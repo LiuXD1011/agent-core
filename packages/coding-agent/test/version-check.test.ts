@@ -12,11 +12,13 @@ import { allowNetwork } from "./test-network-env.ts";
 const originalSkipVersionCheck = process.env.PI_CORE_SKIP_VERSION_CHECK;
 
 beforeEach(() => {
+	vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
 	allowNetwork();
 });
 
 afterEach(() => {
 	vi.unstubAllGlobals();
+	vi.unstubAllEnvs();
 	if (originalSkipVersionCheck === undefined) {
 		delete process.env.PI_CORE_SKIP_VERSION_CHECK;
 	} else {
@@ -35,6 +37,7 @@ describe("version checks", () => {
 	});
 
 	it("returns only newer versions", async () => {
+		vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.3" }));
 		vi.stubGlobal("fetch", fetchMock);
 
@@ -42,7 +45,17 @@ describe("version checks", () => {
 		await expect(checkForNewPiVersion("1.2.2")).resolves.toEqual({ version: "1.2.3" });
 	});
 
-	it("uses the pi.dev version check api with a pi user agent", async () => {
+	it("does not query any feed when no version check URL is configured", async () => {
+		delete process.env.PI_CORE_VERSION_CHECK_URL;
+		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(getLatestPiVersion("1.2.3")).resolves.toBeUndefined();
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it("uses the configured version check api with a pi-core user agent", async () => {
+		vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 

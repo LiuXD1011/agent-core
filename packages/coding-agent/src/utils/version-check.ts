@@ -2,8 +2,15 @@ import { compare, valid } from "semver";
 import { fetchWithRetry } from "./management-http.ts";
 import { getPiUserAgent } from "./pi-user-agent.ts";
 
-const LATEST_VERSION_URL = "https://pi.dev/api/latest-version";
+// Pi Core does not track the upstream pi.dev release feed: following it would
+// misreport upstream Pi versions as Pi Core updates. Self-update goes through
+// npm (@liuxuedeng/pi-core@latest). Point PI_CORE_VERSION_CHECK_URL at a feed
+// returning { packageName, version } to re-enable update checks.
 const DEFAULT_VERSION_CHECK_TIMEOUT_MS = 10000;
+
+function resolveVersionCheckUrl(): string | undefined {
+	return process.env.PI_CORE_VERSION_CHECK_URL;
+}
 
 export interface LatestPiRelease {
 	version: string;
@@ -54,8 +61,11 @@ export async function getLatestPiRelease(
 ): Promise<LatestPiRelease | undefined> {
 	if (process.env.PI_CORE_OFFLINE) return undefined;
 
+	const versionCheckUrl = resolveVersionCheckUrl();
+	if (!versionCheckUrl) return undefined;
+
 	const response = await fetchWithRetry(
-		LATEST_VERSION_URL,
+		versionCheckUrl,
 		{
 			headers: {
 				"User-Agent": getPiUserAgent(currentVersion),

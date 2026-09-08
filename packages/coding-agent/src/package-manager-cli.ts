@@ -669,7 +669,9 @@ async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 		});
 	}
 	if (!latestRelease) {
-		throw new Error(`Could not determine latest ${APP_NAME} version.`);
+		throw new Error(
+			`Self-update version check is not configured in ${APP_NAME}. Upgrade with: npm install -g ${PACKAGE_NAME}@latest`,
+		);
 	}
 
 	const packageName = latestRelease.packageName ?? PACKAGE_NAME;

@@ -134,6 +134,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 	}
 
 	beforeEach(() => {
+		vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
+		allowNetwork();
 		allowNetwork();
 		tempDir = join(tmpdir(), `pi-package-commands-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 		agentDir = join(tempDir, "agent");
@@ -554,6 +556,17 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		} finally {
 			errorSpy.mockRestore();
 		}
+	});
+
+	it("explains how to upgrade when no version check feed is configured", async () => {
+		delete process.env.PI_CORE_VERSION_CHECK_URL;
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		await expect(runPackageCommandDirectly(["update", "--self"])).resolves.toBeUndefined();
+
+		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
+			`npm install -g ${PACKAGE_NAME}@latest`,
+		);
 	});
 
 	it("allows explicit self-update checks when automatic version checks are disabled", async () => {
