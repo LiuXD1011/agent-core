@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Developer wrapper that runs pi from this checkout's latest `npm run build`.
-# Development invocations use PI_EXPERIMENTAL=1 by default. Pass --stable to use
+# Development invocations use PI_CORE_EXPERIMENTAL=1 by default. Pass --stable to use
 # the next pi executable on PATH; `pi update` also uses stable so self-update
 # works.
 #
@@ -71,5 +71,5 @@ if [[ ! -x "$dev_pi" ]]; then
 	exit 1
 fi
 
-export PI_EXPERIMENTAL="${PI_EXPERIMENTAL:-1}"
+export PI_CORE_EXPERIMENTAL="${PI_CORE_EXPERIMENTAL:-1}"
 exec "$dev_pi" ${args[@]+"${args[@]}"}

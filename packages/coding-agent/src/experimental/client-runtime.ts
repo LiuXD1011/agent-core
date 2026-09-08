@@ -45,7 +45,7 @@ export interface ClientRuntime {
 }
 
 export interface OpenClientRuntimeOptions {
-	/** Directory searched when --connect is omitted. Defaults to PI_SERVER_DIR or ~/.pi/server. */
+	/** Directory searched when --connect is omitted. Defaults to PI_CORE_SERVER_DIR or ~/.pi-core/server. */
 	readonly directory?: string;
 }
 

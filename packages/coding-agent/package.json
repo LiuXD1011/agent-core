@@ -4,7 +4,7 @@
 	"description": "Pi Core - AI coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"piConfig": {
-		"configDir": ".pi"
+		"configDir": ".pi-core"
 	},
 	"bin": {
 		"pi-core": "dist/bundle/cli.js"

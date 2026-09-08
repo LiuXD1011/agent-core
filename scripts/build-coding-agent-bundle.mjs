@@ -83,7 +83,7 @@ function commonBuildOptions() {
 		absWorkingDir: repoRoot,
 		banner,
 		bundle: true,
-		define: { PI_BUNDLED_NODE: "true" },
+		define: { PI_CORE_BUNDLED_NODE: "true" },
 		external: ["@liuxuedeng/pi-core-chord", "@silvia-odwyer/photon-node"],
 		format: "esm",
 		legalComments: "none",

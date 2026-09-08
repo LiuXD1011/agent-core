@@ -3,8 +3,8 @@
  *
  * Demonstrates the project_trust event. Install globally or pass via -e:
  *
- *   mkdir -p ~/.pi/agent/extensions
- *   cp packages/coding-agent/examples/extensions/project-trust.ts ~/.pi/agent/extensions/
+ *   mkdir -p ~/.pi-core/agent/extensions
+ *   cp packages/coding-agent/examples/extensions/project-trust.ts ~/.pi-core/agent/extensions/
  *
  * Or:
  *

@@ -31,7 +31,7 @@ import {
 
 const OFFICIAL_PACKAGE_NAME = "@liuxuedeng/pi-core";
 const OFFICIAL_APP_NAME = "pi-core";
-const OFFICIAL_CONFIG_DIR_NAME = ".pi";
+const OFFICIAL_CONFIG_DIR_NAME = ".pi-core";
 
 interface DistributionMetadata {
 	packageName: string;
@@ -115,7 +115,7 @@ async function clearStartupTui(ui: TUI): Promise<void> {
 /**
  * First-time setup runs when all of these hold:
  * - this is the official Pi distribution (not a fork/rebrand)
- * - experimental features are enabled (PI_EXPERIMENTAL=1)
+ * - experimental features are enabled (PI_CORE_EXPERIMENTAL=1)
  * - the default agent directory is used (no custom agent dir override)
  * - setup was not completed before (settings.json does not exist)
  */

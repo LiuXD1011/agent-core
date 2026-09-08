@@ -5,7 +5,7 @@ import type { AuthInput } from "../cli/experimental/command-options.ts";
 import { ModelRuntime } from "../core/model-runtime.ts";
 import { resolvePath } from "../utils/paths.ts";
 
-export const ENV_RADIUS_GATEWAY = "PI_RADIUS_GATEWAY";
+export const ENV_RADIUS_GATEWAY = "PI_CORE_RADIUS_GATEWAY";
 
 export interface RadiusRelayAuth {
 	readonly gateway: string;
@@ -32,7 +32,7 @@ export class RadiusRelayAuthResolver {
 		readonly signal?: AbortSignal;
 	}): Promise<RadiusRelayAuth | undefined> {
 		options.signal?.throwIfAborted();
-		if (process.env.PI_OFFLINE !== undefined) {
+		if (process.env.PI_CORE_OFFLINE !== undefined) {
 			if (options.required) throw new Error("Radius relay connections are unavailable in offline mode");
 			return undefined;
 		}

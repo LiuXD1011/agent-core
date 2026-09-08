@@ -9,7 +9,7 @@ MINI_DIST="$SCRIPT_DIR/packages/coding-agent/dist/experimental/mini/main.js"
 # started with. Restart it after changing anything under mini/, or the protocol will not match.
 stop_server() {
   pkill -f "mini/server/entry" 2>/dev/null || true
-  rm -f "${PI_AGENT_DIR:-$HOME/.pi/agent}/experimental/mini.sock"
+  rm -f "${PI_CORE_AGENT_DIR:-$HOME/.pi/agent}/experimental/mini.sock"
 }
 
 USE_DIST=false

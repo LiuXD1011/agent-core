@@ -896,8 +896,8 @@ npx tsx test/chat-simple.ts
 
 ### Debug logging
 
-Set `PI_TUI_WRITE_LOG` to capture the raw ANSI stream written to stdout.
+Set `PI_CORE_TUI_WRITE_LOG` to capture the raw ANSI stream written to stdout.
 
 ```bash
-PI_TUI_WRITE_LOG=/tmp/tui-ansi.log npx tsx test/chat-simple.ts
+PI_CORE_TUI_WRITE_LOG=/tmp/tui-ansi.log npx tsx test/chat-simple.ts
 ```

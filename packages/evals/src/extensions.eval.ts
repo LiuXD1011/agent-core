@@ -21,7 +21,7 @@ function createExtensionAuthoringHarness(name: string, transformSystemPrompt?: (
 		...(transformSystemPrompt ? { transformSystemPrompt } : {}),
 		output: ({ response, session }) => {
 			const extensions = session.resourceLoader.getExtensions();
-			const extensionPath = join(session.sessionManager.getCwd(), ".pi", "extensions", "hello.ts");
+			const extensionPath = join(session.sessionManager.getCwd(), ".pi-core", "extensions", "hello.ts");
 			const extensionSource = existsSync(extensionPath) ? readFileSync(extensionPath, "utf8") : null;
 			return {
 				response,

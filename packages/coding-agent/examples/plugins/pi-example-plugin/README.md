@@ -7,14 +7,14 @@ The package needs no build script. Pi asks Chord to discover `src/session.ts` an
 From the repository root:
 
 ```bash
-PI_EXPERIMENTAL=1 ./pi-test.sh server \
+PI_CORE_EXPERIMENTAL=1 ./pi-test.sh server \
   -e "$PWD/packages/coding-agent/examples/plugins/pi-example-plugin"
 ```
 
 Alternatively, a client can select the plugin for the Session it creates or resumes on one local server:
 
 ```bash
-PI_EXPERIMENTAL=1 ./pi-test.sh client \
+PI_CORE_EXPERIMENTAL=1 ./pi-test.sh client \
   -e "$PWD/packages/coding-agent/examples/plugins/pi-example-plugin"
 ```
 

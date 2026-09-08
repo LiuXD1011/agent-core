@@ -82,12 +82,12 @@ afterEach(async () => {
 });
 
 describe("experimental durable server composition", () => {
-	test("uses PI_SERVER_DIR and PI_SERVER_ID", async () => {
+	test("uses PI_CORE_SERVER_DIR and PI_CORE_SERVER_ID", async () => {
 		const directory = await mkdtemp(join("/tmp", "pi-server-dir-"));
 		directories.add(directory);
 		const serverId = "00000000-0000-4000-8000-000000000001";
-		vi.stubEnv("PI_SERVER_DIR", directory);
-		vi.stubEnv("PI_SERVER_ID", serverId);
+		vi.stubEnv("PI_CORE_SERVER_DIR", directory);
+		vi.stubEnv("PI_CORE_SERVER_ID", serverId);
 		const runtime = await startServer();
 		servers.add(runtime);
 
@@ -168,8 +168,8 @@ describe("experimental durable server composition", () => {
 		const directory = await mkdtemp(join("/tmp", "pi-auto-server-"));
 		directories.add(directory);
 		const serverId = "00000000-0000-4000-8000-000000000001";
-		vi.stubEnv("PI_SERVER_DIR", directory);
-		vi.stubEnv("PI_SERVER_ID", serverId);
+		vi.stubEnv("PI_CORE_SERVER_DIR", directory);
+		vi.stubEnv("PI_CORE_SERVER_ID", serverId);
 
 		const results = await Promise.all([runClient({ command: "client" }), runClient({ command: "client" })]);
 		expect(results).toEqual([
@@ -198,8 +198,8 @@ describe("experimental durable server composition", () => {
 		directories.add(directory);
 		const serverId = "00000000-0000-4000-8000-000000000001";
 		const packagePath = fileURLToPath(new URL("../examples/plugins/pi-example-plugin", import.meta.url));
-		vi.stubEnv("PI_SERVER_DIR", directory);
-		vi.stubEnv("PI_SERVER_ID", serverId);
+		vi.stubEnv("PI_CORE_SERVER_DIR", directory);
+		vi.stubEnv("PI_CORE_SERVER_ID", serverId);
 
 		const first = await openClientRuntime({ command: "client", ...sessionWorkerModel });
 		try {
@@ -235,8 +235,8 @@ describe("experimental durable server composition", () => {
 		const directory = await mkdtemp(join("/tmp", "pi-auto-session-"));
 		directories.add(directory);
 		const serverId = "00000000-0000-4000-8000-000000000001";
-		vi.stubEnv("PI_SERVER_DIR", directory);
-		vi.stubEnv("PI_SERVER_ID", serverId);
+		vi.stubEnv("PI_CORE_SERVER_DIR", directory);
+		vi.stubEnv("PI_CORE_SERVER_ID", serverId);
 
 		await expect(runClient({ command: "client", sessionId: "demo-1", ...sessionWorkerModel })).resolves.toEqual({
 			kind: "attached",

@@ -15,7 +15,7 @@ export type ClientResult =
 	| { readonly kind: "prompted"; readonly serverId: string; readonly sessionId: string; readonly text: string };
 
 export interface RunClientOptions {
-	/** Directory searched when --connect is omitted. Defaults to PI_SERVER_DIR or ~/.pi/server. */
+	/** Directory searched when --connect is omitted. Defaults to PI_CORE_SERVER_DIR or ~/.pi-core/server. */
 	readonly directory?: string;
 	/** Receives snapshot-ordered main-lane events while a prompt is active. */
 	readonly onEvent?: (event: LaneWatchEvent) => void | Promise<void>;

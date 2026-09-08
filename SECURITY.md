@@ -58,7 +58,7 @@ on `pi.dev`.
 - Reports requiring the ability to create, modify, delete, or replace files,
   directories, symlinks, environment variables, shell configuration, or other
   user-controlled local state on the target machine. This includes `~/.pi`,
-  `~/.pi/agent/models.json`, workspace files, `AGENTS.md`, skills, extensions,
+  `~/.pi-core/agent/models.json`, workspace files, `AGENTS.md`, skills, extensions,
   extension configuration, dotfiles, and files synchronized through NFS, roaming
   profiles, or dotfile managers, unless the report shows how Pi itself grants
   that access.

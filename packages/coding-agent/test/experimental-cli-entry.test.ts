@@ -35,8 +35,8 @@ function runEntry(entry: string, experimental: boolean) {
 				HOME: directory,
 				USERPROFILE: directory,
 				PI_CORE_CODING_AGENT_DIR: join(directory, "agent"),
-				PI_OFFLINE: "1",
-				PI_EXPERIMENTAL: experimental ? "1" : "0",
+				PI_CORE_OFFLINE: "1",
+				PI_CORE_EXPERIMENTAL: experimental ? "1" : "0",
 			},
 		},
 	);
