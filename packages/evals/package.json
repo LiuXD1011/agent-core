@@ -1,5 +1,5 @@
 {
-	"name": "@earendil-works/pi-evals",
+	"name": "@liuxuedeng/pi-core-evals",
 	"version": "0.85.1",
 	"private": true,
 	"type": "module",
@@ -9,7 +9,7 @@
 		"test": "vitest run --config vitest.test.config.ts"
 	},
 	"devDependencies": {
-		"@earendil-works/pi-ai": "^0.85.1",
+		"@liuxuedeng/pi-core-ai": "^0.85.1",
 		"@liuxuedeng/pi-core": "^0.85.1",
 		"@types/node": "22.19.19",
 		"shx": "0.4.0",

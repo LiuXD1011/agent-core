@@ -7,8 +7,8 @@ import {
 	type FacetLoader,
 	type JsonValue,
 	type LoadedFacets,
-} from "@earendil-works/chord";
-import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
+} from "@liuxuedeng/pi-core-chord";
+import { BACKGROUND_CONTEXT } from "@liuxuedeng/pi-core-chord/context";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -18,7 +18,7 @@ import {
 	setKeybindings,
 	Text,
 	type TUI,
-} from "@earendil-works/pi-tui";
+} from "@liuxuedeng/pi-core-tui";
 import type { ClientCommand } from "../cli/experimental/commands/client.ts";
 import { getAgentDir } from "../config.ts";
 import { KeybindingsManager } from "../core/keybindings.ts";

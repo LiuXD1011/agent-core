@@ -4,7 +4,7 @@ import {
 	fauxProvider,
 	fauxToolCall,
 	type ToolResultMessage,
-} from "@earendil-works/pi-ai";
+} from "@liuxuedeng/pi-core-ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { HarnessEvent, WatchHandle } from "../../../src/harness/agent-harness.ts";

@@ -5,8 +5,8 @@
 		"paths": {
 			"@liuxuedeng/pi-core": ["./src/index.ts"],
 			"@liuxuedeng/pi-core/hooks": ["./src/core/hooks/index.ts"],
-			"@earendil-works/pi-tui": ["../tui/src/index.ts"],
-			"@earendil-works/pi-ai": ["../ai/src/index.ts"],
+			"@liuxuedeng/pi-core-tui": ["../tui/src/index.ts"],
+			"@liuxuedeng/pi-core-ai": ["../ai/src/index.ts"],
 			"typebox": ["../../node_modules/typebox"]
 		},
 		"skipLibCheck": true

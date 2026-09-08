@@ -24,10 +24,10 @@ export default defineConfig({
 	resolve: {
 		conditions: ["source"],
 		alias: [
-			{ find: /^@earendil-works\/pi-telemetry$/, replacement: telemetrySrcIndex },
-			{ find: /^@earendil-works\/pi-agent-core$/, replacement: agentSrcIndex },
-			{ find: /^@earendil-works\/pi-ai$/, replacement: aiSrcIndex },
-			{ find: /^@earendil-works\/pi-ai\/compat$/, replacement: aiSrcCompat },
+			{ find: /^@liuxuedeng\/pi-core-telemetry$/, replacement: telemetrySrcIndex },
+			{ find: /^@liuxuedeng\/pi-core-agent$/, replacement: agentSrcIndex },
+			{ find: /^@liuxuedeng\/pi-core-ai$/, replacement: aiSrcIndex },
+			{ find: /^@liuxuedeng\/pi-core-ai\/compat$/, replacement: aiSrcCompat },
 		],
 	},
 	ssr: { resolve: { conditions: ["source"] } },

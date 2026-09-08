@@ -11,12 +11,12 @@ All credit for the original design and implementation goes to the [Pi authors](h
 
 | Package | Description |
 |---------|-------------|
-| **[@earendil-works/chord](packages/chord)** | Standalone application-composition runtime for services, replicated state, RPC, and plugins |
-| **[@earendil-works/pi-telemetry](packages/telemetry)** | Vendor-neutral telemetry contracts, reference adapter, conformance tests, and typed schemas |
-| **[@earendil-works/pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
-| **[@earendil-works/pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
+| **[@liuxuedeng/pi-core-chord](packages/chord)** | Standalone application-composition runtime for services, replicated state, RPC, and plugins |
+| **[@liuxuedeng/pi-core-telemetry](packages/telemetry)** | Vendor-neutral telemetry contracts, reference adapter, conformance tests, and typed schemas |
+| **[@liuxuedeng/pi-core-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
+| **[@liuxuedeng/pi-core-agent](packages/agent)** | Agent runtime with tool calling and state management |
 | **[@liuxuedeng/pi-core](packages/coding-agent)** | Interactive coding agent CLI |
-| **[@earendil-works/pi-tui](packages/tui)** | Terminal UI library with differential rendering |
+| **[@liuxuedeng/pi-core-tui](packages/tui)** | Terminal UI library with differential rendering |
 
 Workspace package names are being migrated to the `@liuxuedeng/pi-core-*` namespace.
 

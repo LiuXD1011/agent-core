@@ -5,7 +5,7 @@
  */
 
 import type { ExtensionAPI } from "@liuxuedeng/pi-core";
-import { Text } from "@earendil-works/pi-tui";
+import { Text } from "@liuxuedeng/pi-core-tui";
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("tui", {

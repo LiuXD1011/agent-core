@@ -4,9 +4,9 @@ import {
 	type JsonValue,
 	RemoteServiceProvider,
 	replicatedState,
-} from "@earendil-works/chord";
-import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import type { RoutedServerServiceAttachment, RoutedServerServiceHost } from "@earendil-works/pi-server";
+} from "@liuxuedeng/pi-core-chord";
+import { BACKGROUND_CONTEXT } from "@liuxuedeng/pi-core-chord/context";
+import type { RoutedServerServiceAttachment, RoutedServerServiceHost } from "@liuxuedeng/pi-core-server";
 import { PresentationPlugins } from "./plugins.ts";
 import {
 	type SessionCreateOptions,

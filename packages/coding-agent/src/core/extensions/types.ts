@@ -14,7 +14,7 @@ import type {
 	AgentToolUpdateCallback,
 	ThinkingLevel,
 	ToolExecutionMode,
-} from "@earendil-works/pi-agent-core";
+} from "@liuxuedeng/pi-core-agent";
 import type {
 	Api,
 	AssistantMessageEvent,
@@ -32,7 +32,7 @@ import type {
 	TextContent,
 	ToolResultMessage,
 	Usage,
-} from "@earendil-works/pi-ai";
+} from "@liuxuedeng/pi-core-ai";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -43,7 +43,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	TUI,
-} from "@earendil-works/pi-tui";
+} from "@liuxuedeng/pi-core-tui";
 import type { Static, TSchema } from "typebox";
 import type { Theme } from "../../modes/interactive/theme/theme.ts";
 import type { BashResult } from "../bash-executor.ts";

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { DynamicBorder, type ExtensionAPI, type ExtensionContext } from "@liuxuedeng/pi-core";
-import { Container, hyperlink, Text } from "@earendil-works/pi-tui";
+import { Container, hyperlink, Text } from "@liuxuedeng/pi-core-tui";
 
 const PR_PROMPT_PATTERN = /^\s*You are given one or more GitHub PR URLs:\s*(\S+)/im;
 const ISSUE_PROMPT_PATTERN = /^\s*Analyze GitHub issue\(s\):\s*(\S+)/im;

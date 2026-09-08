@@ -1,6 +1,7 @@
 import type { ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { isAbsolute } from "node:path";
+import { BACKGROUND_CONTEXT, type Context, type JsonlSessionMetadata, TODO_CONTEXT } from "@liuxuedeng/pi-core-agent";
 import {
 	createServiceUnsubscribeCall,
 	decodeServiceControlCall,
@@ -8,14 +9,8 @@ import {
 	parseServiceProviderUpdate,
 	type ServiceCall,
 	type ServiceProviderUpdate,
-} from "@earendil-works/chord";
-import {
-	BACKGROUND_CONTEXT,
-	type Context,
-	type JsonlSessionMetadata,
-	TODO_CONTEXT,
-} from "@earendil-works/pi-agent-core";
-import { type RoutedSessionAttachment, type RoutedSessionHandle, ServerError } from "@earendil-works/pi-server";
+} from "@liuxuedeng/pi-core-chord";
+import { type RoutedSessionAttachment, type RoutedSessionHandle, ServerError } from "@liuxuedeng/pi-core-server";
 import { Check } from "typebox/value";
 import type { CoordinatorConnection, CoordinatorConnectionEvent } from "./coordinator.ts";
 import { spawnInternalProcess } from "./process.ts";

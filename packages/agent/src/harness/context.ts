@@ -1,4 +1,4 @@
-import type { Context, ContextKey } from "@earendil-works/chord";
+import type { Context, ContextKey } from "@liuxuedeng/pi-core-chord";
 import {
 	awaitWithContext,
 	BACKGROUND_CONTEXT,
@@ -8,8 +8,8 @@ import {
 	withCancel,
 	withContextValue,
 	withoutAbortSignal,
-} from "@earendil-works/chord/context";
-import { NOOP_TELEMETRY_CONTEXT, type TelemetryContext } from "@earendil-works/pi-telemetry";
+} from "@liuxuedeng/pi-core-chord/context";
+import { NOOP_TELEMETRY_CONTEXT, type TelemetryContext } from "@liuxuedeng/pi-core-telemetry";
 
 export {
 	awaitWithContext,

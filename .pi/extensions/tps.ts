@@ -1,4 +1,4 @@
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { AssistantMessage } from "@liuxuedeng/pi-core-ai";
 import type { ExtensionAPI } from "@liuxuedeng/pi-core";
 
 function isAssistantMessage(message: unknown): message is AssistantMessage {

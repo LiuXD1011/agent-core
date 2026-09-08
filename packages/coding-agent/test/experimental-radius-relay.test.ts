@@ -1,5 +1,5 @@
-import type { Client } from "@earendil-works/pi-client";
-import type { Server } from "@earendil-works/pi-server";
+import type { Client } from "@liuxuedeng/pi-core-client";
+import type { Server } from "@liuxuedeng/pi-core-server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { RadiusRelayAuthResolver } from "../src/experimental/radius-auth.ts";
 import {

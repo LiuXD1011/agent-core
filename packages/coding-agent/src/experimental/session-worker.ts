@@ -1,16 +1,6 @@
 import { createConnection, type Socket } from "node:net";
 import { isAbsolute } from "node:path";
 import {
-	isJsonValue,
-	type JsonValue,
-	parseServiceProviderUpdate,
-	REMOTE_SERVICE_ERROR_CODES,
-	RemoteServiceError,
-	type RemoteServiceErrorCode,
-	type ServiceCall,
-	type ServiceProviderUpdate,
-} from "@earendil-works/chord";
-import {
 	AgentHarness,
 	type AgentHarness as AgentHarnessInstance,
 	type AgentLane,
@@ -23,8 +13,18 @@ import {
 	type Session,
 	TODO_CONTEXT,
 	withCancel,
-} from "@earendil-works/pi-agent-core";
-import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
+} from "@liuxuedeng/pi-core-agent";
+import { NodeExecutionEnv } from "@liuxuedeng/pi-core-agent/node";
+import {
+	isJsonValue,
+	type JsonValue,
+	parseServiceProviderUpdate,
+	REMOTE_SERVICE_ERROR_CODES,
+	RemoteServiceError,
+	type RemoteServiceErrorCode,
+	type ServiceCall,
+	type ServiceProviderUpdate,
+} from "@liuxuedeng/pi-core-chord";
 import lockfile from "proper-lockfile";
 import Type, { type Static } from "typebox";
 import { Check } from "typebox/value";

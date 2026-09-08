@@ -1,5 +1,5 @@
-import type { ServiceSubscriptionSnapshot } from "@earendil-works/chord";
-import type { RpcTarget, SessionTarget } from "@earendil-works/pi-protocol";
+import type { ServiceSubscriptionSnapshot } from "@liuxuedeng/pi-core-chord";
+import type { RpcTarget, SessionTarget } from "@liuxuedeng/pi-core-protocol";
 import type { ByteTransportFactory } from "./transport.ts";
 
 export type ConnectionState = "disconnected" | "connecting" | "connected";

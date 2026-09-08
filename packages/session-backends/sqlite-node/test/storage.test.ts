@@ -1,6 +1,6 @@
-import * as storedValues from "@earendil-works/pi-agent-core";
-import * as sessionWrites from "@earendil-works/pi-agent-core";
-import { BACKGROUND_CONTEXT, prepareStorageCommit } from "@earendil-works/pi-agent-core";
+import * as storedValues from "@liuxuedeng/pi-core-agent";
+import * as sessionWrites from "@liuxuedeng/pi-core-agent";
+import { BACKGROUND_CONTEXT, prepareStorageCommit } from "@liuxuedeng/pi-core-agent";
 import { describe, expect, it } from "vitest";
 import {
 	createNodeSqliteFactory,

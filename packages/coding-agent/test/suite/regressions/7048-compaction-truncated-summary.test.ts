@@ -1,4 +1,4 @@
-import { type AssistantMessage, fauxAssistantMessage } from "@earendil-works/pi-ai";
+import { type AssistantMessage, fauxAssistantMessage } from "@liuxuedeng/pi-core-ai";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, type Harness } from "../harness.ts";
 

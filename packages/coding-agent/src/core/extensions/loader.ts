@@ -7,13 +7,13 @@ import * as fs from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import * as _bundledPiAgentCore from "@earendil-works/pi-agent-core";
-import type { Provider } from "@earendil-works/pi-ai";
-import * as _bundledPiAiCompat from "@earendil-works/pi-ai/compat";
-import * as _bundledPiAiOauth from "@earendil-works/pi-ai/oauth";
-import * as _bundledPiAiProviders from "@earendil-works/pi-ai/providers/all";
-import type { KeyId } from "@earendil-works/pi-tui";
-import * as _bundledPiTui from "@earendil-works/pi-tui";
+import * as _bundledPiAgentCore from "@liuxuedeng/pi-core-agent";
+import type { Provider } from "@liuxuedeng/pi-core-ai";
+import * as _bundledPiAiCompat from "@liuxuedeng/pi-core-ai/compat";
+import * as _bundledPiAiOauth from "@liuxuedeng/pi-core-ai/oauth";
+import * as _bundledPiAiProviders from "@liuxuedeng/pi-core-ai/providers/all";
+import type { KeyId } from "@liuxuedeng/pi-core-tui";
+import * as _bundledPiTui from "@liuxuedeng/pi-core-tui";
 import { createJiti } from "jiti/static";
 // Static imports of packages that extensions may use.
 // These MUST be static so Bun bundles them into the compiled binary.
@@ -54,15 +54,15 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@sinclair/typebox": _bundledTypebox,
 	"@sinclair/typebox/compile": _bundledTypeboxCompile,
 	"@sinclair/typebox/value": _bundledTypeboxValue,
-	"@earendil-works/pi-agent-core": _bundledPiAgentCore,
-	"@earendil-works/pi-tui": _bundledPiTui,
+	"@liuxuedeng/pi-core-agent": _bundledPiAgentCore,
+	"@liuxuedeng/pi-core-tui": _bundledPiTui,
 	// Extensions resolve the pi-ai root to the compat entrypoint (a strict
 	// superset of the core entrypoint): existing extensions using the old
 	// global API keep working at runtime until compat is removed.
-	"@earendil-works/pi-ai": _bundledPiAiCompat,
-	"@earendil-works/pi-ai/compat": _bundledPiAiCompat,
-	"@earendil-works/pi-ai/oauth": _bundledPiAiOauth,
-	"@earendil-works/pi-ai/providers/all": _bundledPiAiProviders,
+	"@liuxuedeng/pi-core-ai": _bundledPiAiCompat,
+	"@liuxuedeng/pi-core-ai/compat": _bundledPiAiCompat,
+	"@liuxuedeng/pi-core-ai/oauth": _bundledPiAiOauth,
+	"@liuxuedeng/pi-core-ai/providers/all": _bundledPiAiProviders,
 	"@liuxuedeng/pi-core": _bundledPiCodingAgent,
 	"@mariozechner/pi-agent-core": _bundledPiAgentCore,
 	"@mariozechner/pi-tui": _bundledPiTui,
@@ -106,26 +106,26 @@ function getAliases(): Record<string, string> {
 	};
 
 	const piCodingAgentEntry = packageIndex;
-	const piAgentCoreEntry = resolveWorkspaceOrImport("agent/dist/index.js", "@earendil-works/pi-agent-core");
-	const piTuiEntry = resolveWorkspaceOrImport("tui/dist/index.js", "@earendil-works/pi-tui");
+	const piAgentCoreEntry = resolveWorkspaceOrImport("agent/dist/index.js", "@liuxuedeng/pi-core-agent");
+	const piTuiEntry = resolveWorkspaceOrImport("tui/dist/index.js", "@liuxuedeng/pi-core-tui");
 	// Extensions resolve the pi-ai root to the compat entrypoint (a strict
 	// superset of the core entrypoint): existing extensions using the old
 	// global API keep working at runtime until compat is removed.
-	const piAiCompatEntry = resolveWorkspaceOrImport("ai/dist/compat.js", "@earendil-works/pi-ai/compat");
-	const piAiOauthEntry = resolveWorkspaceOrImport("ai/dist/oauth.js", "@earendil-works/pi-ai/oauth");
+	const piAiCompatEntry = resolveWorkspaceOrImport("ai/dist/compat.js", "@liuxuedeng/pi-core-ai/compat");
+	const piAiOauthEntry = resolveWorkspaceOrImport("ai/dist/oauth.js", "@liuxuedeng/pi-core-ai/oauth");
 	const piAiProvidersEntry = resolveWorkspaceOrImport(
 		"ai/dist/providers/all.js",
-		"@earendil-works/pi-ai/providers/all",
+		"@liuxuedeng/pi-core-ai/providers/all",
 	);
 
 	_aliases = {
 		"@liuxuedeng/pi-core": piCodingAgentEntry,
-		"@earendil-works/pi-agent-core": piAgentCoreEntry,
-		"@earendil-works/pi-tui": piTuiEntry,
-		"@earendil-works/pi-ai/providers/all": piAiProvidersEntry,
-		"@earendil-works/pi-ai/compat": piAiCompatEntry,
-		"@earendil-works/pi-ai/oauth": piAiOauthEntry,
-		"@earendil-works/pi-ai": piAiCompatEntry,
+		"@liuxuedeng/pi-core-agent": piAgentCoreEntry,
+		"@liuxuedeng/pi-core-tui": piTuiEntry,
+		"@liuxuedeng/pi-core-ai/providers/all": piAiProvidersEntry,
+		"@liuxuedeng/pi-core-ai/compat": piAiCompatEntry,
+		"@liuxuedeng/pi-core-ai/oauth": piAiOauthEntry,
+		"@liuxuedeng/pi-core-ai": piAiCompatEntry,
 		"@mariozechner/pi-coding-agent": piCodingAgentEntry,
 		"@mariozechner/pi-agent-core": piAgentCoreEntry,
 		"@mariozechner/pi-tui": piTuiEntry,

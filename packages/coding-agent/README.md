@@ -707,9 +707,9 @@ MIT
 
 ## See Also
 
-- [@earendil-works/pi-ai](https://www.npmjs.com/package/@earendil-works/pi-ai): Core LLM toolkit
-- [@earendil-works/pi-agent-core](https://www.npmjs.com/package/@earendil-works/pi-agent-core): Agent framework
-- [@earendil-works/pi-tui](https://www.npmjs.com/package/@earendil-works/pi-tui): Terminal UI components
+- [@liuxuedeng/pi-core-ai](https://www.npmjs.com/package/@liuxuedeng/pi-core-ai): Core LLM toolkit
+- [@liuxuedeng/pi-core-agent](https://www.npmjs.com/package/@liuxuedeng/pi-core-agent): Agent framework
+- [@liuxuedeng/pi-core-tui](https://www.npmjs.com/package/@liuxuedeng/pi-core-tui): Terminal UI components
 
 <p align="center">
   <a href="https://pi.dev">pi.dev</a> domain graciously donated by

@@ -1,5 +1,5 @@
-import { defineFacet } from "@earendil-works/chord";
-import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
+import { defineFacet } from "@liuxuedeng/pi-core-chord";
+import { BACKGROUND_CONTEXT } from "@liuxuedeng/pi-core-chord/context";
 import { ExampleFacetService } from "./contract.ts";
 
 export default defineFacet({

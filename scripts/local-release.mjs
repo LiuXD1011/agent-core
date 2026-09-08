@@ -7,15 +7,15 @@ import { spawnSync } from "node:child_process";
 import { installCodingAgentConsumer, packReleasePackages, smokeTestCodingAgentConsumer } from "./coding-agent-consumer.mjs";
 
 const packages = [
-	{ directory: "packages/chord", name: "@earendil-works/chord" },
-	{ directory: "packages/telemetry", name: "@earendil-works/pi-telemetry" },
-	{ directory: "packages/ai", name: "@earendil-works/pi-ai" },
-	{ directory: "packages/tui", name: "@earendil-works/pi-tui" },
-	{ directory: "packages/agent", name: "@earendil-works/pi-agent-core" },
-	{ directory: "packages/protocol", name: "@earendil-works/pi-protocol" },
-	{ directory: "packages/client", name: "@earendil-works/pi-client" },
-	{ directory: "packages/session-backends/sqlite-node", name: "@earendil-works/pi-session-backend-sqlite-node" },
-	{ directory: "packages/server", name: "@earendil-works/pi-server" },
+	{ directory: "packages/chord", name: "@liuxuedeng/pi-core-chord" },
+	{ directory: "packages/telemetry", name: "@liuxuedeng/pi-core-telemetry" },
+	{ directory: "packages/ai", name: "@liuxuedeng/pi-core-ai" },
+	{ directory: "packages/tui", name: "@liuxuedeng/pi-core-tui" },
+	{ directory: "packages/agent", name: "@liuxuedeng/pi-core-agent" },
+	{ directory: "packages/protocol", name: "@liuxuedeng/pi-core-protocol" },
+	{ directory: "packages/client", name: "@liuxuedeng/pi-core-client" },
+	{ directory: "packages/session-backends/sqlite-node", name: "@liuxuedeng/pi-core-sqlite-node" },
+	{ directory: "packages/server", name: "@liuxuedeng/pi-core-server" },
 	{ directory: "packages/coding-agent", name: "@liuxuedeng/pi-core" },
 ];
 

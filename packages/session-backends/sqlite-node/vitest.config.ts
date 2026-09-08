@@ -26,11 +26,11 @@ export default defineConfig({
 	resolve: {
 		conditions: ["source"],
 		alias: [
-			{ find: /^@earendil-works\/pi-telemetry$/, replacement: telemetryIndex },
-			{ find: /^@earendil-works\/pi-agent-core\/node$/, replacement: agentNode },
-			{ find: /^@earendil-works\/pi-agent-core\/harness\/session\/testing$/, replacement: agentSessionTesting },
-			{ find: /^@earendil-works\/pi-agent-core$/, replacement: agentIndex },
-			{ find: /^@earendil-works\/pi-ai$/, replacement: aiIndex },
+			{ find: /^@liuxuedeng\/pi-core-telemetry$/, replacement: telemetryIndex },
+			{ find: /^@liuxuedeng\/pi-core-agent\/node$/, replacement: agentNode },
+			{ find: /^@liuxuedeng\/pi-core-agent\/harness\/session\/testing$/, replacement: agentSessionTesting },
+			{ find: /^@liuxuedeng\/pi-core-agent$/, replacement: agentIndex },
+			{ find: /^@liuxuedeng\/pi-core-ai$/, replacement: aiIndex },
 		],
 	},
 	ssr: { resolve: { conditions: ["source"] } },

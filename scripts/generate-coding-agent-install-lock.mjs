@@ -12,7 +12,7 @@ const rootLockfilePath = join(repoRoot, "package-lock.json");
 const outputPackageJsonPath = join(outputDir, "package.json");
 const outputLockfilePath = join(outputDir, "package-lock.json");
 const internalPackagePrefix = "@earendil-works/pi-";
-const internalPackageNames = new Set(["@earendil-works/chord"]);
+const internalPackageNames = new Set(["@liuxuedeng/pi-core-chord"]);
 const piCorePackagePrefix = "@liuxuedeng/pi-core";
 
 function isInternalPackageName(name) {

@@ -1,5 +1,5 @@
-import type { Component } from "@earendil-works/pi-tui";
-import { Box, Container, Spacer, Text } from "@earendil-works/pi-tui";
+import type { Component } from "@liuxuedeng/pi-core-tui";
+import { Box, Container, Spacer, Text } from "@liuxuedeng/pi-core-tui";
 import type { EntryRenderer } from "../../../core/extensions/types.ts";
 import type { CustomEntry } from "../../../core/session-manager.ts";
 import { theme } from "../theme/theme.ts";

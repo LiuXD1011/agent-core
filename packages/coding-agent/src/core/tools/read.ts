@@ -1,5 +1,5 @@
-import type { AgentTool } from "@earendil-works/pi-agent-core";
-import type { Api, ImageContent, Model, TextContent } from "@earendil-works/pi-ai";
+import type { AgentTool } from "@liuxuedeng/pi-core-agent";
+import type { Api, ImageContent, Model, TextContent } from "@liuxuedeng/pi-core-ai";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { type Static, Type } from "typebox";
