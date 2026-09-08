@@ -1,6 +1,6 @@
 {
 	"name": "@liuxuedeng/pi-core-chord",
-	"version": "0.85.1",
+	"version": "0.1.0-alpha.1",
 	"description": "Application composition runtime for services, replicated state, RPC, and plugins",
 	"type": "module",
 	"main": "./dist/index.js",

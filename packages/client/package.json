@@ -1,6 +1,6 @@
 {
 	"name": "@liuxuedeng/pi-core-client",
-	"version": "0.85.1",
+	"version": "0.1.0-alpha.1",
 	"description": "Transport-neutral client for remote pi sessions over framed CBOR bytes",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -47,8 +47,8 @@
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@liuxuedeng/pi-core-chord": "^0.85.1",
-		"@liuxuedeng/pi-core-protocol": "^0.85.1"
+		"@liuxuedeng/pi-core-chord": "^0.1.0-alpha.1",
+		"@liuxuedeng/pi-core-protocol": "^0.1.0-alpha.1"
 	},
 	"devDependencies": {
 		"shx": "0.4.0",

@@ -1,6 +1,6 @@
 {
 	"name": "@liuxuedeng/pi-core-tui",
-	"version": "0.85.1",
+	"version": "0.1.0-alpha.1",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
 	"type": "module",
 	"main": "dist/index.js",

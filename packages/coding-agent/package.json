@@ -1,6 +1,6 @@
 {
 	"name": "@liuxuedeng/pi-core",
-	"version": "0.85.1",
+	"version": "0.1.0-alpha.1",
 	"description": "Pi Core - AI coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"piConfig": {
@@ -49,10 +49,10 @@
 		"prepublishOnly": "npm run clean && npm run build && npm run shrinkwrap"
 	},
 	"dependencies": {
-		"@liuxuedeng/pi-core-chord": "^0.85.1",
-		"@liuxuedeng/pi-core-agent": "^0.85.1",
-		"@liuxuedeng/pi-core-ai": "^0.85.1",
-		"@liuxuedeng/pi-core-tui": "^0.85.1",
+		"@liuxuedeng/pi-core-chord": "^0.1.0-alpha.1",
+		"@liuxuedeng/pi-core-agent": "^0.1.0-alpha.1",
+		"@liuxuedeng/pi-core-ai": "^0.1.0-alpha.1",
+		"@liuxuedeng/pi-core-tui": "^0.1.0-alpha.1",
 		"@silvia-odwyer/photon-node": "0.3.4",
 		"chalk": "5.6.2",
 		"cross-spawn": "7.0.6",
@@ -80,9 +80,9 @@
 		"@mariozechner/clipboard": "0.3.9"
 	},
 	"devDependencies": {
-		"@liuxuedeng/pi-core-client": "^0.85.1",
-		"@liuxuedeng/pi-core-protocol": "^0.85.1",
-		"@liuxuedeng/pi-core-server": "^0.85.1",
+		"@liuxuedeng/pi-core-client": "^0.1.0-alpha.1",
+		"@liuxuedeng/pi-core-protocol": "^0.1.0-alpha.1",
+		"@liuxuedeng/pi-core-server": "^0.1.0-alpha.1",
 		"@types/cross-spawn": "6.0.6",
 		"@types/hosted-git-info": "3.0.5",
 		"@types/node": "22.19.19",

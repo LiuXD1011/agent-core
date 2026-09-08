@@ -1,6 +1,6 @@
 {
 	"name": "@liuxuedeng/pi-core-telemetry",
-	"version": "0.85.1",
+	"version": "0.1.0-alpha.1",
 	"description": "Vendor-neutral telemetry contracts and typed schema utilities for pi",
 	"type": "module",
 	"main": "./dist/index.js",

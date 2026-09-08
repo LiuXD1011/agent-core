@@ -1,10 +1,10 @@
 {
 	"name": "@liuxuedeng/pi-core-install",
-	"version": "0.85.1",
+	"version": "0.1.0-alpha.1",
 	"private": true,
 	"description": "Lockfile root used by the Pi installer and updater.",
 	"dependencies": {
-		"@liuxuedeng/pi-core": "0.85.1"
+		"@liuxuedeng/pi-core": "0.1.0-alpha.1"
 	},
 	"overrides": {
 		"protobufjs": "7.6.5",
