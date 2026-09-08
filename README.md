@@ -7,6 +7,33 @@ All credit for the original design and implementation goes to the [Pi authors](h
 * **CLI command**: `pi-core` (designed to coexist with an existing `pi` installation)
 * **Main npm package**: `@liuxuedeng/pi-core`
 
+## Install
+
+```bash
+npm install -g @liuxuedeng/pi-core
+pi-core
+```
+
+Requires Node.js 22+. On first launch an interactive setup wizard configures API keys.
+
+Or run from source:
+
+```bash
+git clone https://github.com/LiuXD1011/pi-core.git
+cd pi-core
+npm install
+npm run build
+./pi-test.sh
+```
+
+## Upgrade
+
+```bash
+npm install -g @liuxuedeng/pi-core@latest
+```
+
+Each Pi Core release records the upstream Pi version it is based on: Pi Core 0.1.x is based on Pi v0.85.1. See [NOTICE.md](NOTICE.md) for the project relationship.
+
 ## Packages
 
 | Package | Description |
