@@ -13,7 +13,14 @@ const outputPackageJsonPath = join(outputDir, "package.json");
 const outputLockfilePath = join(outputDir, "package-lock.json");
 const internalPackagePrefix = "@earendil-works/pi-";
 const internalPackageNames = new Set(["@earendil-works/chord"]);
-const installPackageName = "@earendil-works/pi-coding-agent-install";
+const piCorePackagePrefix = "@liuxuedeng/pi-core";
+
+function isInternalPackageName(name) {
+	return (
+		name.startsWith(internalPackagePrefix) || name.startsWith(piCorePackagePrefix) || internalPackageNames.has(name)
+	);
+}
+const installPackageName = "@liuxuedeng/pi-core-install";
 const allowedInstallScriptPackages = new Map([
 	["@google/genai@1.52.0", "preinstall is a no-op in the published package"],
 	["esbuild@0.28.1", "postinstall selects and verifies the platform-specific esbuild binary"],
@@ -145,7 +152,7 @@ function getInternalWorkspaces(lockPackages) {
 		if (!lockPath.startsWith("packages/") || lockPath.includes("/node_modules/") || !entry.name || !entry.version) {
 			continue;
 		}
-		if (!entry.name.startsWith(internalPackagePrefix) && !internalPackageNames.has(entry.name)) {
+		if (!isInternalPackageName(entry.name)) {
 			continue;
 		}
 
@@ -296,11 +303,7 @@ function validateGeneratedFiles(installerPackageJson, installLock, internalNames
 		if (entry.dev || entry.devOptional || entry.extraneous) {
 			errors.push(`${lockPath || "root"} contains dev/extraneous metadata`);
 		}
-		if (
-			packageName !== undefined &&
-			(packageName.startsWith(internalPackagePrefix) || internalPackageNames.has(packageName)) &&
-			entry.version !== installerPackageJson.version
-		) {
+		if (packageName !== undefined && isInternalPackageName(packageName) && entry.version !== installerPackageJson.version) {
 			errors.push(`${lockPath} internal package version ${entry.version} does not match ${installerPackageJson.version}`);
 		}
 		if (entry.hasInstallScript) {

@@ -51,7 +51,7 @@ describe("version checks", () => {
 			"https://pi.dev/api/latest-version",
 			expect.objectContaining({
 				headers: expect.objectContaining({
-					"User-Agent": expect.stringMatching(/^pi\/1\.2\.3 /),
+					"User-Agent": expect.stringMatching(/^pi-core\/1\.2\.3 /),
 					accept: "application/json",
 				}),
 			}),

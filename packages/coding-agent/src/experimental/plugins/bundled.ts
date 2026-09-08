@@ -7,7 +7,7 @@ import {
 } from "@earendil-works/chord/node";
 
 const PRESENTATION_FACET_BUNDLES_KEY = "presentationFacetBundles";
-const PI_PLUGIN_API = "@earendil-works/pi-coding-agent/experimental/plugin";
+const PI_PLUGIN_API = "@liuxuedeng/pi-core/experimental/plugin";
 
 export function createSessionPluginFacetLoader(manifestPaths: readonly string[]): FacetLoader | undefined {
 	if (manifestPaths.length === 0) return undefined;

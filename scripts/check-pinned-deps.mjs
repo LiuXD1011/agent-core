@@ -23,7 +23,9 @@ function collectPackageJsonFiles(directory) {
 }
 
 function isInternalWorkspaceDependency(name) {
-	return name.startsWith("@earendil-works/pi-") || internalPackageNames.has(name);
+	return (
+		name.startsWith("@earendil-works/pi-") || name.startsWith("@liuxuedeng/pi-core") || internalPackageNames.has(name)
+	);
 }
 
 function isNonRegistrySpecifier(specifier) {
