@@ -4,7 +4,7 @@ Delegate tasks to specialized subagents with isolated context windows.
 
 ## Features
 
-- **Isolated context**: Each subagent runs in a separate `pi` process
+- **Isolated context**: Each subagent runs in a separate `pi-core` process
 - **Streaming output**: See tool calls and progress as they happen
 - **Parallel streaming**: All parallel tasks stream updates simultaneously
 - **Markdown rendering**: Final output rendered with proper formatting (expanded view)
@@ -54,9 +54,9 @@ done
 
 ## Security Model
 
-This tool executes a separate `pi` subprocess with a delegated system prompt and tool/model configuration.
+This tool executes a separate `pi-core` subprocess with a delegated system prompt and tool/model configuration.
 
-**Project-local agents** (`.pi/agents/*.md`) are repo-controlled prompts that can instruct the model to read files, run bash commands, etc.
+**Project-local agents** (`.pi-core/agents/*.md`) are repo-controlled prompts that can instruct the model to read files, run bash commands, etc.
 
 **Default behavior:** Only loads **user-level agents** from `~/.pi-core/agent/agents`.
 
@@ -141,7 +141,7 @@ When `model` is omitted, the subagent inherits the dispatching session's active 
 
 **Locations:**
 - `~/.pi-core/agent/agents/*.md` - User-level (always loaded)
-- `.pi/agents/*.md` - Project-level (only with `agentScope: "project"` or `"both"`)
+- `.pi-core/agents/*.md` - Project-level (only with `agentScope: "project"` or `"both"`)
 
 Project agents override user agents with the same name when `agentScope: "both"`.
 

@@ -9,7 +9,7 @@ import { evalHarnessTable } from "./vitest-evals/harness-table.ts";
 type ExtensionAuthoringOutput = {
 	response: string;
 	systemPromptHasGuidelines: boolean;
-	systemPromptHasPiDocs: boolean;
+	systemPromptHasPiCoreDocs: boolean;
 	extensionErrors: Array<{ path: string; error: string }>;
 	loadedExtensions: Array<{ path: string; tools: string[] }>;
 	extensionSource: string | null;
@@ -26,7 +26,7 @@ function createExtensionAuthoringHarness(name: string, transformSystemPrompt?: (
 			return {
 				response,
 				systemPromptHasGuidelines: session.systemPrompt.includes("\nGuidelines:\n"),
-				systemPromptHasPiDocs: session.systemPrompt.includes("\nPi documentation (read only"),
+				systemPromptHasPiCoreDocs: session.systemPrompt.includes("\npi-core documentation (read only"),
 				extensionErrors: extensions.errors,
 				loadedExtensions: extensions.extensions.map(({ path, tools }) => ({
 					path,
@@ -133,7 +133,7 @@ describe.for(extensionHarnessTable)("$name", ({ harness }) => {
 				}
 				const expectsFullPrompt = harness.name === "default-system-prompt";
 				expect(result.output.systemPromptHasGuidelines).toBe(expectsFullPrompt);
-				expect(result.output.systemPromptHasPiDocs).toBe(expectsFullPrompt);
+				expect(result.output.systemPromptHasPiCoreDocs).toBe(expectsFullPrompt);
 			});
 		},
 	);
