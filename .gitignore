@@ -4,6 +4,7 @@ dist/
 *.log
 .DS_Store
 *.tsbuildinfo
+*.tgz
 # packages/*/node_modules/
 packages/*/dist/
 packages/*/dist-chrome/
