@@ -1,23 +1,25 @@
-# Contributing to Pi Core
+# Contributing to Agent Core
 
-Pi Core is an independent secondary-development project based on
+Agent Core is an independent secondary-development project based on
 [Pi](https://github.com/earendil-works/pi) v0.85.1 (see [NOTICE.md](NOTICE.md)).
 Contributions are welcome.
 
 ## Development setup
 
 ```bash
-npm install           # Install all dependencies
-npm run build         # Build all packages
-npm test              # Run tests
-npm run check         # Lint, format, and type check (also runs in pre-commit)
+npm install --ignore-scripts  # Install dependencies without lifecycle scripts
+npm run build                 # Build all packages
+./test.sh                     # Run non-e2e tests (no API keys needed)
+npm run check                 # Lint, format, and type check (also runs in pre-commit)
 ```
 
-Set `PI_CORE_NO_LOCAL_LLM=1` to skip local-LLM integration tests on machines
+See [packages/coding-agent/docs/development.md](packages/coding-agent/docs/development.md) for the full development manual.
+
+Set `AGENT_CORE_NO_LOCAL_LLM=1` to skip local-LLM integration tests on machines
 with Ollama installed:
 
 ```bash
-PI_CORE_NO_LOCAL_LLM=1 npm test
+AGENT_CORE_NO_LOCAL_LLM=1 ./test.sh
 ```
 
 ## Pull requests
@@ -26,7 +28,7 @@ PI_CORE_NO_LOCAL_LLM=1 npm test
 - Every commit must pass the pre-commit gate: formatting, lint, type check,
   dependency pinning, shrinkwrap, and install-lock checks.
 - Lockfile changes are blocked unless intentional; commit with
-  `PI_CORE_ALLOW_LOCKFILE_CHANGE=1` when dependency changes are deliberate.
+  `AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1` when dependency changes are deliberate.
 - Do not edit `CHANGELOG.md` files; entries are added by maintainers.
 
 ## Known test environment issues
@@ -44,6 +46,6 @@ native Linux:
 
 Open issues on the GitHub issue tracker. Include:
 
-- Pi Core version (`pi-core --version`) and how it was installed
+- Agent Core version (`agent-core --version`) and how it was installed
 - OS, Node.js version (`node --version`)
 - Minimal reproduction steps and expected vs. actual behavior
