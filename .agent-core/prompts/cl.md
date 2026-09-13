@@ -50,5 +50,5 @@ Sections (in order):
 - `### Removed` - Removed features
 
 Attribution:
-- Internal: `Fixed foo ([#123](https://github.com/LiuXD1011/pi-core/issues/123))`
-- External: `Added bar ([#456](https://github.com/LiuXD1011/pi-core/pull/456) by [@user](https://github.com/user))`
+- Internal: `Fixed foo ([#123](https://github.com/LiuXD1011/agent-core/issues/123))`
+- External: `Added bar ([#456](https://github.com/LiuXD1011/agent-core/pull/456) by [@user](https://github.com/user))`
