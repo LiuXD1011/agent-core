@@ -21,12 +21,12 @@ function createExtensionAuthoringHarness(name: string, transformSystemPrompt?: (
 		...(transformSystemPrompt ? { transformSystemPrompt } : {}),
 		output: ({ response, session }) => {
 			const extensions = session.resourceLoader.getExtensions();
-			const extensionPath = join(session.sessionManager.getCwd(), ".pi-core", "extensions", "hello.ts");
+			const extensionPath = join(session.sessionManager.getCwd(), ".agent-core", "extensions", "hello.ts");
 			const extensionSource = existsSync(extensionPath) ? readFileSync(extensionPath, "utf8") : null;
 			return {
 				response,
 				systemPromptHasGuidelines: session.systemPrompt.includes("\nGuidelines:\n"),
-				systemPromptHasPiCoreDocs: session.systemPrompt.includes("\npi-core documentation (read only"),
+				systemPromptHasPiCoreDocs: session.systemPrompt.includes("\nagent-core documentation (read only"),
 				extensionErrors: extensions.errors,
 				loadedExtensions: extensions.extensions.map(({ path, tools }) => ({
 					path,
@@ -40,13 +40,13 @@ function createExtensionAuthoringHarness(name: string, transformSystemPrompt?: (
 
 function excludeGuidelinesAndDocumentation(defaultPrompt: string): string {
 	const guidelinesStart = defaultPrompt.indexOf("\nGuidelines:\n");
-	if (guidelinesStart === -1) throw new Error("Default Pi system prompt has no Guidelines section.");
+	if (guidelinesStart === -1) throw new Error("Default Agent Core system prompt has no Guidelines section.");
 	return defaultPrompt.slice(0, guidelinesStart);
 }
 
 function prepareDefaultPromptOverride(defaultPrompt: string): string {
 	const cwdStart = defaultPrompt.lastIndexOf("\nCurrent working directory: ");
-	if (cwdStart === -1) throw new Error("Default Pi system prompt has no working-directory section.");
+	if (cwdStart === -1) throw new Error("Default Agent Core system prompt has no working-directory section.");
 	return defaultPrompt.slice(0, cwdStart);
 }
 
@@ -61,8 +61,8 @@ const ExtensionAuthoringJudge = createJudge<PiCodingAgentInput, ExtensionAuthori
 				output.extensionSource.matchAll(/\b(?:from|import)\s+["']([^"']+)["']/g),
 				(match) => match[1],
 			);
-			if (!imports.includes("@liuxuedeng/pi-core")) {
-				failures.push("extension does not import the canonical @liuxuedeng/pi-core package");
+			if (!imports.includes("@liuxuedeng/agent-core")) {
+				failures.push("extension does not import the canonical @liuxuedeng/agent-core package");
 			}
 			if (imports.some((specifier) => specifier.startsWith("@mariozechner/"))) {
 				failures.push("extension imports a legacy @mariozechner package");
@@ -97,14 +97,14 @@ const ExtensionAuthoringJudge = createJudge<PiCodingAgentInput, ExtensionAuthori
 	},
 );
 
-const extensionHarnessTable = evalHarnessTable("Pi extension authoring system prompt", {
+const extensionHarnessTable = evalHarnessTable("Agent Core extension authoring system prompt", {
 	baseline: createExtensionAuthoringHarness("system-prompt-without-docs", excludeGuidelinesAndDocumentation),
 	candidate: createExtensionAuthoringHarness("default-system-prompt", prepareDefaultPromptOverride),
 });
 
 describe.for(extensionHarnessTable)("$name", ({ harness }) => {
 	describeEval(
-		"Pi extension authoring system prompt",
+		"Agent Core extension authoring system prompt",
 		{ harness, judges: [ExtensionAuthoringJudge], judgeThreshold: null },
 		(it) => {
 			it("creates, reloads, and uses a hello extension", async ({ run, task }) => {
@@ -112,7 +112,7 @@ describe.for(extensionHarnessTable)("$name", ({ harness }) => {
 					{
 						type: "prompt",
 						content:
-							"Create a Pi extension with a hello tool that takes a name and returns a greeting. For example, passing Bob should return `Hello, Bob!`.",
+							"Create an Agent Core extension with a hello tool that takes a name and returns a greeting. For example, passing Bob should return `Hello, Bob!`.",
 					},
 					{ type: "reload" },
 					{
@@ -123,7 +123,7 @@ describe.for(extensionHarnessTable)("$name", ({ harness }) => {
 				]);
 				if (result.output.extensionSource !== null) {
 					const runId = result.artifacts?.runId;
-					if (typeof runId !== "string") throw new Error("Pi eval run did not record a run ID.");
+					if (typeof runId !== "string") throw new Error("Agent Core eval run did not record a run ID.");
 					await recordEvalSourceArtifact(task, runId, {
 						name: "hello.ts",
 						contentType: "text/typescript",

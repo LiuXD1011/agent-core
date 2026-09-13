@@ -1,7 +1,7 @@
 {
-	"name": "@liuxuedeng/pi-core-telemetry",
+	"name": "@liuxuedeng/agent-core-telemetry",
 	"version": "0.1.0-alpha.1",
-	"description": "Vendor-neutral telemetry contracts and typed schema utilities for pi",
+	"description": "Vendor-neutral telemetry contracts and typed schema utilities for Agent Core",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -30,11 +30,18 @@
 		"tracing",
 		"observability"
 	],
-	"author": "Mario Zechner",
+	"author": "LiuXD1011",
+	"contributors": [
+		"Mario Zechner (original Pi)"
+	],
 	"license": "MIT",
+	"homepage": "https://github.com/LiuXD1011/agent-core#readme",
+	"bugs": {
+		"url": "https://github.com/LiuXD1011/agent-core/issues"
+	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/earendil-works/pi.git",
+		"url": "git+https://github.com/LiuXD1011/agent-core.git",
 		"directory": "packages/telemetry"
 	},
 	"engines": {

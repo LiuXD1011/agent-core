@@ -9,7 +9,7 @@ import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 const RELEASES_PREFIX = "releases/v1";
 const INSTALLER_PREFIX = "installer/v1";
-const INSTALLER_PACKAGE_NAME = "@liuxuedeng/pi-core-install";
+const INSTALLER_PACKAGE_NAME = "@liuxuedeng/agent-core-install";
 const REGISTRY_URL = "https://registry.npmjs.org";
 const RETRY_DELAY_MS = 5000;
 const RETRY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -114,16 +114,16 @@ async function verifyPackagesAreAvailable(packages) {
 			result.status === "rejected" ? [`${packages[index].name}: ${result.reason}`] : [],
 		);
 		if (failures.length === 0) {
-			console.log(`All ${packages.length} Pi packages are available from npm (attempt ${attempt}).`);
+			console.log(`All ${packages.length} Agent Core packages are available from npm (attempt ${attempt}).`);
 			return results.map((result) => result.value);
 		}
 
-		console.log(`Waiting for ${failures.length} Pi package${failures.length === 1 ? "" : "s"} on npm (attempt ${attempt}):`);
+		console.log(`Waiting for ${failures.length} Agent Core package${failures.length === 1 ? "" : "s"} on npm (attempt ${attempt}):`);
 		for (const failure of failures) console.log(`  ${failure}`);
 		if (Date.now() < deadline) await sleep(RETRY_DELAY_MS);
 	} while (Date.now() < deadline);
 
-	throw new Error(`Timed out waiting for Pi packages to become available from npm:\n${failures.map((failure) => `  ${failure}`).join("\n")}`);
+	throw new Error(`Timed out waiting for Agent Core packages to become available from npm:\n${failures.map((failure) => `  ${failure}`).join("\n")}`);
 }
 
 function gitSourceCommit() {
@@ -169,7 +169,7 @@ function readLatestRelease(bucket, endpoint, key, outputPath) {
 
 	const metadata = JSON.parse(head);
 	if (typeof metadata.ETag !== "string") {
-		throw new Error("Latest Pi release marker has no ETag.");
+		throw new Error("Latest Agent Core release marker has no ETag.");
 	}
 	runAws([
 		"s3api",
@@ -190,7 +190,7 @@ function readLatestRelease(bucket, endpoint, key, outputPath) {
 		typeof release.version !== "string" ||
 		!STABLE_SEMVER_RE.test(release.version)
 	) {
-		throw new Error("Latest Pi release marker has an invalid version.");
+		throw new Error("Latest Agent Core release marker has an invalid version.");
 	}
 	return { etag: metadata.ETag, version: release.version };
 }
@@ -233,9 +233,9 @@ function validateInstallerArtifacts(packageJsonPath, packageLockPath, version) {
 		packageLock.lockfileVersion !== 3 ||
 		packageLock.version !== version ||
 		root?.version !== version ||
-		root.dependencies?.["@liuxuedeng/pi-core"] !== version
+		root.dependencies?.["@liuxuedeng/agent-core"] !== version
 	) {
-		throw new Error(`Installer package-lock.json must describe Pi ${version}`);
+		throw new Error(`Installer package-lock.json must describe Agent Core ${version}`);
 	}
 }
 
@@ -263,7 +263,7 @@ export async function advanceLatestRelease(version, readLatest, writeLatest) {
 			return { advanced: true, version };
 		}
 	}
-	throw new Error(`Could not advance the Pi release marker to ${version} after ${MAX_POINTER_UPDATE_ATTEMPTS} attempts.`);
+	throw new Error(`Could not advance the Agent Core release marker to ${version} after ${MAX_POINTER_UPDATE_ATTEMPTS} attempts.`);
 }
 
 async function main() {
@@ -349,8 +349,8 @@ async function main() {
 		);
 		console.log(
 			installerLatest.advanced
-				? `Published installer artifacts for Pi ${options.version} through s3://${options.bucket}/${INSTALLER_PREFIX}/latest.json`
-				: `Pi ${installerLatest.version} is already the latest installer release.`,
+				? `Published installer artifacts for Agent Core ${options.version} through s3://${options.bucket}/${INSTALLER_PREFIX}/latest.json`
+				: `Agent Core ${installerLatest.version} is already the latest installer release.`,
 		);
 
 		const result = await advanceLatestRelease(
@@ -374,8 +374,8 @@ async function main() {
 		);
 		console.log(
 			result.advanced
-				? `Announced Pi ${options.version} through s3://${options.bucket}/${RELEASES_PREFIX}/latest.json`
-				: `Pi ${result.version} is already the latest announced release.`,
+				? `Announced Agent Core ${options.version} through s3://${options.bucket}/${RELEASES_PREFIX}/latest.json`
+				: `Agent Core ${result.version} is already the latest announced release.`,
 		);
 	} finally {
 		rmSync(temporaryDirectory, { force: true, recursive: true });

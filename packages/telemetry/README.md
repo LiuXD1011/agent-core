@@ -1,6 +1,6 @@
-# @liuxuedeng/pi-core-telemetry
+# @liuxuedeng/agent-core-telemetry
 
-Vendor-neutral telemetry contracts and typed schema utilities for pi packages.
+Vendor-neutral telemetry contracts and typed schema utilities for Agent Core packages.
 
 This package provides:
 
@@ -10,7 +10,7 @@ This package provides:
 - serializable schema definitions with inferred TypeScript types;
 - no exporter, global current-span state, or dependency on a telemetry backend.
 
-Applications can use the in-memory reference or provide an adapter for OpenTelemetry, Sentry, logs, or another backend. Pi packages pass telemetry contexts explicitly and define their domain schemas separately.
+Applications can use the in-memory reference or provide an adapter for OpenTelemetry, Sentry, logs, or another backend. Agent Core packages pass telemetry contexts explicitly and define their domain schemas separately.
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@ Applications can use the in-memory reference or provide an adapter for OpenTelem
 - [Typed Schemas](#typed-schemas)
   - [Start and Completion Attributes](#start-and-completion-attributes)
 - [Schema Metadata](#schema-metadata)
-- [Pi Package Integration](#pi-package-integration)
+- [Agent Core Package Integration](#agent-core-package-integration)
 - [Security and Portability](#security-and-portability)
 - [API Reference](#api-reference)
 - [Development](#development)
@@ -33,7 +33,7 @@ Applications can use the in-memory reference or provide an adapter for OpenTelem
 ## Installation
 
 ```bash
-npm install @liuxuedeng/pi-core-telemetry
+npm install @liuxuedeng/agent-core-telemetry
 ```
 
 ## Telemetry Concepts
@@ -69,7 +69,7 @@ A `TelemetryContext` starts a span around a callback. The callback receives a `T
 import {
   NOOP_TELEMETRY_CONTEXT,
   type TelemetryContext,
-} from '@liuxuedeng/pi-core-telemetry';
+} from '@liuxuedeng/agent-core-telemetry';
 
 async function loadAccount(
   accountId: string,
@@ -136,7 +136,7 @@ Adapters may activate backend-native ambient context internally for automatic in
 Use `NOOP_TELEMETRY_CONTEXT` when telemetry is optional:
 
 ```typescript
-import { NOOP_TELEMETRY_CONTEXT } from '@liuxuedeng/pi-core-telemetry';
+import { NOOP_TELEMETRY_CONTEXT } from '@liuxuedeng/agent-core-telemetry';
 
 const result = await NOOP_TELEMETRY_CONTEXT.startSpan(
   { name: 'example.operation' },
@@ -156,7 +156,7 @@ The no-op context:
 `InMemoryTelemetryContext` is the backend-neutral reference implementation. It is useful for tests, local diagnostics, and applications that intentionally want process-local capture without an exporter:
 
 ```typescript
-import { InMemoryTelemetryContext } from '@liuxuedeng/pi-core-telemetry';
+import { InMemoryTelemetryContext } from '@liuxuedeng/agent-core-telemetry';
 
 const telemetry = new InMemoryTelemetryContext();
 
@@ -177,13 +177,13 @@ The adapter is safe to use as an ordinary `TelemetryContext`, but storage is unb
 
 ## Adapter Conformance
 
-`@liuxuedeng/pi-core-telemetry/testing` exports a runner-independent conformance suite modeled as grouped cases. A fixture supplies a fresh context and converts its backend's finished spans into normalized `RecordedTelemetrySpan` snapshots:
+`@liuxuedeng/agent-core-telemetry/testing` exports a runner-independent conformance suite modeled as grouped cases. A fixture supplies a fresh context and converts its backend's finished spans into normalized `RecordedTelemetrySpan` snapshots:
 
 ```typescript
 import {
   createTelemetryAdapterConformance,
   type TelemetryAdapterFixture,
-} from '@liuxuedeng/pi-core-telemetry/testing';
+} from '@liuxuedeng/agent-core-telemetry/testing';
 import { describe, it } from 'vitest';
 
 const conformance = createTelemetryAdapterConformance(async () => {
@@ -216,7 +216,7 @@ The low-level span API intentionally accepts open names and attribute bags so ad
 import {
   createTypedSpanStarter,
   defineTelemetrySchema,
-} from '@liuxuedeng/pi-core-telemetry';
+} from '@liuxuedeng/agent-core-telemetry';
 
 export const EXAMPLE_TELEMETRY_SCHEMA = defineTelemetrySchema({
   version: 1,
@@ -323,7 +323,7 @@ Attributes do not end the span. Returning, resolving, throwing, or rejecting fro
 A starter can compose multiple independently versioned schemas:
 
 ```typescript
-import { AGENT_TELEMETRY_SCHEMAS } from '@liuxuedeng/pi-core-agent';
+import { AGENT_TELEMETRY_SCHEMAS } from '@liuxuedeng/agent-core-agent';
 
 const startAgentSpan = createTypedSpanStarter(
   telemetryContext,
@@ -362,13 +362,13 @@ Parent metadata is descriptive schema data:
 
 Adapters do not need to understand schema objects. Instrumentation helpers and tests use them to keep emitted names and attributes consistent.
 
-## Pi Package Integration
+## Agent Core Package Integration
 
 Package ownership is intentionally split:
 
-- `@liuxuedeng/pi-core-telemetry` owns the vendor-neutral contract, no-op and in-memory reference contexts, schema utilities, and adapter conformance suite;
-- `@liuxuedeng/pi-core-ai` accepts and propagates `telemetryContext` in provider request options but owns no telemetry schema;
-- `@liuxuedeng/pi-core-agent` owns and exports the pi AI-request and harness schemas, their combined readonly schema tuple, and typed span helpers.
+- `@liuxuedeng/agent-core-telemetry` owns the vendor-neutral contract, no-op and in-memory reference contexts, schema utilities, and adapter conformance suite;
+- `@liuxuedeng/agent-core-ai` accepts and propagates `telemetryContext` in provider request options but owns no telemetry schema;
+- `@liuxuedeng/agent-core-agent` owns and exports the pi AI-request and harness schemas, their combined readonly schema tuple, and typed span helpers.
 
 ```typescript
 import {
@@ -377,7 +377,7 @@ import {
   HARNESS_TELEMETRY_SCHEMA,
   startAiSpan,
   startHarnessSpan,
-} from '@liuxuedeng/pi-core-agent';
+} from '@liuxuedeng/agent-core-agent';
 ```
 
 The pi schemas use pi-owned `pi.ai.*`, `pi.harness.*`, and `pi.session.*` names. Adapters may translate them to backend conventions without changing the emitted pi vocabulary.
