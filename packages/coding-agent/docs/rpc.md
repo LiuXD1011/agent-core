@@ -2,12 +2,14 @@
 
 RPC mode enables headless operation of the coding agent via a JSON protocol over stdin/stdout. This is useful for embedding the agent in other applications, IDEs, or custom UIs.
 
-**Note for Node.js/TypeScript users**: If you're building a Node.js application, consider using `AgentSession` directly from `@liuxuedeng/pi-core` instead of spawning a subprocess. See [`src/core/agent-session.ts`](../src/core/agent-session.ts) for the API. For a subprocess-based TypeScript client, see [`src/modes/rpc/rpc-client.ts`](../src/modes/rpc/rpc-client.ts).
+A related but separate mode is the [print JSON event stream](#print-json-event-stream): a one-shot, output-only stream of session events. RPC mode is a bidirectional command/response protocol; the two are not the same interaction protocol.
+
+**Note for Node.js/TypeScript users**: If you're building a Node.js application, consider using `AgentSession` directly from `@liuxuedeng/agent-core` instead of spawning a subprocess. See [`src/core/agent-session.ts`](../src/core/agent-session.ts) for the API. For a subprocess-based TypeScript client, see [`src/modes/rpc/rpc-client.ts`](../src/modes/rpc/rpc-client.ts).
 
 ## Starting RPC Mode
 
 ```bash
-pi-core --mode rpc [options]
+agent-core --mode rpc [options]
 ```
 
 Common options:
@@ -809,7 +811,7 @@ Response:
 }
 ```
 
-The current session name is available via `get_state` in the `sessionName` field. To set the initial name when starting RPC mode, pass `--name <name>` or `-n <name>` to the `pi-core --mode rpc` process.
+The current session name is available via `get_state` in the `sessionName` field. To set the initial name when starting RPC mode, pass `--name <name>` or `-n <name>` to the `agent-core --mode rpc` process.
 
 ### Commands
 
@@ -829,9 +831,9 @@ Response:
   "success": true,
   "data": {
     "commands": [
-      {"name": "session-name", "description": "Set or clear session name", "source": "extension", "path": "/home/user/.pi-core/agent/extensions/session.ts"},
-      {"name": "fix-tests", "description": "Fix failing tests", "source": "prompt", "location": "project", "path": "/home/user/myproject/.pi-core/agent/prompts/fix-tests.md"},
-      {"name": "skill:brave-search", "description": "Web search via Brave API", "source": "skill", "location": "user", "path": "/home/user/.pi-core/agent/skills/brave-search/SKILL.md"}
+      {"name": "session-name", "description": "Set or clear session name", "source": "extension", "path": "/home/user/.agent-core/agent/extensions/session.ts"},
+      {"name": "fix-tests", "description": "Fix failing tests", "source": "prompt", "location": "project", "path": "/home/user/myproject/.agent-core/agent/prompts/fix-tests.md"},
+      {"name": "skill:brave-search", "description": "Web search via Brave API", "source": "skill", "location": "user", "path": "/home/user/.agent-core/agent/skills/brave-search/SKILL.md"}
     ]
   }
 }
@@ -845,8 +847,8 @@ Each command has:
   - `"prompt"`: Loaded from a prompt template `.md` file
   - `"skill"`: Loaded from a skill directory (name is prefixed with `skill:`)
 - `location`: Where it was loaded from (optional, not present for extensions):
-  - `"user"`: User-level (`~/.pi-core/agent/`)
-  - `"project"`: Project-level (`./.pi-core/agent/`)
+  - `"user"`: User-level (`~/.agent-core/agent/`)
+  - `"project"`: Project-level (`./.agent-core/agent/`)
   - `"path"`: Explicit path via CLI or settings
 - `path`: Absolute file path to the command source (optional)
 
@@ -904,7 +906,7 @@ Emitted when one low-level agent run completes. Contains all messages generated 
 
 ### agent_settled
 
-Emitted after the full session-level run settles. At this point Pi will not continue automatically through retry, compaction retry, or queued follow-up messages.
+Emitted after the full session-level run settles. At this point Agent Core will not continue automatically through retry, compaction retry, or queued follow-up messages.
 
 ```json
 {"type": "agent_settled"}
@@ -1332,7 +1334,7 @@ Set the terminal window/tab title. Fire-and-forget.
   "type": "extension_ui_request",
   "id": "uuid-8",
   "method": "setTitle",
-  "title": "pi-core - my project"
+  "title": "agent-core - my project"
 }
 ```
 
@@ -1530,7 +1532,7 @@ import subprocess
 import json
 
 proc = subprocess.Popen(
-    ["pi", "--mode", "rpc", "--no-session"],
+    ["agent-core", "--mode", "rpc", "--no-session"],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True
@@ -1569,7 +1571,7 @@ For a complete example of handling the extension UI protocol, see [`examples/rpc
 const { spawn } = require("child_process");
 const { StringDecoder } = require("string_decoder");
 
-const agent = spawn("pi", ["--mode", "rpc", "--no-session"]);
+const agent = spawn("agent-core", ["--mode", "rpc", "--no-session"]);
 
 function attachJsonlReader(stream, onLine) {
     const decoder = new StringDecoder("utf8");
@@ -1615,4 +1617,103 @@ agent.stdin.write(JSON.stringify({ type: "prompt", message: "Hello" }) + "\n");
 process.on("SIGINT", () => {
     agent.stdin.write(JSON.stringify({ type: "abort" }) + "\n");
 });
+```
+
+## Print JSON Event Stream
+
+```bash
+agent-core --mode json "Your prompt"
+```
+
+Outputs all session events as JSON lines to stdout. Useful for integrating agent-core into other tools or custom UIs. This is a one-shot, output-only event stream — not the bidirectional RPC protocol described above.
+
+### Event Types
+
+Wire events use `JsonAgentSessionEvent`. It matches
+[`AgentSessionEvent`](https://github.com/LiuXD1011/agent-core/blob/main/packages/coding-agent/src/core/agent-session.ts)
+except that streaming message updates omit cumulative snapshots:
+
+```typescript
+type WithoutPartial<T> = T extends { partial: unknown } ? Omit<T, "partial"> : T;
+
+type JsonAssistantMessageEvent<T> = T extends { type: "toolcall_start"; partial: unknown }
+  ? WithoutPartial<T> & { id: string; toolName: string }
+  : WithoutPartial<T>;
+
+type JsonAgentSessionEvent =
+  | Exclude<AgentSessionEvent, { type: "message_update" }>
+  | {
+      type: "message_update";
+      usage: Usage;
+      assistantMessageEvent: JsonAssistantMessageEvent<AssistantMessageEvent>;
+    };
+```
+
+`queue_update` emits the full pending steering and follow-up queues whenever they change. `compaction_start` and `compaction_end` cover both manual and automatic compaction.
+
+Other base events come from
+[`AgentEvent`](https://github.com/LiuXD1011/agent-core/blob/main/packages/agent/src/types.ts):
+
+```typescript
+type AgentEvent =
+  // Agent lifecycle
+  | { type: "agent_start" }
+  | { type: "agent_end"; messages: AgentMessage[] }
+  // Turn lifecycle
+  | { type: "turn_start" }
+  | { type: "turn_end"; message: AgentMessage; toolResults: ToolResultMessage[] }
+  // Message lifecycle
+  | { type: "message_start"; message: AgentMessage }
+  | { type: "message_update"; message: AgentMessage; assistantMessageEvent: AssistantMessageEvent }
+  | { type: "message_end"; message: AgentMessage }
+  // Tool execution
+  | { type: "tool_execution_start"; toolCallId: string; toolName: string; args: any }
+  | { type: "tool_execution_update"; toolCallId: string; toolName: string; args: any; partialResult: any }
+  | { type: "tool_execution_end"; toolCallId: string; toolName: string; result: any; isError: boolean };
+```
+
+### Message Types
+
+Base messages from [`packages/ai/src/types.ts`](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/types.ts#L134):
+- `UserMessage` (line 134)
+- `AssistantMessage` (line 140)
+- `ToolResultMessage` (line 152)
+
+Extended messages from [`packages/coding-agent/src/core/messages.ts`](https://github.com/LiuXD1011/agent-core/blob/main/packages/coding-agent/src/core/messages.ts#L29):
+- `BashExecutionMessage` (line 29)
+- `CustomMessage` (line 46)
+- `BranchSummaryMessage` (line 55)
+- `CompactionSummaryMessage` (line 62)
+
+### Output Format
+
+Each line is a JSON object. The first line is the session header:
+
+```json
+{"type":"session","version":3,"id":"uuid","timestamp":"...","cwd":"/path"}
+```
+
+Followed by events as they occur:
+
+```json
+{"type":"agent_start"}
+{"type":"turn_start"}
+{"type":"message_start","message":{"role":"assistant","content":[],...}}
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
+{"type":"message_end","message":{...}}
+{"type":"turn_end","message":{...},"toolResults":[]}
+{"type":"agent_end","messages":[...]}
+```
+
+`message_update` records are delta-only. They omit both the cumulative `message` field and
+`assistantMessageEvent.partial` to keep stream size linear. The top-level `usage` field contains
+the latest cumulative provider-reported usage and may remain zero when a provider only reports
+usage at completion. Use `contentIndex` and `delta` to assemble live text, thinking, or tool-call
+arguments if needed. A `toolcall_start` event also includes the constant-sized `id` and `toolName`
+fields. `message_end` contains the final authoritative message.
+
+### Example
+
+```bash
+agent-core --mode json "List files" 2>/dev/null | jq -c 'select(.type == "message_end")'
 ```

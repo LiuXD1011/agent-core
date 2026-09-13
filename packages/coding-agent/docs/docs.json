@@ -8,16 +8,12 @@
           "path": "index.md"
         },
         {
-          "title": "Quickstart",
-          "path": "quickstart.md"
-        },
-        {
-          "title": "Using Pi",
+          "title": "Using Agent Core",
           "path": "usage.md"
         },
         {
-          "title": "Providers",
-          "path": "providers.md"
+          "title": "Models and Providers",
+          "path": "models.md"
         },
         {
           "title": "Security",
@@ -34,10 +30,6 @@
         {
           "title": "Keybindings",
           "path": "keybindings.md"
-        },
-        {
-          "title": "Sessions",
-          "path": "sessions.md"
         },
         {
           "title": "Compaction",
@@ -65,12 +57,8 @@
           "path": "themes.md"
         },
         {
-          "title": "Pi Packages",
+          "title": "Agent Core Packages",
           "path": "packages.md"
-        },
-        {
-          "title": "Custom Models",
-          "path": "models.md"
         },
         {
           "title": "Custom Providers",
@@ -84,6 +72,10 @@
         {
           "title": "Session Format",
           "path": "session-format.md"
+        },
+        {
+          "title": "Environment Variables",
+          "path": "environment-variables.md"
         }
       ]
     },
@@ -99,10 +91,6 @@
           "path": "rpc.md"
         },
         {
-          "title": "JSON Event Stream Mode",
-          "path": "json.md"
-        },
-        {
           "title": "TUI Components",
           "path": "tui.md"
         }
@@ -112,24 +100,12 @@
       "title": "Platform Setup",
       "items": [
         {
-          "title": "Windows",
-          "path": "windows.md"
-        },
-        {
-          "title": "Termux on Android",
-          "path": "termux.md"
-        },
-        {
-          "title": "tmux",
-          "path": "tmux.md"
-        },
-        {
           "title": "Terminal Setup",
           "path": "terminal-setup.md"
         },
         {
-          "title": "Shell Aliases",
-          "path": "shell-aliases.md"
+          "title": "Termux on Android",
+          "path": "termux.md"
         }
       ]
     },
@@ -150,7 +126,39 @@
     },
     {
       "from": "tree.md",
-      "to": "sessions.md"
+      "to": "usage.md"
+    },
+    {
+      "from": "quickstart.md",
+      "to": "usage.md"
+    },
+    {
+      "from": "sessions.md",
+      "to": "usage.md"
+    },
+    {
+      "from": "providers.md",
+      "to": "models.md"
+    },
+    {
+      "from": "llama-cpp.md",
+      "to": "models.md"
+    },
+    {
+      "from": "json.md",
+      "to": "rpc.md"
+    },
+    {
+      "from": "tmux.md",
+      "to": "terminal-setup.md"
+    },
+    {
+      "from": "windows.md",
+      "to": "terminal-setup.md"
+    },
+    {
+      "from": "shell-aliases.md",
+      "to": "terminal-setup.md"
     }
   ]
 }

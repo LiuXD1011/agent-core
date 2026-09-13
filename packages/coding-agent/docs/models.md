@@ -1,18 +1,319 @@
-# Custom Models
+# Models and Providers
 
-Add custom providers and models (Ollama, vLLM, LM Studio, proxies) via `~/.pi-core/agent/models.json`.
+This page covers built-in providers and authentication, custom models and providers via `~/.agent-core/agent/models.json`, and local models with the llama.cpp router.
 
 ## Table of Contents
 
-- [Minimal Example](#minimal-example)
-- [Full Example](#full-example)
-- [Supported APIs](#supported-apis)
-- [Provider Configuration](#provider-configuration)
-- [Model Configuration](#model-configuration)
-- [Overriding Built-in Providers](#overriding-built-in-providers)
-- [Per-model Overrides](#per-model-overrides)
-- [Anthropic Messages Compatibility](#anthropic-messages-compatibility)
-- [OpenAI Compatibility](#openai-compatibility)
+- [Built-in Providers and Auth](#built-in-providers-and-auth)
+  - [Subscriptions](#subscriptions)
+  - [API Keys](#api-keys)
+  - [Auth File](#auth-file)
+  - [Credential Key Resolution](#credential-key-resolution)
+  - [Cloud Providers](#cloud-providers)
+  - [Resolution Order](#resolution-order)
+- [Custom Models](#custom-models)
+  - [Minimal Example](#minimal-example)
+  - [Full Example](#full-example)
+  - [Supported APIs](#supported-apis)
+  - [Provider Configuration](#provider-configuration)
+  - [Model Configuration](#model-configuration)
+  - [Overriding Built-in Providers](#overriding-built-in-providers)
+  - [Per-model Overrides](#per-model-overrides)
+  - [Anthropic Messages Compatibility](#anthropic-messages-compatibility)
+  - [OpenAI Compatibility](#openai-compatibility)
+- [Local Models (llama.cpp)](#local-models-llamacpp)
+
+## Built-in Providers and Auth
+
+Agent Core supports subscription-based providers via OAuth and API key providers via environment variables or auth file. Built-in catalogs ship with agent-core; dynamic providers registered by extensions may refresh their catalogs and cache them in `~/.agent-core/agent/models-store.json` for offline use.
+
+### Subscriptions
+
+Use `/login` in interactive mode, then select a provider:
+
+- ChatGPT Plus/Pro (Codex)
+- Claude Pro/Max
+- GitHub Copilot
+- xAI (Grok/X subscription)
+- OpenRouter (OAuth-minted API key billed from OpenRouter credits)
+
+Use `/logout` to clear credentials. Tokens are stored in `~/.agent-core/agent/auth.json` and auto-refresh when expired. OpenRouter instead mints a user-controlled API key that does not expire automatically.
+
+#### OpenAI Codex
+
+- Requires ChatGPT Plus or Pro subscription
+- Officially endorsed by OpenAI: [Codex for OSS](https://developers.openai.com/community/codex-for-oss)
+
+#### Claude Pro/Max
+
+Anthropic subscription auth is active for Claude Pro/Max accounts. Third-party harness usage draws from [extra usage](https://claude.ai/settings/usage) and is billed per token, not against Claude plan limits.
+
+#### GitHub Copilot
+
+- Press Enter for github.com, or enter your GitHub Enterprise Server domain
+- If you get "model not supported", enable it in VS Code: Copilot Chat → model selector → select model → "Enable"
+
+#### xAI (Grok/X subscription)
+
+- Run `/login xai`, then select **Use a subscription**
+- `XAI_API_KEY` remains available through **Use an API key**
+
+#### OpenRouter
+
+- Run `/login openrouter`, then select **Sign in with OpenRouter** to open the OpenRouter PKCE authorization flow
+- The authorization creates a user-controlled OpenRouter API key billed from your OpenRouter credits
+- On remote/headless machines (e.g. over SSH) the browser cannot reach the loopback callback; paste the final redirect URL (or the authorization code) into the login prompt instead
+- `OPENROUTER_API_KEY` remains available through **Use an API key**
+
+### API Keys
+
+Use `/login` in interactive mode and select a provider to store an API key in `auth.json`, or set credentials via environment variable:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+agent-core
+```
+
+| Provider | Environment Variable | `auth.json` key |
+|----------|----------------------|------------------|
+| Anthropic | `ANTHROPIC_API_KEY` | `anthropic` |
+| Ant Ling | `ANT_LING_API_KEY` | `ant-ling` |
+| Azure OpenAI Responses | `AZURE_OPENAI_API_KEY` | `azure-openai-responses` |
+| OpenAI | `OPENAI_API_KEY` | `openai` |
+| DeepSeek | `DEEPSEEK_API_KEY` | `deepseek` |
+| NVIDIA NIM | `NVIDIA_API_KEY` | `nvidia` |
+| Google Gemini | `GEMINI_API_KEY` | `google` |
+| Amazon Bedrock | `AWS_BEARER_TOKEN_BEDROCK` | `amazon-bedrock` |
+| Mistral | `MISTRAL_API_KEY` | `mistral` |
+| Groq | `GROQ_API_KEY` | `groq` |
+| Cerebras | `CEREBRAS_API_KEY` | `cerebras` |
+| Cloudflare AI Gateway | `CLOUDFLARE_API_KEY` (+ `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_GATEWAY_ID`) | `cloudflare-ai-gateway` |
+| Cloudflare Workers AI | `CLOUDFLARE_API_KEY` (+ `CLOUDFLARE_ACCOUNT_ID`) | `cloudflare-workers-ai` |
+| xAI | `XAI_API_KEY` | `xai` |
+| OpenRouter | `OPENROUTER_API_KEY` | `openrouter` |
+| Vercel AI Gateway | `AI_GATEWAY_API_KEY` | `vercel-ai-gateway` |
+| ZAI Coding Plan (Global) | `ZAI_API_KEY` | `zai` |
+| ZAI Coding Plan (China) | `ZAI_CODING_CN_API_KEY` | `zai-coding-cn` |
+| OpenCode Zen | `OPENCODE_API_KEY` | `opencode` |
+| OpenCode Go | `OPENCODE_API_KEY` | `opencode-go` |
+| Hugging Face | `HF_TOKEN` | `huggingface` |
+| Fireworks | `FIREWORKS_API_KEY` | `fireworks` |
+| Together AI | `TOGETHER_API_KEY` | `together` |
+| Baseten | `BASETEN_API_KEY` | `baseten` |
+| Kimi For Coding | `KIMI_API_KEY` | `kimi-coding` |
+| MiniMax | `MINIMAX_API_KEY` | `minimax` |
+| MiniMax (China) | `MINIMAX_CN_API_KEY` | `minimax-cn` |
+| Qwen Token Plan (existing catalog) | `QWEN_TOKEN_PLAN_API_KEY` | `qwen-token-plan` |
+| Qwen Token Plan (Individual) | `QWEN_TOKEN_PLAN_API_KEY` | `qwen-token-plan-individual` |
+| Qwen Token Plan (China) | `QWEN_TOKEN_PLAN_CN_API_KEY` | `qwen-token-plan-cn` |
+| Xiaomi MiMo | `XIAOMI_API_KEY` | `xiaomi` |
+| Xiaomi MiMo Token Plan (China) | `XIAOMI_TOKEN_PLAN_CN_API_KEY` | `xiaomi-token-plan-cn` |
+| Xiaomi MiMo Token Plan (Amsterdam) | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` | `xiaomi-token-plan-ams` |
+| Xiaomi MiMo Token Plan (Singapore) | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` | `xiaomi-token-plan-sgp` |
+
+Reference for environment variables and `auth.json` keys: [`const envMap`](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/env-api-keys.ts) in [`packages/ai/src/env-api-keys.ts`](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/env-api-keys.ts).
+
+#### Auth File
+
+Store credentials in `~/.agent-core/agent/auth.json`:
+
+```json
+{
+  "anthropic": { "type": "api_key", "key": "sk-ant-..." },
+  "ant-ling": { "type": "api_key", "key": "..." },
+  "openai": { "type": "api_key", "key": "sk-..." },
+  "deepseek": { "type": "api_key", "key": "sk-..." },
+  "nvidia": { "type": "api_key", "key": "nvapi-..." },
+  "google": { "type": "api_key", "key": "..." },
+  "opencode": { "type": "api_key", "key": "..." },
+  "opencode-go": { "type": "api_key", "key": "..." },
+  "together": { "type": "api_key", "key": "..." },
+  "qwen-token-plan":  { "type": "api_key", "key": "sk-sp-..." },
+  "qwen-token-plan-individual": { "type": "api_key", "key": "sk-sp-..." },
+  "qwen-token-plan-cn": { "type": "api_key", "key": "sk-sp-..." },
+  "xiaomi": { "type": "api_key", "key": "..." },
+  "xiaomi-token-plan-cn":  { "type": "api_key", "key": "..." },
+  "xiaomi-token-plan-ams": { "type": "api_key", "key": "..." },
+  "xiaomi-token-plan-sgp": { "type": "api_key", "key": "..." }
+}
+```
+
+`qwen-token-plan-individual` uses the same international endpoint and `QWEN_TOKEN_PLAN_API_KEY` as
+`qwen-token-plan`, but limits the picker to the models documented for Individual subscriptions. The existing
+provider keeps its broader catalog for backward compatibility. When using `auth.json`, store the
+credential under the provider you select; an environment variable is shared by both international providers.
+
+The file is created with `0600` permissions (user read/write only). Auth file credentials take priority over environment variables.
+
+API key credentials can also include provider-scoped environment values. These values are used before process environment variables when resolving the credential key, provider/model headers, and provider configuration such as Cloudflare account IDs, Azure OpenAI settings, Vertex project/location, Bedrock settings, `AGENT_CORE_CACHE_RETENTION`, and `HTTP_PROXY`/`HTTPS_PROXY`.
+
+```json
+{
+  "cloudflare-ai-gateway": {
+    "type": "api_key",
+    "key": "$CLOUDFLARE_API_KEY",
+    "env": {
+      "CLOUDFLARE_API_KEY": "...",
+      "CLOUDFLARE_ACCOUNT_ID": "account-id",
+      "CLOUDFLARE_GATEWAY_ID": "gateway-id"
+    }
+  }
+}
+```
+
+Use this when agent-core should use different provider settings than the project shell environment.
+
+### Credential Key Resolution
+
+The `key` field supports command execution, environment interpolation, and literals:
+
+- **Shell command:** `"!command"` at the start executes the whole value as a command and uses stdout (cached for process lifetime)
+  ```json
+  { "type": "api_key", "key": "!security find-generic-password -ws 'anthropic'" }
+  { "type": "api_key", "key": "!op read 'op://vault/item/credential'" }
+  ```
+- **Environment interpolation:** `"$ENV_VAR"` or `"${ENV_VAR}"` uses the value of the named variable. Interpolation works inside larger literals.
+  ```json
+  { "type": "api_key", "key": "$MY_ANTHROPIC_KEY" }
+  { "type": "api_key", "key": "${KEY_PREFIX}_${KEY_SUFFIX}" }
+  ```
+  `$FOO_BAR` is the variable `FOO_BAR`; use `${FOO}_BAR` when `BAR` is literal text. Missing environment variables make the value unresolved.
+- **Escapes:** `"$$"` emits a literal `"$"`; `"$!"` emits a literal `"!"` without triggering command execution.
+  ```json
+  { "type": "api_key", "key": "$$literal-dollar-prefix" }
+  { "type": "api_key", "key": "$!literal-bang-prefix" }
+  ```
+- **Literal value:** Used directly. Plain uppercase strings such as `MY_API_KEY` are literals; use `$MY_API_KEY` for environment variables.
+  ```json
+  { "type": "api_key", "key": "sk-ant-..." }
+  { "type": "api_key", "key": "public" }
+  ```
+
+OAuth credentials are also stored here after `/login` and managed automatically.
+
+### Cloud Providers
+
+#### Azure OpenAI
+
+```bash
+export AZURE_OPENAI_API_KEY=...
+export AZURE_OPENAI_BASE_URL=https://your-resource.ai.azure.com
+# also supported: https://your-resource.cognitiveservices.azure.com
+# also supported: https://your-resource.openai.azure.com
+# root endpoints are auto-normalized to /openai/v1
+# or use resource name instead of base URL
+export AZURE_OPENAI_RESOURCE_NAME=your-resource
+
+# Optional
+export AZURE_OPENAI_API_VERSION=2024-02-01
+export AZURE_OPENAI_DEPLOYMENT_NAME_MAP=gpt-4=my-gpt4,gpt-4o=my-gpt4o
+```
+
+#### Amazon Bedrock
+
+Use `/login amazon-bedrock` to store a Bedrock API key, or configure one of the ambient AWS credential sources below:
+
+```bash
+# Option 1: AWS Profile
+export AWS_PROFILE=your-profile
+
+# Option 2: IAM Keys
+export AWS_ACCESS_KEY_ID=AKIA...
+export AWS_SECRET_ACCESS_KEY=...
+
+# Option 3: Bearer Token
+export AWS_BEARER_TOKEN_BEDROCK=...
+
+# Optional region (defaults to us-east-1)
+export AWS_REGION=us-west-2
+```
+
+Also supports ECS task roles (`AWS_CONTAINER_CREDENTIALS_*`) and IRSA (`AWS_WEB_IDENTITY_TOKEN_FILE`).
+
+```bash
+agent-core --provider amazon-bedrock --model us.anthropic.claude-sonnet-4-20250514-v1:0
+```
+
+Prompt caching is enabled automatically for Claude models whose ID contains a recognizable model name (base models and system-defined inference profiles). For application inference profiles (whose ARNs don't contain the model name), set `AWS_BEDROCK_FORCE_CACHE=1` to enable cache points:
+
+```bash
+export AWS_BEDROCK_FORCE_CACHE=1
+agent-core --provider amazon-bedrock --model arn:aws:bedrock:us-east-1:123456789012:application-inference-profile/abc123
+```
+
+If you are connecting to a Bedrock API proxy, the following environment variables can be used:
+
+```bash
+# Set the URL for the Bedrock proxy (standard AWS SDK env var)
+export AWS_ENDPOINT_URL_BEDROCK_RUNTIME=https://my.corp.proxy/bedrock
+
+# Set if your proxy does not require authentication
+export AWS_BEDROCK_SKIP_AUTH=1
+
+# Set if your proxy only supports HTTP/1.1
+export AWS_BEDROCK_FORCE_HTTP1=1
+```
+
+#### Cloudflare AI Gateway
+
+`CLOUDFLARE_API_KEY` can be set via `/login`. The account ID and gateway slug can be set as environment variables or in the API key credential's `env` object in `auth.json`.
+
+```bash
+export CLOUDFLARE_API_KEY=...           # or use /login
+export CLOUDFLARE_ACCOUNT_ID=...
+export CLOUDFLARE_GATEWAY_ID=...        # create at dash.cloudflare.com → AI → AI Gateway
+agent-core --provider cloudflare-ai-gateway --model "claude-sonnet-4-5"
+```
+
+Routes to OpenAI, Anthropic, and Workers AI through Cloudflare AI Gateway. Workers AI uses the Unified API (`/compat`) and prefixed model IDs (`workers-ai/@cf/...`). OpenAI uses the OpenAI passthrough route (`/openai`) with native OpenAI model IDs such as `gpt-5.1`. Anthropic uses the Anthropic passthrough route (`/anthropic`) with native Anthropic model IDs such as `claude-sonnet-4-5`.
+
+AI Gateway authentication uses `CLOUDFLARE_API_KEY` as `cf-aig-authorization`. Upstream authentication can be one of:
+
+| Mode | Request auth | Upstream auth |
+|------|--------------|---------------|
+| Workers AI | Cloudflare token only | Cloudflare-native |
+| Unified billing | Cloudflare token only | Cloudflare handles upstream auth and deducts credits |
+| Stored BYOK | Cloudflare token only | Cloudflare injects provider keys stored in the AI Gateway dashboard |
+| Inline BYOK | Cloudflare token plus upstream `Authorization` header | The request supplies the upstream provider key |
+
+For normal agent-core usage, prefer unified billing or stored BYOK. Inline BYOK requires configuring an additional upstream `Authorization` header for the Cloudflare AI Gateway provider, for example via a `models.json` provider/model override.
+
+#### Cloudflare Workers AI
+
+`CLOUDFLARE_API_KEY` can be set via `/login`. `CLOUDFLARE_ACCOUNT_ID` can be set as an environment variable or in the API key credential's `env` object in `auth.json`.
+
+```bash
+export CLOUDFLARE_API_KEY=...           # or use /login
+export CLOUDFLARE_ACCOUNT_ID=...
+agent-core --provider cloudflare-workers-ai --model "@cf/moonshotai/kimi-k2.6"
+```
+
+Agent Core automatically sets `x-session-affinity` for [prefix caching](https://developers.cloudflare.com/workers-ai/features/prompt-caching/) discounts.
+
+#### Google Vertex AI
+
+Uses Application Default Credentials:
+
+```bash
+gcloud auth application-default login
+export GOOGLE_CLOUD_PROJECT=your-project
+export GOOGLE_CLOUD_LOCATION=us-central1
+```
+
+Or set `GOOGLE_APPLICATION_CREDENTIALS` to a service account key file.
+
+### Resolution Order
+
+When resolving credentials for a provider:
+
+1. CLI `--api-key` flag
+2. `auth.json` entry (API key or OAuth token)
+3. Environment variable
+4. Custom provider keys from `models.json`
+
+## Custom Models
+
+Add custom providers and models (Ollama, vLLM, LM Studio, proxies) via `~/.agent-core/agent/models.json`. For providers that need custom API implementations or OAuth flows, create an extension instead; see [custom-provider.md](custom-provider.md).
 
 ## Minimal Example
 
@@ -34,9 +335,9 @@ For local models (Ollama, LM Studio, vLLM), only `id` is required per model:
 }
 ```
 
-The `apiKey` value is a placeholder because Ollama ignores it. pi still treats models as requiring auth before they appear in `/model`, so keyless local servers should keep a dummy value, save a key for that provider with `/login`, or pass `--api-key` when selecting the model.
+The `apiKey` value is a placeholder because Ollama ignores it. agent-core still treats models as requiring auth before they appear in `/model`, so keyless local servers should keep a dummy value, save a key for that provider with `/login`, or pass `--api-key` when selecting the model.
 
-Some OpenAI-compatible servers do not understand the `developer` role used for reasoning-capable models. For those providers, set `compat.supportsDeveloperRole` to `false` so pi sends the system prompt as a `system` message instead. If the server also does not support `reasoning_effort`, set `compat.supportsReasoningEffort` to `false` too.
+Some OpenAI-compatible servers do not understand the `developer` role used for reasoning-capable models. For those providers, set `compat.supportsDeveloperRole` to `false` so agent-core sends the system prompt as a `system` message instead. If the server also does not support `reasoning_effort`, set `compat.supportsReasoningEffort` to `false` too.
 
 You can set `compat` at the provider level to apply to all models, or at the model level to override a specific model. This commonly applies to Ollama, vLLM, SGLang, and similar OpenAI-compatible servers.
 
@@ -136,7 +437,6 @@ Set `api` at provider level (default for all models) or model level (override pe
 | `baseUrl` | API endpoint URL |
 | `api` | API type (see above) |
 | `apiKey` | Optional API key config (see value resolution below). Omit it when auth is provided by `/login`/`auth.json` or CLI `--api-key`. |
-| `oauth` | Dynamic OAuth provider type. Currently supports `"radius"`; requires the gateway `baseUrl`. |
 | `headers` | Custom headers (see value resolution below) |
 | `authHeader` | Set `true` to add `Authorization: Bearer <apiKey>` automatically |
 | `models` | Array of model configurations |
@@ -169,7 +469,7 @@ The `apiKey` and `headers` fields support command execution, environment interpo
   "apiKey": "sk-..."
   ```
 
-For `models.json`, shell commands are resolved at request time. pi intentionally does not apply built-in TTL, stale reuse, or recovery logic for arbitrary commands. Different commands need different caching and failure strategies, and pi cannot infer the right one.
+For `models.json`, shell commands are resolved at request time. agent-core intentionally does not apply built-in TTL, stale reuse, or recovery logic for arbitrary commands. Different commands need different caching and failure strategies, and pi cannot infer the right one.
 
 If your command is slow, expensive, rate-limited, or should keep using a previous value on transient failures, wrap it in your own script or command that implements the caching or TTL behavior you want.
 
@@ -202,7 +502,7 @@ If your command is slow, expensive, rate-limited, or should keep using a previou
 | `name` | No | `id` | Human-readable model label. Used for matching (`--model` patterns) and shown as secondary model detail text. |
 | `api` | No | provider's `api` | Override provider's API for this model |
 | `reasoning` | No | `false` | Supports extended thinking |
-| `thinkingLevelMap` | No | omitted | Maps pi thinking levels to provider values and marks unsupported levels (see below) |
+| `thinkingLevelMap` | No | omitted | Maps agent-core thinking levels to provider values and marks unsupported levels (see below) |
 | `input` | No | `["text"]` | Input types: `["text"]` or `["text", "image"]` |
 | `contextWindow` | No | `128000` | Context window size in tokens |
 | `maxTokens` | No | `16384` | Maximum output tokens |
@@ -236,9 +536,11 @@ Current behavior:
 - `/model`, `--list-models`, and the interactive footer display entries by model `id`.
 - The configured `name` is used for model matching and secondary model detail text. It does not replace the footer/status-bar model id.
 
+Custom model entries are static: there is no online catalog that keeps them current. Adding a new model means configuring `api`, `baseUrl`, an API key, the model ID, and any needed capability parameters (`reasoning`, `input`, `compat`) yourself. Prices and context windows must be updated manually, and the resulting usage/cost numbers are local estimates, not your vendor's bill.
+
 ### Sampling Parameters
 
-`samplingParams` is a free-form object merged verbatim into every request body for the model, after the fields pi sets itself, so its keys win. Use it to send sampling parameters pi does not model — including server-specific ones like llama.cpp's `min_p` or vLLM's `top_k`:
+`samplingParams` is a free-form object merged verbatim into every request body for the model, after the fields agent-core sets itself, so its keys win. Use it to send sampling parameters agent-core does not model — including server-specific ones like llama.cpp's `min_p` or vLLM's `top_k`:
 
 ```json
 {
@@ -252,13 +554,13 @@ Current behavior:
 }
 ```
 
-Only OpenAI-compatible APIs apply it (`openai-completions`, `openai-responses`, `azure-openai-responses`); other APIs ignore it. Keys override pi's named request fields (for example a `temperature` key here beats the request-level temperature), so prefer it as the single source of sampling truth for a model. In `modelOverrides`, `samplingParams` merges per key with the base model's value.
+Only OpenAI-compatible APIs apply it (`openai-completions`, `openai-responses`, `azure-openai-responses`); other APIs ignore it. Keys override agent-core's named request fields (for example a `temperature` key here beats the request-level temperature), so prefer it as the single source of sampling truth for a model. In `modelOverrides`, `samplingParams` merges per key with the base model's value.
 
 A constant thinking-token cap can go here too, but it will not follow `thinkingBudgets` or leave room for the answer. Prefer `compat.thinkingTokenBudgetField` (or the `supportsThinkingTokenBudget` alias) for that.
 
 ### Thinking Level Map
 
-Use `thinkingLevelMap` on a model to describe model-specific thinking controls. Keys are pi thinking levels: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. Maps may contain holes; for example, a model can expose `high` and `max` without exposing `xhigh`.
+Use `thinkingLevelMap` on a model to describe model-specific thinking controls. Keys are agent-core thinking levels: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. Maps may contain holes; for example, a model can expose `high` and `max` without exposing `xhigh`.
 
 Values are tristate:
 
@@ -390,11 +692,11 @@ Behavior notes:
 
 For providers or proxies using `api: "anthropic-messages"`, use `compat` to control Anthropic-specific request compatibility.
 
-By default pi sends per-tool `eager_input_streaming: true`. If a proxy or Anthropic-compatible backend rejects that field, set `supportsEagerToolInputStreaming` to `false`. Pi will omit `tools[].eager_input_streaming` and send the legacy `fine-grained-tool-streaming-2025-05-14` beta header for tool-enabled requests instead.
+By default agent-core sends per-tool `eager_input_streaming: true`. If a proxy or Anthropic-compatible backend rejects that field, set `supportsEagerToolInputStreaming` to `false`. Agent Core will omit `tools[].eager_input_streaming` and send the legacy `fine-grained-tool-streaming-2025-05-14` beta header for tool-enabled requests instead.
 
 Some Anthropic models require adaptive thinking (`thinking.type: "adaptive"` plus `output_config.effort`) instead of the legacy budget-based thinking payload. Built-in models set this automatically. For custom providers or aliases that route to those models, set `forceAdaptiveThinking` to `true`.
 
-Claude models with per-turn effort support use `supportsMidConvoEffort`. Pi then persists each response's provider effort, reconstructs effort-only system messages on later requests, and sends thinking binding controls with `prefix_mismatch_behavior: "drop_block"` to avoid stale signed-thinking prefixes causing persistent 400 responses. Set this only for the exact supported Claude model on a faithful Anthropic Messages transport; do not enable it for APIs that merely imitate the Messages shape.
+Claude models with per-turn effort support use `supportsMidConvoEffort`. Agent Core then persists each response's provider effort, reconstructs effort-only system messages on later requests, and sends thinking binding controls with `prefix_mismatch_behavior: "drop_block"` to avoid stale signed-thinking prefixes causing persistent 400 responses. Set this only for the exact supported Claude model on a faithful Anthropic Messages transport; do not enable it for APIs that merely imitate the Messages shape.
 
 Some Anthropic-compatible providers emit thinking blocks with empty signatures and still expect them on replay. Set `allowEmptySignature` to `true` only for those providers; real Anthropic rejects empty thinking signatures.
 
@@ -432,7 +734,7 @@ Built-in Anthropic models enable `supportsStrictTools` in their model metadata. 
 | `sendSessionAffinityHeaders` | Whether to send `x-session-affinity` from the session id when caching is enabled. Default: auto-detected for known providers. |
 | `supportsCacheControlOnTools` | Whether the provider accepts Anthropic-style `cache_control` markers on tool definitions. Default: `true`. |
 | `forceAdaptiveThinking` | Whether to send adaptive thinking (`thinking.type: "adaptive"` plus `output_config.effort`) for this model. Built-in adaptive models set this automatically. Default: `false`. |
-| `supportsMidConvoEffort` | Whether the exact Claude model transport supports per-turn effort system messages and thinking binding controls. Pi persists native effort levels and always sends `drop_block` when enabled. Default: `false`. |
+| `supportsMidConvoEffort` | Whether the exact Claude model transport supports per-turn effort system messages and thinking binding controls. Agent Core persists native effort levels and always sends `drop_block` when enabled. Default: `false`. |
 | `allowEmptySignature` | Whether to replay empty thinking signatures as `signature: ""` instead of converting thinking to text. Default: `false`. |
 | `supportsStrictTools` | Whether the provider accepts strict JSON-schema tool definitions. Default: `false`; built-in Anthropic models enable it in generated metadata. |
 
@@ -465,15 +767,15 @@ For providers with partial OpenAI compatibility, use the `compat` field.
 | `supportsDeveloperRole` | Use `developer` vs `system` role |
 | `supportsReasoningEffort` | Support for `reasoning_effort` parameter |
 | `supportsUsageInStreaming` | Supports `stream_options: { include_usage: true }` (default: `true`) |
-| `supportsFinishReason` | Whether streamed responses include `finish_reason`. When `false`, pi infers `stop` or `toolUse` when the stream ends. Default: `true`. |
+| `supportsFinishReason` | Whether streamed responses include `finish_reason`. When `false`, agent-core infers `stop` or `toolUse` when the stream ends. Default: `true`. |
 | `maxTokensField` | Use `max_completion_tokens` or `max_tokens` |
 | `requiresToolResultName` | Include `name` on tool result messages |
 | `requiresAssistantAfterToolResult` | Insert an assistant message before a user message after tool results |
 | `requiresThinkingAsText` | Convert thinking blocks to plain text |
 | `requiresReasoningContentOnAssistantMessages` | Include empty `reasoning_content` on all replayed assistant messages when reasoning is enabled |
 | `thinkingFormat` | Use `reasoning_effort`, `openrouter`, `deepseek`, `together`, `baseten`, `zai`, `qwen`, `chat-template`, or `qwen-chat-template` thinking parameters |
-| `chatTemplateKwargs` | `chat_template_kwargs` values for `thinkingFormat: "chat-template"`; use `{ "$var": "thinking.enabled" }`, `{ "$var": "thinking.effort" }`, or `{ "$var": "thinking.budget" }` for pi-controlled thinking values |
-| `chatTemplateArgs` | `chat_template_args` values for `thinkingFormat: "baseten"`; use `{ "$var": "thinking.enabled" }`, `{ "$var": "thinking.effort" }`, or `{ "$var": "thinking.budget" }` for pi-controlled thinking values |
+| `chatTemplateKwargs` | `chat_template_kwargs` values for `thinkingFormat: "chat-template"`; use `{ "$var": "thinking.enabled" }`, `{ "$var": "thinking.effort" }`, or `{ "$var": "thinking.budget" }` for agent-core-controlled thinking values |
+| `chatTemplateArgs` | `chat_template_args` values for `thinkingFormat: "baseten"`; use `{ "$var": "thinking.enabled" }`, `{ "$var": "thinking.effort" }`, or `{ "$var": "thinking.budget" }` for agent-core-controlled thinking values |
 | `thinkingTokenBudgetField` | Top-level request field used to cap reasoning tokens from `thinkingBudgets`, clamped so at least 1024 tokens remain for the answer. `"thinking_token_budget"` (vLLM), `"thinking_budget"` (Qwen/DashScope/SGLang), `"thinking_budget_tokens"` (llama.cpp). Off by default; not set on the generated catalog. |
 | `supportsThinkingTokenBudget` | Alias for `thinkingTokenBudgetField: "thinking_token_budget"` (vLLM). Prefer `thinkingTokenBudgetField`. Default: `false`. |
 | `cacheControlFormat` | Use Anthropic-style `cache_control` markers on the system prompt, last tool definition, and last user, assistant, or tool-result text content. Currently only `anthropic` is supported. |
@@ -572,3 +874,105 @@ Vercel AI Gateway example:
   }
 }
 ```
+
+## Local Models (llama.cpp)
+
+Agent Core supports the [llama.cpp](https://github.com/ggml-org/llama.cpp) router server. The router discovers multiple GGUF models and loads or unloads them on demand.
+
+Use a current llama.cpp build with router support. Follow the [build instructions](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md) or install a [prebuilt release](https://github.com/ggml-org/llama.cpp/releases) for your platform.
+
+### Start the router
+
+Start `llama-server` without `--model` or `-m`. Passing a model starts single-model mode instead of router mode.
+
+```bash
+llama-server \
+  --models-dir ~/models \
+  --no-models-autoload \
+  --jinja \
+  --host 127.0.0.1 \
+  --port 8080 \
+  -ngl 999 \
+  -c 32768
+```
+
+Important options:
+
+- `--models-dir ~/models` discovers local GGUF files.
+- `--no-models-autoload` keeps loading explicit through `/llama`.
+- `--jinja` enables compatible chat templates and tool calling.
+- `-ngl 999` offloads as many layers as possible to the GPU.
+- `-c 32768` sets the context window for each loaded model. Omit it to use the model's native context, which may require substantially more memory.
+
+A single-file model can sit directly in the model directory. Put multimodal and multi-shard models in separate subdirectories:
+
+```text
+~/models/
+├── llama-3.2-1b-Q4_K_M.gguf
+├── gemma-3-4b-it-Q4_K_M/
+│   ├── gemma-3-4b-it-Q4_K_M.gguf
+│   └── mmproj-F16.gguf
+└── large-model-Q4_K_M/
+    ├── large-model-Q4_K_M-00001-of-00003.gguf
+    ├── large-model-Q4_K_M-00002-of-00003.gguf
+    └── large-model-Q4_K_M-00003-of-00003.gguf
+```
+
+Restart the router after manually adding files. For per-model context sizes and other options, use [llama.cpp model presets](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#model-presets).
+
+### Configure Agent Core
+
+Start agent-core and configure the provider:
+
+```text
+/login llama.cpp
+```
+
+Enter the router URL and optional API key. The default URL is `http://127.0.0.1:8080`.
+
+If you start the router with `--no-models-autoload`, `/login llama.cpp` only stores the connection. Run `/llama` to load a model, then `/model` to select the loaded model for the current session.
+
+Environment variables can configure the same values without `/login`:
+
+```bash
+export LLAMA_BASE_URL=http://127.0.0.1:8080
+export LLAMA_API_KEY=optional-secret
+agent-core
+```
+
+If the server uses an API key, start `llama-server` with the matching `--api-key` value. Keep `--host 127.0.0.1` for local-only access.
+
+### Manage models
+
+Run:
+
+```text
+/llama
+```
+
+- Select an unloaded model to load it.
+- Select a loaded model to unload it.
+- Select **Download model…**, search Hugging Face, then choose a repository and quantization. Exact `owner/repository[:quant]` values also work.
+- Press Escape during a load or download to confirm cancellation.
+
+Hugging Face search uses `HF_TOKEN` when set, then checks `$HF_TOKEN_PATH`, `$HF_HOME/token`, `$XDG_CACHE_HOME/huggingface/token`, and `~/.cache/huggingface/token`. Search also works without authentication, subject to lower rate limits. Agent Core warns before downloading gated repositories and links to their access page. The llama.cpp server performs the download, so its process must also have `HF_TOKEN` when the selected repository requires access.
+
+If other models are loaded, Agent Core asks whether to unload them first or keep them loaded. Agent Core does not silently unload models and never deletes model files. The router may be shared with other clients, so `/llama` always displays the router's current state.
+
+Only loaded models appear in `/model`. After loading a model, run `/model` to select it for the current Agent Core session.
+
+If the router disconnects, `/llama` shows **Retry** and **Close**. Retry reconnects and refreshes model state without replaying the interrupted operation.
+
+### Troubleshooting
+
+Check that the router is reachable:
+
+```bash
+curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8080/models
+```
+
+- **No models in `/llama`:** Check `--models-dir`, the directory layout, and restart the router.
+- **Model missing from `/model`:** Load it with `/llama` first.
+- **Load fails or uses too much memory:** Lower `-c` or unload another model.
+- **Server is not in router mode:** Start it without `--model`, `-m`, or `-hf`.
