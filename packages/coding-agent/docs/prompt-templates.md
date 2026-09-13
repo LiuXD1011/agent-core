@@ -6,10 +6,10 @@ Prompt templates are Markdown snippets that expand into full prompts. Type `/nam
 
 ## Locations
 
-Pi loads prompt templates from:
+Agent Core loads prompt templates from:
 
-- Global: `~/.pi-core/agent/prompts/*.md`
-- Project: `.pi-core/prompts/*.md` (only after the project is trusted)
+- Global: `~/.agent-core/agent/prompts/*.md`
+- Project: `.agent-core/prompts/*.md` (only after the project is trusted)
 - Packages: `prompts/` directories or `pi.prompts` entries in `package.json`
 - Settings: `prompts` array with files or directories
 - CLI: `--prompt-template <path>` (repeatable)

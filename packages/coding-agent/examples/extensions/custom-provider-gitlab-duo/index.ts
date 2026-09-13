@@ -5,11 +5,11 @@
  * Delegates to pi-ai's built-in Anthropic and OpenAI streaming implementations.
  *
  * Usage:
- *   pi -e ./packages/coding-agent/examples/extensions/custom-provider-gitlab-duo
+ *   agent-core -e ./packages/coding-agent/examples/extensions/custom-provider-gitlab-duo
  *   # Then /login gitlab-duo, or set GITLAB_TOKEN=glpat-...
  */
 
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 import {
 	type Api,
 	type AssistantMessageEventStream,
@@ -22,7 +22,7 @@ import {
 	openAIResponsesApi,
 	type SimpleStreamOptions,
 	type ThinkingLevelMap,
-} from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
 
 // =============================================================================
 // Constants

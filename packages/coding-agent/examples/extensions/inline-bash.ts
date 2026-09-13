@@ -1,8 +1,8 @@
 /**
  * Inline Bash Extension - expands inline bash commands in user prompts.
  *
- * Start pi with this extension:
- *   pi -e ./examples/extensions/inline-bash.ts
+ * Start agent-core with this extension:
+ *   agent-core -e ./examples/extensions/inline-bash.ts
  *
  * Then type prompts with inline bash:
  *   What's in !{pwd}?
@@ -14,7 +14,7 @@
  *
  * Note: Regular !command syntax (whole-line bash) is preserved and works as before.
  */
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
 	const PATTERN = /!\{([^}]+)\}/g;

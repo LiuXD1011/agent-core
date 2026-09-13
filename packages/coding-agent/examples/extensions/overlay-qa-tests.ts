@@ -1,7 +1,7 @@
 /**
  * Overlay QA Tests - comprehensive overlay positioning and edge case tests
  *
- * Usage: pi --extension ./examples/extensions/overlay-qa-tests.ts
+ * Usage: agent-core --extension ./examples/extensions/overlay-qa-tests.ts
  *
  * Commands:
  *   /overlay-animation  - Real-time animation demo (~30 FPS, proves DOOM-like rendering works)
@@ -19,9 +19,9 @@
  *   /overlay-streaming  - Multiple input panels with simulated streaming (Tab to cycle focus)
  */
 
-import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@liuxuedeng/pi-core";
-import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@liuxuedeng/pi-core-tui";
-import { Input, matchesKey, truncateToWidth, visibleWidth } from "@liuxuedeng/pi-core-tui";
+import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@liuxuedeng/agent-core";
+import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@liuxuedeng/agent-core-tui";
+import { Input, matchesKey, truncateToWidth, visibleWidth } from "@liuxuedeng/agent-core-tui";
 import { spawn } from "child_process";
 
 // Global handle for toggle demo (in real code, use a more elegant pattern)

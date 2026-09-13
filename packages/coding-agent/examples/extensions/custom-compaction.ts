@@ -10,12 +10,12 @@
  * which can be cheaper/faster than the main conversation model.
  *
  * Usage:
- *   pi --extension examples/extensions/custom-compaction.ts
+ *   agent-core --extension examples/extensions/custom-compaction.ts
  */
 
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
-import { convertToLlm, serializeConversation } from "@liuxuedeng/pi-core";
-import { uuidv7 } from "@liuxuedeng/pi-core-ai";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
+import { convertToLlm, serializeConversation } from "@liuxuedeng/agent-core";
+import { uuidv7 } from "@liuxuedeng/agent-core-ai";
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_before_compact", async (event, ctx) => {

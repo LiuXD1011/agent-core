@@ -17,11 +17,11 @@
  * is used automatically (syntax highlighting, line numbers, truncation warnings).
  *
  * Usage:
- *   pi -e ./tool-override.ts
+ *   agent-core -e ./tool-override.ts
  */
 
-import { type ExtensionAPI, getAgentDir, withFileMutationQueue } from "@liuxuedeng/pi-core";
-import type { TextContent } from "@liuxuedeng/pi-core-ai";
+import { type ExtensionAPI, getAgentDir, withFileMutationQueue } from "@liuxuedeng/agent-core";
+import type { TextContent } from "@liuxuedeng/agent-core-ai";
 import { constants, readFileSync } from "fs";
 import { access, appendFile, readFile } from "fs/promises";
 import { join, resolve } from "path";

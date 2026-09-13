@@ -1,6 +1,6 @@
 import { appendFileSync } from "node:fs";
 import { join } from "node:path";
-import { CONFIG_DIR_NAME, type ExtensionAPI } from "@liuxuedeng/pi-core";
+import { CONFIG_DIR_NAME, type ExtensionAPI } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
 	pi.on("before_provider_request", (event, ctx) => {

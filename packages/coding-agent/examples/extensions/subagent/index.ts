@@ -1,7 +1,7 @@
 /**
  * Subagent Tool - Delegate tasks to specialized agents
  *
- * Spawns a separate `pi-core` process for each subagent invocation,
+ * Spawns a separate `agent-core` process for each subagent invocation,
  * giving it an isolated context window.
  *
  * Supports three modes:
@@ -22,11 +22,11 @@ import {
 	getAgentDir,
 	getMarkdownTheme,
 	withFileMutationQueue,
-} from "@liuxuedeng/pi-core";
-import type { AgentToolResult, ThinkingLevel } from "@liuxuedeng/pi-core-agent";
-import type { Message } from "@liuxuedeng/pi-core-ai";
-import { StringEnum } from "@liuxuedeng/pi-core-ai";
-import { Container, Markdown, Spacer, Text } from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core";
+import type { AgentToolResult, ThinkingLevel } from "@liuxuedeng/agent-core-agent";
+import type { Message } from "@liuxuedeng/agent-core-ai";
+import { StringEnum } from "@liuxuedeng/agent-core-ai";
+import { Container, Markdown, Spacer, Text } from "@liuxuedeng/agent-core-tui";
 import { Type } from "typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.ts";
 
@@ -259,7 +259,7 @@ function getCliInvocation(args: string[]): { command: string; args: string[] } {
 		return { command: process.execPath, args };
 	}
 
-	return { command: "pi-core", args };
+	return { command: "agent-core", args };
 }
 
 type OnUpdateCallback = (partial: AgentToolResult<SubagentDetails>) => void;

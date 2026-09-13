@@ -1,6 +1,6 @@
 # Examples
 
-Example code for pi-coding-agent SDK and extensions.
+Example code for the agent-core SDK and extensions.
 
 ## Directories
 
@@ -17,9 +17,6 @@ Example extensions demonstrating:
 - System prompt modifications and custom compaction
 - External integrations (SSH, file watchers, system theme sync)
 - Custom providers (Anthropic with custom streaming, GitLab Duo)
-
-### [plugins/pi-example-plugin/](plugins/pi-example-plugin/)
-An experimental plugin package that Pi automatically builds into separate Session-worker and TUI Chord facets.
 
 ## Documentation
 

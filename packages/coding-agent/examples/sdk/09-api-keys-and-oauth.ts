@@ -4,7 +4,7 @@
  * Configure provider auth through ModelRuntime.
  */
 
-import { createAgentSession, ModelRuntime, SessionManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, ModelRuntime, SessionManager } from "@liuxuedeng/agent-core";
 
 const modelRuntime = await ModelRuntime.create();
 const { session: defaultAuthSession } = await createAgentSession({

@@ -7,7 +7,7 @@
  * Usage: /emit [event-name] [data] - emit an event on the bus
  */
 
-import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
 	// Store ctx for use in event handler

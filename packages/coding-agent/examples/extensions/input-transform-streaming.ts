@@ -8,10 +8,10 @@
  * file changes, giving the model immediate context. During steering the
  * exec call is skipped so the correction reaches the model without delay.
  *
- * Start pi with this extension:
- *   pi -e ./examples/extensions/input-transform-streaming.ts
+ * Start agent-core with this extension:
+ *   agent-core -e ./examples/extensions/input-transform-streaming.ts
  */
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 
 const TRIGGER = /\b(changes?|diff|modified)\b/i;
 

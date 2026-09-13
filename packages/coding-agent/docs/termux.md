@@ -1,6 +1,8 @@
 # Termux (Android) Setup
 
-Pi runs on Android via [Termux](https://termux.dev/), a terminal emulator and Linux environment for Android.
+> Agent Core does not actively verify this platform. The instructions below are kept as-is and may lag behind current releases.
+
+Agent Core runs on Android via [Termux](https://termux.dev/), a terminal emulator and Linux environment for Android.
 
 ## Prerequisites
 
@@ -16,14 +18,14 @@ pkg update && pkg upgrade
 # Install dependencies
 pkg install nodejs termux-api git
 
-# Install pi
-npm install -g --ignore-scripts @liuxuedeng/pi-core
+# Install agent-core
+npm install -g --ignore-scripts @liuxuedeng/agent-core
 
 # Create config directory
-mkdir -p ~/.pi-core/agent
+mkdir -p ~/.agent-core/agent
 
-# Run pi
-pi
+# Run agent-core
+agent-core
 ```
 
 ## Clipboard Support
@@ -34,7 +36,7 @@ Image clipboard is not supported on Termux (the `ctrl+v` image paste feature wil
 
 ## Example AGENTS.md for Termux
 
-Create `~/.pi-core/agent/AGENTS.md` to help the agent understand the Termux environment:
+Create `~/.agent-core/agent/AGENTS.md` to help the agent understand the Termux environment:
 
 ````markdown
 # Agent Environment: Termux on Android

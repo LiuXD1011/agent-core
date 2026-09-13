@@ -11,12 +11,12 @@
  * - Minimal: Shows only tool call, no output (this extension's collapsed mode)
  *
  * Usage:
- *   pi -e ./minimal-mode.ts
+ *   agent-core -e ./minimal-mode.ts
  *
  * Then use ctrl+o to toggle between minimal (collapsed) and full (expanded) views.
  */
 
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 import {
 	createBashTool,
 	createEditTool,
@@ -25,8 +25,8 @@ import {
 	createLsTool,
 	createReadTool,
 	createWriteTool,
-} from "@liuxuedeng/pi-core";
-import { Text } from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core";
+import { Text } from "@liuxuedeng/agent-core-tui";
 import { homedir } from "os";
 
 /**

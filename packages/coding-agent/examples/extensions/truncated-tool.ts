@@ -15,7 +15,7 @@
  */
 
 import { mkdtemp, writeFile } from "node:fs/promises";
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 import {
 	DEFAULT_MAX_BYTES,
 	DEFAULT_MAX_LINES,
@@ -23,8 +23,8 @@ import {
 	type TruncationResult,
 	truncateHead,
 	withFileMutationQueue,
-} from "@liuxuedeng/pi-core";
-import { Text } from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core";
+import { Text } from "@liuxuedeng/agent-core-tui";
 import { execSync } from "child_process";
 import { tmpdir } from "os";
 import { join } from "path";

@@ -16,7 +16,7 @@ See [examples/sdk/](../examples/sdk/) for working examples from minimal to full 
 ## Quick Start
 
 ```typescript
-import { createAgentSession, ModelRuntime, SessionManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, ModelRuntime, SessionManager } from "@liuxuedeng/agent-core";
 
 const modelRuntime = await ModelRuntime.create();
 const { session } = await createAgentSession({
@@ -36,7 +36,7 @@ await session.prompt("What files are in the current directory?");
 ## Installation
 
 ```bash
-npm install @liuxuedeng/pi-core
+npm install @liuxuedeng/agent-core
 ```
 
 The SDK is included in the main package. No separate installation needed.
@@ -50,7 +50,7 @@ The main factory function for a single `AgentSession`.
 `createAgentSession()` uses a `ResourceLoader` to supply extensions, skills, prompt templates, themes, and context files. If you do not provide one, it uses `DefaultResourceLoader` with standard discovery.
 
 ```typescript
-import { createAgentSession, SessionManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, SessionManager } from "@liuxuedeng/agent-core";
 
 // Minimal: defaults with DefaultResourceLoader
 const { session } = await createAgentSession();
@@ -128,7 +128,7 @@ import {
   createAgentSessionServices,
   getAgentDir,
   SessionManager,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -235,7 +235,7 @@ Both `steer()` and `followUp()` expand file-based prompt templates but error on 
 
 ### Agent and AgentState
 
-The `Agent` class (from `@liuxuedeng/pi-core-agent`) handles the core LLM interaction. Access it via `session.agent`.
+The `Agent` class (from `@liuxuedeng/agent-core-agent`) handles the core LLM interaction. Access it via `session.agent`.
 
 ```typescript
 // Access current state
@@ -337,23 +337,23 @@ const { session } = await createAgentSession({
   cwd: process.cwd(), // default
   
   // Global config directory
-  agentDir: "~/.pi-core/agent", // default (expands ~)
+  agentDir: "~/.agent-core/agent", // default (expands ~)
 });
 ```
 
 `cwd` is used by `DefaultResourceLoader` for:
-- Project extensions (`.pi-core/extensions/`)
+- Project extensions (`.agent-core/extensions/`)
 - Project skills:
-  - `.pi-core/skills/`
+  - `.agent-core/skills/`
   - `.agents/skills/` in `cwd` and ancestor directories (up to git repo root, or filesystem root when not in a repo)
-- Project prompts (`.pi-core/prompts/`)
+- Project prompts (`.agent-core/prompts/`)
 - Context files (`AGENTS.md` walking up from cwd)
 - Session directory naming
 
 `agentDir` is used by `DefaultResourceLoader` for:
 - Global extensions (`extensions/`)
 - Global skills:
-  - `skills/` under `agentDir` (for example `~/.pi-core/agent/skills/`)
+  - `skills/` under `agentDir` (for example `~/.agent-core/agent/skills/`)
   - `~/.agents/skills/`
 - Global prompts (`prompts/`)
 - Global context file (`AGENTS.md`)
@@ -367,13 +367,15 @@ When you pass a custom `ResourceLoader`, `cwd` and `agentDir` no longer control 
 ### Model
 
 ```typescript
-import { getModel } from "@liuxuedeng/pi-core-ai";
-import { ModelRuntime } from "@liuxuedeng/pi-core";
+import { getModel } from "@liuxuedeng/agent-core-ai";
+import { ModelRuntime } from "@liuxuedeng/agent-core";
 
 const modelRuntime = await ModelRuntime.create();
 
-// create() restores cached catalogs but does not refresh them from pi.dev by default.
-// Opt in to a create-time network refresh and bound how long it may take:
+// create() loads the built-in static catalogs plus models.json. It does not
+// fetch model catalogs from the network by default.
+// Opt in to a create-time network refresh (used by dynamic extension
+// providers) and bound how long it may take:
 const refreshedRuntime = await ModelRuntime.create({
   allowModelNetwork: true,
   modelRefreshTimeoutMs: 15_000,
@@ -409,7 +411,7 @@ If no model is provided:
 2. Uses default from settings
 3. Falls back to first available model
 
-Remote catalogs are persisted locally so later runtimes can restore them without a network request. The default file is `~/.pi-core/agent/models-store.json`; set `modelsStorePath` to choose another location, or inject `modelsStore` to control persistence. Network refreshes are throttled to once per provider every four hours unless forced. To force an immediate refresh, call `await modelRuntime.refresh({ allowNetwork: true, force: true, signal })`. Setting `PI_OFFLINE` disables model network access.
+Remote catalogs are persisted locally so later runtimes can restore them without a network request. The default file is `~/.agent-core/agent/models-store.json`; set `modelsStorePath` to choose another location, or inject `modelsStore` to control persistence. Network refreshes are throttled to once per provider every four hours unless forced. To force an immediate refresh, call `await modelRuntime.refresh({ allowNetwork: true, force: true, signal })`. Setting `AGENT_CORE_OFFLINE` disables model network access.
 
 To match CLI model parsing, use the exported resolver helpers:
 
@@ -417,7 +419,7 @@ To match CLI model parsing, use the exported resolver helpers:
 import {
   resolveCliModel,
   resolveModelScopeWithDiagnostics,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const cliModel = resolveCliModel({
   cliModel: "anthropic/claude-opus-4-5:high",
@@ -448,10 +450,10 @@ Authentication resolution priority (handled by `ModelRuntime`):
 4. Fallback resolver (for custom provider keys from `models.json`)
 
 ```typescript
-import { InMemoryCredentialStore } from "@liuxuedeng/pi-core-ai";
-import { createAgentSession, ModelRuntime } from "@liuxuedeng/pi-core";
+import { InMemoryCredentialStore } from "@liuxuedeng/agent-core-ai";
+import { createAgentSession, ModelRuntime } from "@liuxuedeng/agent-core";
 
-// Default: uses ~/.pi-core/agent/auth.json and ~/.pi-core/agent/models.json
+// Default: uses ~/.agent-core/agent/auth.json and ~/.agent-core/agent/models.json
 const modelRuntime = await ModelRuntime.create();
 
 // Provider-owned auth methods and current status
@@ -478,9 +480,9 @@ const { session } = await createAgentSession({
 });
 ```
 
-`login()`, `logout()`, `setRuntimeApiKey()`, and `removeRuntimeApiKey()` resolve after the affected provider's cached/built-in catalog, composition, and availability snapshot are locally consistent. They do not wait for remote catalog freshness. If credentials were committed but local synchronization fails, they reject with the exported `CredentialSynchronizationError`; inspect its `providerId`, `operation`, `credential`, and `cause` fields instead of retrying the credential mutation blindly.
+`login()`, `logout()`, `setRuntimeApiKey()`, and `removeRuntimeApiKey()` resolve after the affected provider's built-in catalog, composition, and availability snapshot are locally consistent. They do not wait for dynamic provider catalog refreshes. If credentials were committed but local synchronization fails, they reject with the exported `CredentialSynchronizationError`; inspect its `providerId`, `operation`, `credential`, and `cause` fields instead of retrying the credential mutation blindly.
 
-Public model/auth operations and `ModelRuntime.create({ signal })` accept optional abort signals and are unbounded when omitted. SDK applications own deadline policy for remote catalog freshness:
+Public model/auth operations and `ModelRuntime.create({ signal })` accept optional abort signals and are unbounded when omitted. SDK applications own deadline policy for dynamic provider catalog refreshes:
 
 ```typescript
 const signal = AbortSignal.timeout(15_000);
@@ -503,7 +505,7 @@ A failed or timed-out network refresh does not undo a successful credential oper
 Use a `ResourceLoader` to override the system prompt:
 
 ```typescript
-import { createAgentSession, DefaultResourceLoader } from "@liuxuedeng/pi-core";
+import { createAgentSession, DefaultResourceLoader } from "@liuxuedeng/agent-core";
 
 const loader = new DefaultResourceLoader({
   systemPromptOverride: () => "You are a helpful assistant.",
@@ -525,10 +527,10 @@ Specify which built-in tools to enable:
 - `noTools: "builtin"` disables default built-ins while keeping extension and custom tools enabled
 - `excludeTools` disables specific built-in, extension, or custom tool names after any `tools` allowlist is applied
 
-The `edit` tool returns `details.diff` for Pi's TUI display and `details.patch` as a standard unified patch for SDK consumers.
+The `edit` tool returns `details.diff` for the Agent Core TUI display and `details.patch` as a standard unified patch for SDK consumers.
 
 ```typescript
-import { createAgentSession } from "@liuxuedeng/pi-core";
+import { createAgentSession } from "@liuxuedeng/agent-core";
 
 // Read-only mode
 const { session } = await createAgentSession({
@@ -556,7 +558,7 @@ const { session } = await createAgentSession({
 When you pass a custom `cwd`, `createAgentSession()` builds selected built-in tools for that cwd.
 
 ```typescript
-import { createAgentSession, SessionManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, SessionManager } from "@liuxuedeng/agent-core";
 
 const cwd = "/path/to/project";
 
@@ -580,7 +582,7 @@ const { session } = await createAgentSession({
 
 ```typescript
 import { Type } from "typebox";
-import { createAgentSession, defineTool } from "@liuxuedeng/pi-core";
+import { createAgentSession, defineTool } from "@liuxuedeng/agent-core";
 
 // Inline custom tool
 const myTool = defineTool({
@@ -612,10 +614,10 @@ If you pass `tools`, include each custom or extension tool name you want enabled
 
 ### Extensions
 
-Extensions are loaded by the `ResourceLoader`. `DefaultResourceLoader` discovers extensions from `~/.pi-core/agent/extensions/`, `.pi-core/extensions/`, and settings.json extension sources.
+Extensions are loaded by the `ResourceLoader`. `DefaultResourceLoader` discovers extensions from `~/.agent-core/agent/extensions/`, `.agent-core/extensions/`, and settings.json extension sources.
 
 ```typescript
-import { createAgentSession, DefaultResourceLoader } from "@liuxuedeng/pi-core";
+import { createAgentSession, DefaultResourceLoader } from "@liuxuedeng/agent-core";
 
 const loader = new DefaultResourceLoader({
   additionalExtensionPaths: ["/path/to/my-extension.ts"],
@@ -637,7 +639,7 @@ Extensions can register tools, subscribe to events, add commands, and more. See 
 **Named inline extensions:** By default, inline factories display as `<inline:1>`, `<inline:2>`, etc. in the startup Extensions list. To show a descriptive name instead, wrap the factory:
 
 ```typescript
-import type { InlineExtension } from "@liuxuedeng/pi-core";
+import type { InlineExtension } from "@liuxuedeng/agent-core";
 
 const myProvider: InlineExtension = {
   name: "my-provider",
@@ -658,7 +660,7 @@ This displays as `<inline:my-provider>` instead of `<inline:1>`. Bare factory fu
 **Event Bus:** Extensions can communicate via `pi.events`. Pass a shared `eventBus` to `DefaultResourceLoader` if you need to emit or listen from outside:
 
 ```typescript
-import { createEventBus, DefaultResourceLoader } from "@liuxuedeng/pi-core";
+import { createEventBus, DefaultResourceLoader } from "@liuxuedeng/agent-core";
 
 const eventBus = createEventBus();
 const loader = new DefaultResourceLoader({
@@ -678,7 +680,7 @@ import {
   createAgentSession,
   DefaultResourceLoader,
   type Skill,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const customSkill: Skill = {
   name: "my-skill",
@@ -704,7 +706,7 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 ### Context Files
 
 ```typescript
-import { createAgentSession, DefaultResourceLoader } from "@liuxuedeng/pi-core";
+import { createAgentSession, DefaultResourceLoader } from "@liuxuedeng/agent-core";
 
 const loader = new DefaultResourceLoader({
   agentsFilesOverride: (current) => ({
@@ -728,7 +730,7 @@ import {
   createAgentSession,
   DefaultResourceLoader,
   type PromptTemplate,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const customCommand: PromptTemplate = {
   name: "deploy",
@@ -763,7 +765,7 @@ import {
   createAgentSessionServices,
   getAgentDir,
   SessionManager,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 // In-memory (no persistence)
 const { session } = await createAgentSession({
@@ -862,7 +864,7 @@ sm.createBranchedSession(leafId);       // Extract path to new file
 ### Settings Management
 
 ```typescript
-import { createAgentSession, SettingsManager, SessionManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, SettingsManager, SessionManager } from "@liuxuedeng/agent-core";
 
 // Default: loads from files (global + project merged)
 const { session } = await createAgentSession({
@@ -896,8 +898,8 @@ const { session } = await createAgentSession({
 **Project-specific settings:**
 
 Settings load from two locations and merge:
-1. Global: `~/.pi-core/agent/settings.json`
-2. Project: `<cwd>/.pi-core/settings.json`
+1. Global: `~/.agent-core/agent/settings.json`
+2. Project: `<cwd>/.agent-core/settings.json`
 
 Project overrides global. Nested objects merge keys. Setters modify global settings by default.
 
@@ -918,7 +920,7 @@ Use `DefaultResourceLoader` to discover extensions, skills, prompts, themes, and
 import {
   DefaultResourceLoader,
   getAgentDir,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const loader = new DefaultResourceLoader({
   cwd,
@@ -959,7 +961,7 @@ interface LoadExtensionsResult {
 ## Complete Example
 
 ```typescript
-import { getModel } from "@liuxuedeng/pi-core-ai";
+import { getModel } from "@liuxuedeng/agent-core-ai";
 import { Type } from "typebox";
 import {
   createAgentSession,
@@ -968,7 +970,7 @@ import {
   ModelRuntime,
   SessionManager,
   SettingsManager,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const modelRuntime = await ModelRuntime.create({
   authPath: "/custom/agent/auth.json",
@@ -1049,7 +1051,7 @@ import {
   getAgentDir,
   InteractiveMode,
   SessionManager,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -1089,7 +1091,7 @@ import {
   getAgentDir,
   runPrintMode,
   SessionManager,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -1126,7 +1128,7 @@ import {
   getAgentDir,
   runRpcMode,
   SessionManager,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -1152,7 +1154,7 @@ See [RPC documentation](rpc.md) for the JSON protocol.
 For subprocess-based integration without building with the SDK, use the CLI directly:
 
 ```bash
-pi-core --mode rpc --no-session
+agent-core --mode rpc --no-session
 ```
 
 See [RPC documentation](rpc.md) for the JSON protocol.

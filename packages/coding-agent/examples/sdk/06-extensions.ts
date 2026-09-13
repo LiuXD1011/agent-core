@@ -5,15 +5,15 @@
  * They provide a unified system for extensions, custom tools, commands, and more.
  *
  * By default, extension files are discovered from:
- * - ~/.pi-core/agent/extensions/
- * - <cwd>/.pi/extensions/
+ * - ~/.agent-core/agent/extensions/
+ * - <cwd>/.agent-core/extensions/
  * - Paths specified in settings.json "extensions" array
  *
  * An extension is a TypeScript file that exports a default function:
  *   export default function (pi: ExtensionAPI) { ... }
  */
 
-import { createAgentSession, DefaultResourceLoader, getAgentDir, SessionManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, DefaultResourceLoader, getAgentDir, SessionManager } from "@liuxuedeng/agent-core";
 
 // Extensions are discovered automatically from standard locations.
 // You can also add paths via settings.json or DefaultResourceLoader options.
@@ -52,7 +52,7 @@ try {
 
 // Example extension file (./my-logging-extension.ts):
 /*
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
 	pi.on("agent_start", async () => {

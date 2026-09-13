@@ -3,17 +3,17 @@
  *
  * Demonstrates the project_trust event. Install globally or pass via -e:
  *
- *   mkdir -p ~/.pi-core/agent/extensions
- *   cp packages/coding-agent/examples/extensions/project-trust.ts ~/.pi-core/agent/extensions/
+ *   mkdir -p ~/.agent-core/agent/extensions
+ *   cp packages/coding-agent/examples/extensions/project-trust.ts ~/.agent-core/agent/extensions/
  *
  * Or:
  *
- *   pi -e packages/coding-agent/examples/extensions/project-trust.ts
+ *   agent-core -e packages/coding-agent/examples/extensions/project-trust.ts
  *
  * Try it in a project containing .pi, AGENTS.md/CLAUDE.md, or .agents/skills.
  */
 
-import type { ExtensionAPI, ProjectTrustEventResult } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI, ProjectTrustEventResult } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
 	let loadCount = 0;

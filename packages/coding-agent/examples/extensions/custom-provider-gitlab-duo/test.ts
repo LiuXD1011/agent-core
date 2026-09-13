@@ -8,7 +8,13 @@
  *   npx tsx test.ts claude-sonnet-4-5-20250929 --thinking
  */
 
-import { type Api, type Context, type Model, registerApiProvider, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
+import {
+	type Api,
+	type Context,
+	type Model,
+	registerApiProvider,
+	streamSimple,
+} from "@liuxuedeng/agent-core-ai/compat";
 import { readFileSync } from "fs";
 import { getAgentDir } from "packages/coding-agent/src/config.js";
 import { join } from "path";

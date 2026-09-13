@@ -10,10 +10,10 @@
  * via `tool_call` input mutation without replacing the tool.
  *
  * Config files (merged, project takes precedence):
- * - ~/.pi-core/agent/extensions/sandbox.json (global)
- * - <cwd>/.pi/sandbox.json (project-local)
+ * - ~/.agent-core/agent/extensions/sandbox.json (global)
+ * - <cwd>/.agent-core/sandbox.json (project-local)
  *
- * Example .pi/sandbox.json:
+ * Example .agent-core/sandbox.json:
  * ```json
  * {
  *   "enabled": true,
@@ -30,13 +30,13 @@
  * ```
  *
  * Usage:
- * - `pi -e ./sandbox` - sandbox enabled with default/config settings
- * - `pi -e ./sandbox --no-sandbox` - disable sandboxing
+ * - `agent-core -e ./sandbox` - sandbox enabled with default/config settings
+ * - `agent-core -e ./sandbox --no-sandbox` - disable sandboxing
  * - `/sandbox` - show current sandbox configuration
  *
  * Setup:
- * 1. Copy sandbox/ directory to ~/.pi-core/agent/extensions/
- * 2. Run `npm install` in ~/.pi-core/agent/extensions/sandbox/
+ * 1. Copy sandbox/ directory to ~/.agent-core/agent/extensions/
+ * 2. Run `npm install` in ~/.agent-core/agent/extensions/sandbox/
  *
  * Linux also requires: bubblewrap, socat, ripgrep
  */
@@ -45,8 +45,8 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { SandboxManager, type SandboxRuntimeConfig } from "@anthropic-ai/sandbox-runtime";
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
-import { type BashOperations, CONFIG_DIR_NAME, createBashTool, getAgentDir } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
+import { type BashOperations, CONFIG_DIR_NAME, createBashTool, getAgentDir } from "@liuxuedeng/agent-core";
 
 interface SandboxConfig extends SandboxRuntimeConfig {
 	enabled?: boolean;

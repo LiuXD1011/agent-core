@@ -1,13 +1,13 @@
 /**
- * Syncs pi theme with macOS system appearance (dark/light mode).
+ * Syncs agent-core theme with macOS system appearance (dark/light mode).
  *
  * Usage:
- *   pi -e examples/extensions/mac-system-theme.ts
+ *   agent-core -e examples/extensions/mac-system-theme.ts
  */
 
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 
 const execAsync = promisify(exec);
 

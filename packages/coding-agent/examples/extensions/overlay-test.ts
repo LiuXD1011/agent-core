@@ -1,15 +1,15 @@
 /**
  * Overlay Test - validates overlay compositing with inline text inputs
  *
- * Usage: pi --extension ./examples/extensions/overlay-test.ts
+ * Usage: agent-core --extension ./examples/extensions/overlay-test.ts
  *
  * Run /overlay-test to show a floating overlay with:
  * - Inline text inputs within menu items
  * - Edge case tests (wide chars, styled text, emoji)
  */
 
-import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@liuxuedeng/pi-core";
-import { CURSOR_MARKER, type Focusable, matchesKey, visibleWidth } from "@liuxuedeng/pi-core-tui";
+import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@liuxuedeng/agent-core";
+import { CURSOR_MARKER, type Focusable, matchesKey, visibleWidth } from "@liuxuedeng/agent-core-tui";
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("overlay-test", {

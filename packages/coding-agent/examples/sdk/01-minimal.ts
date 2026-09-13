@@ -2,10 +2,10 @@
  * Minimal SDK Usage
  *
  * Uses all defaults: discovers skills, extensions, tools, context files
- * from cwd and ~/.pi-core/agent. Model chosen from settings or first available.
+ * from cwd and ~/.agent-core/agent. Model chosen from settings or first available.
  */
 
-import { createAgentSession } from "@liuxuedeng/pi-core";
+import { createAgentSession } from "@liuxuedeng/agent-core";
 
 const { session } = await createAgentSession();
 

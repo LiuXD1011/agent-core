@@ -1,7 +1,7 @@
 /**
  * Gondolin Tool Routing Example
  *
- * Runs pi's built-in tools inside a local Gondolin micro-VM. The host working
+ * Runs agent-core's built-in tools inside a local Gondolin micro-VM. The host working
  * directory is mounted at /workspace in the guest. File changes under
  * /workspace write through to the host; other guest filesystem changes are
  * isolated to the VM.
@@ -12,7 +12,7 @@
  *
  * Usage:
  *   cd /path/to/project
- *   pi -e /path/to/pi/packages/coding-agent/examples/extensions/gondolin
+ *   agent-core -e /path/to/agent-core/packages/coding-agent/examples/extensions/gondolin
  *
  * Requirements:
  *   - Node.js >= 23.6.0 for @earendil-works/gondolin
@@ -21,7 +21,7 @@
 
 import path from "node:path";
 import { RealFSProvider, VM } from "@earendil-works/gondolin";
-import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/agent-core";
 import {
 	type BashOperations,
 	createBashTool,
@@ -42,7 +42,7 @@ import {
 	truncateHead,
 	truncateLine,
 	type WriteOperations,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 const GUEST_WORKSPACE = "/workspace";
 const DEFAULT_GREP_LIMIT = 100;
@@ -379,7 +379,7 @@ export default function (pi: ExtensionAPI) {
 	async function startVm(ctx?: ExtensionContext): Promise<VM> {
 		ctx?.ui.setStatus("gondolin", ctx.ui.theme.fg("accent", `Gondolin: starting ${GUEST_WORKSPACE}`));
 		const created = await VM.create({
-			sessionLabel: `pi ${path.basename(localCwd)}`,
+			sessionLabel: `agent-core ${path.basename(localCwd)}`,
 			vfs: {
 				mounts: {
 					[GUEST_WORKSPACE]: new RealFSProvider(localCwd),

@@ -22,12 +22,12 @@
  *   toggled the tool output open (via ctrl+e or clicking)
  *
  * Usage:
- *   pi -e ./built-in-tool-renderer.ts
+ *   agent-core -e ./built-in-tool-renderer.ts
  */
 
-import type { BashToolDetails, EditToolDetails, ExtensionAPI, ReadToolDetails } from "@liuxuedeng/pi-core";
-import { createBashTool, createEditTool, createReadTool, createWriteTool } from "@liuxuedeng/pi-core";
-import { Text } from "@liuxuedeng/pi-core-tui";
+import type { BashToolDetails, EditToolDetails, ExtensionAPI, ReadToolDetails } from "@liuxuedeng/agent-core";
+import { createBashTool, createEditTool, createReadTool, createWriteTool } from "@liuxuedeng/agent-core";
+import { Text } from "@liuxuedeng/agent-core-tui";
 
 export default function (pi: ExtensionAPI) {
 	const cwd = process.cwd();

@@ -5,13 +5,13 @@
  * Tool selection persists across session reloads and respects branch navigation.
  *
  * Usage:
- * 1. Copy this file to ~/.pi-core/agent/extensions/ or your project's .pi/extensions/
+ * 1. Copy this file to ~/.agent-core/agent/extensions/ or your project's .agent-core/extensions/
  * 2. Use /tools to open the tool selector
  */
 
-import type { ExtensionAPI, ExtensionContext, ToolInfo } from "@liuxuedeng/pi-core";
-import { getSettingsListTheme } from "@liuxuedeng/pi-core";
-import { Container, type SettingItem, SettingsList } from "@liuxuedeng/pi-core-tui";
+import type { ExtensionAPI, ExtensionContext, ToolInfo } from "@liuxuedeng/agent-core";
+import { getSettingsListTheme } from "@liuxuedeng/agent-core";
+import { Container, type SettingItem, SettingsList } from "@liuxuedeng/agent-core-tui";
 
 // State persisted to session
 interface ToolsState {

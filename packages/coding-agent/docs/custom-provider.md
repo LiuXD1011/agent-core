@@ -30,11 +30,11 @@ See these complete provider examples:
 
 ## Quick Reference
 
-Extensions can register either a complete pi-ai `Provider` or use the legacy provider-config form. Prefer a complete provider when custom authentication, filtering, refresh, or streaming behavior is required. Pi composes `models.json` overrides above registered native providers.
+Extensions can register either a complete pi-ai `Provider` or use the legacy provider-config form. Prefer a complete provider when custom authentication, filtering, refresh, or streaming behavior is required. Agent Core composes `models.json` overrides above registered native providers.
 
 ```typescript
-import { createProvider, openAICompletionsApi } from "@liuxuedeng/pi-core-ai";
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import { createProvider, openAICompletionsApi } from "@liuxuedeng/agent-core-ai";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
   pi.registerProvider(createProvider({
@@ -88,7 +88,7 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-The extension factory can also be `async`. For dynamic model discovery, fetch and register models in the factory instead of `session_start`. pi waits for the factory before startup continues, so the provider is available during interactive startup and to `pi-core --list-models`.
+The extension factory can also be `async`. For dynamic model discovery, fetch and register models in the factory instead of `session_start`. pi waits for the factory before startup continues, so the provider is available during interactive startup and to `agent-core --list-models`.
 
 ## Override Existing Provider
 
@@ -125,7 +125,7 @@ To add a completely new provider, specify `models` along with the required confi
 If the model list comes from a remote endpoint, use an async extension factory:
 
 ```typescript
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 
 export default async function (pi: ExtensionAPI) {
   const response = await fetch("http://localhost:1234/v1/models");
@@ -288,7 +288,7 @@ The key is resolved for each request. An explicit request `Authorization` header
 Add OAuth/SSO authentication that integrates with `/login`:
 
 ```typescript
-import type { OAuthCredentials, OAuthLoginCallbacks } from "@liuxuedeng/pi-core-ai";
+import type { OAuthCredentials, OAuthLoginCallbacks } from "@liuxuedeng/agent-core-ai";
 
 pi.registerProvider("corporate-ai", {
   baseUrl: "https://ai.corp.com/v1",
@@ -382,7 +382,7 @@ interface OAuthLoginCallbacks {
 
 ### OAuthCredentials
 
-Credentials are persisted in `~/.pi-core/agent/auth.json`:
+Credentials are persisted in `~/.agent-core/agent/auth.json`:
 
 ```typescript
 interface OAuthCredentials {
@@ -397,12 +397,12 @@ interface OAuthCredentials {
 For providers with non-standard APIs, implement `streamSimple`. Study the existing API implementations before writing your own:
 
 **Reference implementations:**
-- [anthropic-messages.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/api/anthropic-messages.ts) - Anthropic Messages API
-- [mistral-conversations.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/api/mistral-conversations.ts) - Mistral Conversations API
-- [openai-completions.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/api/openai-completions.ts) - OpenAI Chat Completions
-- [openai-responses.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/api/openai-responses.ts) - OpenAI Responses API
-- [google-generative-ai.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/api/google-generative-ai.ts) - Google Generative AI
-- [bedrock-converse-stream.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/api/bedrock-converse-stream.ts) - AWS Bedrock
+- [anthropic-messages.ts](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/api/anthropic-messages.ts) - Anthropic Messages API
+- [mistral-conversations.ts](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/api/mistral-conversations.ts) - Mistral Conversations API
+- [openai-completions.ts](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/api/openai-completions.ts) - OpenAI Chat Completions
+- [openai-responses.ts](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/api/openai-responses.ts) - OpenAI Responses API
+- [google-generative-ai.ts](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/api/google-generative-ai.ts) - Google Generative AI
+- [bedrock-converse-stream.ts](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/api/bedrock-converse-stream.ts) - AWS Bedrock
 
 ### Stream Pattern
 
@@ -417,7 +417,7 @@ import {
   type SimpleStreamOptions,
   calculateCost,
   createAssistantMessageEventStream,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 
 function streamMyProvider(
   model: Model<any>,
@@ -571,7 +571,7 @@ When a request exceeds the model's context window, pi can recover automatically 
 Detection runs on the finalized assistant message:
 
 - `stopReason === "error"`
-- `errorMessage` matches one of pi's known overflow patterns (see [`packages/ai/src/utils/overflow.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/utils/overflow.ts))
+- `errorMessage` matches one of pi's known overflow patterns (see [`packages/ai/src/utils/overflow.ts`](https://github.com/LiuXD1011/agent-core/blob/main/packages/ai/src/utils/overflow.ts))
 
 If your provider returns overflow errors with a message pi does not recognize, normalize the error from the same extension that registers the provider. Use a `message_end` handler to rewrite the assistant message so its `errorMessage` starts with a phrase pi recognizes. The generic fallback `context_length_exceeded` is the safest choice.
 
@@ -634,7 +634,7 @@ pi.registerProvider("my-provider", {
 
 ## Testing Your Implementation
 
-Test your provider against the same test suites used by built-in providers. Copy and adapt these test files from [packages/ai/test/](https://github.com/earendil-works/pi-mono/tree/main/packages/ai/test):
+Test your provider against the same test suites used by built-in providers. Copy and adapt these test files from [packages/ai/test/](https://github.com/LiuXD1011/agent-core/tree/main/packages/ai/test):
 
 | Test | Purpose |
 |------|---------|

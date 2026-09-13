@@ -12,7 +12,7 @@ import {
 	getAgentDir,
 	SessionManager,
 	type Skill,
-} from "@liuxuedeng/pi-core";
+} from "@liuxuedeng/agent-core";
 
 // Or define custom skills inline
 const customSkill: Skill = {
@@ -37,7 +37,7 @@ const loader = new DefaultResourceLoader({
 });
 await loader.reload();
 
-// Discover all skills from cwd/.pi/skills, ~/.pi-core/agent/skills, etc.
+// Discover all skills from cwd/.agent-core/skills, ~/.agent-core/agent/skills, etc.
 const { skills: allSkills, diagnostics } = loader.getSkills();
 console.log(
 	"Discovered skills:",

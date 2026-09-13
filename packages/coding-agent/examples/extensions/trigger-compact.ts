@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/agent-core";
 
 const COMPACT_THRESHOLD_TOKENS = 100_000;
 

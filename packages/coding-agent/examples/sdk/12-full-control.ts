@@ -11,8 +11,8 @@ import {
 	type ResourceLoader,
 	SessionManager,
 	SettingsManager,
-} from "@liuxuedeng/pi-core";
-import { getModel } from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core";
+import { getModel } from "@liuxuedeng/agent-core-ai/compat";
 
 const modelRuntime = await ModelRuntime.create({
 	authPath: "/tmp/my-agent/auth.json",

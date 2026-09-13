@@ -5,8 +5,8 @@
  * without paying for an extra follow-up LLM turn.
  */
 
-import { defineTool, type ExtensionAPI } from "@liuxuedeng/pi-core";
-import { Text } from "@liuxuedeng/pi-core-tui";
+import { defineTool, type ExtensionAPI } from "@liuxuedeng/agent-core";
+import { Text } from "@liuxuedeng/agent-core-tui";
 import { Type } from "typebox";
 
 interface StructuredOutputDetails {

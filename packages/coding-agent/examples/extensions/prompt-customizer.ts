@@ -8,11 +8,11 @@
  * are currently active, respecting whatever the user has configured.
  *
  * Usage:
- * 1. Copy this file to ~/.pi-core/agent/extensions/ or your project's .pi/extensions/
+ * 1. Copy this file to ~/.agent-core/agent/extensions/ or your project's .agent-core/extensions/
  * 2. Use the extension — it automatically adapts to your active tools and skills
  */
 
-import type { BuildSystemPromptOptions, ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { BuildSystemPromptOptions, ExtensionAPI } from "@liuxuedeng/agent-core";
 
 /**
  * Adds tool-specific guidance that adapts to the active tool set.

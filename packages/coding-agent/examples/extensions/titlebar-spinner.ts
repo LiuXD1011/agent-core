@@ -5,11 +5,11 @@
  * Uses `ctx.ui.setTitle()` to update the terminal title via the extension API.
  *
  * Usage:
- *   pi --extension examples/extensions/titlebar-spinner.ts
+ *   agent-core --extension examples/extensions/titlebar-spinner.ts
  */
 
 import path from "node:path";
-import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/agent-core";
 
 const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 

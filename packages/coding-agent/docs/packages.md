@@ -1,14 +1,14 @@
-> pi can help you create pi packages. Ask it to bundle your extensions, skills, prompt templates, or themes.
+> Agent Core can help you create Agent Core packages. Ask it to bundle your extensions, skills, prompt templates, or themes.
 
-# Pi Packages
+# Agent Core Packages
 
-Pi packages bundle extensions, skills, prompt templates, and themes so you can share them through npm or git. A package can declare resources in `package.json` under the `pi-core` key, or use conventional directories.
+Agent Core packages bundle extensions, skills, prompt templates, and themes so you can share them through npm or git. A package can declare resources in `package.json` under the `pi` key, or use conventional directories. Agent Core keeps the `pi` manifest key for resource declarations.
 
 ## Table of Contents
 
 - [Install and Manage](#install-and-manage)
 - [Package Sources](#package-sources)
-- [Creating a Pi Package](#creating-a-pi-package)
+- [Creating an Agent Core Package](#creating-an-agent-core-package)
 - [Package Structure](#package-structure)
 - [Dependencies](#dependencies)
 - [Package Filtering](#package-filtering)
@@ -17,41 +17,41 @@ Pi packages bundle extensions, skills, prompt templates, and themes so you can s
 
 ## Install and Manage
 
-> **Security:** Pi packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
+> **Security:** Agent Core packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
 
 ```bash
-pi-core install npm:@foo/bar@1.0.0
-pi-core install git:github.com/user/repo@v1
-pi-core install https://github.com/user/repo  # raw URLs work too
-pi-core install /absolute/path/to/package
-pi-core install ./relative/path/to/package
+agent-core install npm:@foo/bar@1.0.0
+agent-core install git:github.com/user/repo@v1
+agent-core install https://github.com/user/repo  # raw URLs work too
+agent-core install /absolute/path/to/package
+agent-core install ./relative/path/to/package
 
-pi-core remove npm:@foo/bar
-pi-core list                     # show installed packages from settings
-pi-core update                   # update pi only
-pi-core update --all             # update pi, update packages, and reconcile pinned git refs
-pi-core update --extensions      # update packages and reconcile pinned git refs only
-pi-core update --models          # refresh model catalogs only
-pi-core update --self            # update pi only
-pi-core update --self --force    # reinstall pi even if current
-pi-core update npm:@foo/bar      # update one package
-pi-core update --extension npm:@foo/bar
+agent-core remove npm:@foo/bar
+agent-core list                     # show installed packages from settings
+agent-core update                   # update agent-core only
+agent-core update --all             # update agent-core, update packages, and reconcile pinned git refs
+agent-core update --extensions      # update packages and reconcile pinned git refs only
+agent-core update --models          # refresh model catalogs only
+agent-core update --self            # update agent-core only
+agent-core update --self --force    # reinstall agent-core even if current
+agent-core update npm:@foo/bar      # update one package
+agent-core update --extension npm:@foo/bar
 ```
 
-These commands manage pi packages and `pi-core update` can update the pi CLI installation. For experimental installer-managed installations, `pi-core update` installs the exact checked version into a staged, lockfile-backed release and activates it only after verification, leaving the current release intact if the update fails. Managed installations do not support `--force`; rerun the installer to repair one. To uninstall pi itself, see [Quickstart](quickstart.md#uninstall).
+These commands manage Agent Core packages and `agent-core update` can update the agent-core CLI installation. For experimental installer-managed installations, `agent-core update` installs the exact checked version into a staged, lockfile-backed release and activates it only after verification, leaving the current release intact if the update fails. Managed installations do not support `--force`; rerun the installer to repair one. To uninstall agent-core itself, see [Uninstall](usage.md#uninstall).
 
-By default, `install` and `remove` write to user settings (`~/.pi-core/agent/settings.json`). Use `-l` to write to project settings (`.pi-core/settings.json`) instead. Project settings can be shared with your team, and pi-core installs any missing packages automatically on startup after the project is trusted.
+By default, `install` and `remove` write to user settings (`~/.agent-core/agent/settings.json`). Use `-l` to write to project settings (`.agent-core/settings.json`) instead. Project settings can be shared with your team, and agent-core installs any missing packages automatically on startup after the project is trusted.
 
 To try a package without installing it, use `--extension` or `-e`. This installs to a temporary directory for the current run only:
 
 ```bash
-pi-core -e npm:@foo/bar
-pi-core -e git:github.com/user/repo
+agent-core -e npm:@foo/bar
+agent-core -e git:github.com/user/repo
 ```
 
 ## Package Sources
 
-Pi accepts three source types in settings and `pi-core install`.
+Agent Core accepts three source types in settings and `agent-core install`.
 
 ### npm
 
@@ -60,9 +60,9 @@ npm:@scope/pkg@1.2.3
 npm:pkg
 ```
 
-- Versioned specs are pinned and skipped by package updates (`pi-core update --extensions`, `pi-core update --all`).
-- User installs go under `~/.pi-core/agent/npm/`.
-- Project installs go under `.pi-core/npm/`.
+- Versioned specs are pinned and skipped by package updates (`agent-core update --extensions`, `agent-core update --all`).
+- User installs go under `~/.agent-core/agent/npm/`.
+- Project installs go under `.agent-core/npm/`.
 - Set `npmCommand` in `settings.json` to pin npm package lookup and install operations to a specific wrapper command such as `mise` or `asdf`.
 
 Example:
@@ -87,21 +87,21 @@ ssh://git@github.com/user/repo@v1
 - HTTPS and SSH URLs are both supported.
 - SSH URLs use your configured SSH keys automatically (respects `~/.ssh/config`).
 - For non-interactive runs (for example CI), you can set `GIT_TERMINAL_PROMPT=0` to disable credential prompts and set `GIT_SSH_COMMAND` (for example `ssh -o BatchMode=yes -o ConnectTimeout=5`) to fail fast.
-- Refs are pinned tags or commits. `pi-core update --extensions` and `pi-core update --all` do not move them to newer refs, but they do reconcile an existing clone to the configured ref.
-- Use `pi-core install git:host/user/repo@new-ref` to update settings and move an existing package to a new pinned ref.
-- Cloned to `~/.pi-core/agent/git/<host>/<path>` (global) or `.pi-core/git/<host>/<path>` (project).
-- When reconciliation changes the checkout, pi resets and cleans the clone, then runs `npm install` if `package.json` exists.
+- Refs are pinned tags or commits. `agent-core update --extensions` and `agent-core update --all` do not move them to newer refs, but they do reconcile an existing clone to the configured ref.
+- Use `agent-core install git:host/user/repo@new-ref` to update settings and move an existing package to a new pinned ref.
+- Cloned to `~/.agent-core/agent/git/<host>/<path>` (global) or `.agent-core/git/<host>/<path>` (project).
+- When reconciliation changes the checkout, agent-core resets and cleans the clone, then runs `npm install` if `package.json` exists.
 
 **SSH examples:**
 ```bash
 # git@host:path shorthand (requires git: prefix)
-pi-core install git:git@github.com:user/repo
+agent-core install git:git@github.com:user/repo
 
 # ssh:// protocol format
-pi-core install ssh://git@github.com/user/repo
+agent-core install ssh://git@github.com/user/repo
 
 # With version ref
-pi-core install git:git@github.com:user/repo@v1.0.0
+agent-core install git:git@github.com:user/repo@v1.0.0
 ```
 
 ### Local Paths
@@ -111,11 +111,11 @@ pi-core install git:git@github.com:user/repo@v1.0.0
 ./relative/path/to/package
 ```
 
-Local paths point to files or directories on disk and are added to settings without copying. Relative paths are resolved against the settings file they appear in. If the path is a file, it loads as a single extension. If it is a directory, pi loads resources using package rules.
+Local paths point to files or directories on disk and are added to settings without copying. Relative paths are resolved against the settings file they appear in. If the path is a file, it loads as a single extension. If it is a directory, agent-core loads resources using package rules.
 
-## Creating a Pi Package
+## Creating an Agent Core Package
 
-Add a `pi-core` manifest to `package.json` or use conventional directories. Include the `pi-package` keyword for discoverability.
+Add a `pi` manifest to `package.json` or use conventional directories. Include the `pi-package` keyword for discoverability.
 
 ```json
 {
@@ -132,32 +132,11 @@ Add a `pi-core` manifest to `package.json` or use conventional directories. Incl
 
 Paths are relative to the package root. Arrays support glob patterns and `!exclusions`. Positive manifest globs discover visible paths in lexical order. List dot-prefixed paths directly. If a glob would need to continue through a symlink, list the symlinked resource root directly.
 
-### Gallery Metadata
-
-The [package gallery](https://pi.dev/packages) displays packages tagged with `pi-package`. Add `video` or `image` fields to show a preview:
-
-```json
-{
-  "name": "my-package",
-  "keywords": ["pi-package"],
-  "pi": {
-    "extensions": ["./extensions"],
-    "video": "https://example.com/demo.mp4",
-    "image": "https://example.com/screenshot.png"
-  }
-}
-```
-
-- **video**: MP4 only. On desktop, autoplays on hover. Clicking opens a fullscreen player.
-- **image**: PNG, JPEG, GIF, or WebP. Displayed as a static preview.
-
-If both are set, video takes precedence.
-
 ## Package Structure
 
 ### Convention Directories
 
-If no `pi-core` manifest is present, pi auto-discovers resources from these directories:
+If no `pi` manifest is present, Agent Core auto-discovers resources from these directories:
 
 - `extensions/` loads `.ts` and `.js` files
 - `skills/` recursively finds `SKILL.md` folders and loads top-level `.md` files as skills
@@ -166,11 +145,11 @@ If no `pi-core` manifest is present, pi auto-discovers resources from these dire
 
 ## Dependencies
 
-Third party runtime dependencies belong in `dependencies` in `package.json`. Dependencies that do not register extensions, skills, prompt templates, or themes also belong in `dependencies`. When pi-core installs a package from npm or git, it runs `npm install`, so those dependencies are installed automatically.
+Third party runtime dependencies belong in `dependencies` in `package.json`. Dependencies that do not register extensions, skills, prompt templates, or themes also belong in `dependencies`. When agent-core installs a package from npm or git, it runs `npm install`, so those dependencies are installed automatically.
 
-Pi bundles core packages for extensions and skills. If you import any of these, list them in `peerDependencies` with a `"*"` range and do not bundle them: `@liuxuedeng/pi-core-ai`, `@liuxuedeng/pi-core-agent`, `@liuxuedeng/pi-core`, `@liuxuedeng/pi-core-tui`, `typebox`.
+Agent Core bundles core packages for extensions and skills. If you import any of these, list them in `peerDependencies` with a `"*"` range and do not bundle them: `@liuxuedeng/agent-core-ai`, `@liuxuedeng/agent-core-agent`, `@liuxuedeng/agent-core`, `@liuxuedeng/agent-core-tui`, `typebox`.
 
-Other pi packages must be bundled in your tarball. Add them to `dependencies` and `bundledDependencies`, then reference their resources through `node_modules/` paths. Pi loads packages with separate module roots, so separate installs do not collide or share modules.
+Other Agent Core packages must be bundled in your tarball. Add them to `dependencies` and `bundledDependencies`, then reference their resources through `node_modules/` paths. Agent Core loads packages with separate module roots, so separate installs do not collide or share modules.
 
 Example:
 
@@ -217,7 +196,7 @@ Filter what a package loads using the object form in settings:
 
 ## Enable and Disable Resources
 
-Use `pi-core config` to enable or disable extensions, skills, prompt templates, and themes from installed packages and local directories. `pi-core config` starts in global settings (`~/.pi-core/agent/settings.json`); press Tab to switch between global and project-local modes. Use `pi-core config -l` to start in project overrides (`.pi-core/settings.json`) with inherited global resources dimmed.
+Use `agent-core config` to enable or disable extensions, skills, prompt templates, and themes from installed packages and local directories. `agent-core config` starts in global settings (`~/.agent-core/agent/settings.json`); press Tab to switch between global and project-local modes. Use `agent-core config -l` to start in project overrides (`.agent-core/settings.json`) with inherited global resources dimmed.
 
 ## Scope and Deduplication
 

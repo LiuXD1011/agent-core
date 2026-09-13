@@ -5,12 +5,12 @@
  * that lists all available slash commands in the current session.
  *
  * Usage:
- * 1. Copy this file to ~/.pi-core/agent/extensions/ or your project's .pi/extensions/
+ * 1. Copy this file to ~/.agent-core/agent/extensions/ or your project's .agent-core/extensions/
  * 2. Use /commands to see available commands
  * 3. Use /commands extensions to filter by source
  */
 
-import type { ExtensionAPI, SlashCommandInfo } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI, SlashCommandInfo } from "@liuxuedeng/agent-core";
 
 export default function commandsExtension(pi: ExtensionAPI) {
 	pi.registerCommand("commands", {

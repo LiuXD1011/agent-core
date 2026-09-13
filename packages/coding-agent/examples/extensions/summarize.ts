@@ -1,7 +1,7 @@
-import type { ExtensionAPI, ExtensionCommandContext } from "@liuxuedeng/pi-core";
-import { DynamicBorder, getMarkdownTheme } from "@liuxuedeng/pi-core";
-import { uuidv7 } from "@liuxuedeng/pi-core-ai";
-import { Container, Markdown, matchesKey, Text } from "@liuxuedeng/pi-core-tui";
+import type { ExtensionAPI, ExtensionCommandContext } from "@liuxuedeng/agent-core";
+import { DynamicBorder, getMarkdownTheme } from "@liuxuedeng/agent-core";
+import { uuidv7 } from "@liuxuedeng/agent-core-ai";
+import { Container, Markdown, matchesKey, Text } from "@liuxuedeng/agent-core-tui";
 
 type ContentBlock = {
 	type?: string;

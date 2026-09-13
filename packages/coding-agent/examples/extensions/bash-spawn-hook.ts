@@ -4,11 +4,11 @@
  * Adjusts command, cwd, and env before execution.
  *
  * Usage:
- *   pi -e ./bash-spawn-hook.ts
+ *   agent-core -e ./bash-spawn-hook.ts
  */
 
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
-import { createBashTool } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
+import { createBashTool } from "@liuxuedeng/agent-core";
 
 export default function (pi: ExtensionAPI) {
 	const cwd = process.cwd();
@@ -17,7 +17,7 @@ export default function (pi: ExtensionAPI) {
 		spawnHook: ({ command, cwd, env }) => ({
 			command: `source ~/.profile\n${command}`,
 			cwd,
-			env: { ...env, PI_CORE_SPAWN_HOOK: "1" },
+			env: { ...env, AGENT_CORE_SPAWN_HOOK: "1" },
 		}),
 	});
 

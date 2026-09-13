@@ -1,15 +1,15 @@
 # Extension Examples
 
-Example extensions for pi-coding-agent.
+Example extensions for agent-core.
 
 ## Usage
 
 ```bash
 # Load an extension with --extension flag
-pi --extension examples/extensions/permission-gate.ts
+agent-core --extension examples/extensions/permission-gate.ts
 
 # Or copy to extensions directory for auto-discovery
-cp permission-gate.ts ~/.pi-core/agent/extensions/
+cp permission-gate.ts ~/.agent-core/agent/extensions/
 ```
 
 ## Examples
@@ -100,7 +100,7 @@ cp permission-gate.ts ~/.pi-core/agent/extensions/
 
 | Extension | Description |
 |-----------|-------------|
-| `mac-system-theme.ts` | Syncs pi theme with macOS dark/light mode |
+| `mac-system-theme.ts` | Syncs agent-core theme with macOS dark/light mode |
 
 ### Resources
 
@@ -128,7 +128,7 @@ cp permission-gate.ts ~/.pi-core/agent/extensions/
 | Extension | Description |
 |-----------|-------------|
 | `custom-provider-anthropic/` | Custom Anthropic provider with OAuth support and custom streaming implementation |
-| `custom-provider-gitlab-duo/` | GitLab Duo provider using pi-ai's built-in Anthropic/OpenAI streaming via proxy |
+| `custom-provider-gitlab-duo/` | GitLab Duo provider using agent-core-ai's built-in Anthropic/OpenAI streaming via proxy |
 
 ### External Dependencies
 
@@ -142,7 +142,7 @@ cp permission-gate.ts ~/.pi-core/agent/extensions/
 See [docs/extensions.md](../../docs/extensions.md) for full documentation.
 
 ```typescript
-import type { ExtensionAPI } from "@liuxuedeng/pi-core";
+import type { ExtensionAPI } from "@liuxuedeng/agent-core";
 import { Type } from "typebox";
 
 export default function (pi: ExtensionAPI) {
@@ -184,7 +184,7 @@ export default function (pi: ExtensionAPI) {
 
 **Use StringEnum for string parameters** (required for Google API compatibility):
 ```typescript
-import { StringEnum } from "@liuxuedeng/pi-core-ai";
+import { StringEnum } from "@liuxuedeng/agent-core-ai";
 
 // Good
 action: StringEnum(["list", "add"] as const)

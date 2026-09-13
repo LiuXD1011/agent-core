@@ -4,7 +4,7 @@
  * Override settings using SettingsManager.
  */
 
-import { createAgentSession, SessionManager, SettingsManager } from "@liuxuedeng/pi-core";
+import { createAgentSession, SessionManager, SettingsManager } from "@liuxuedeng/agent-core";
 
 const cwd = process.cwd();
 

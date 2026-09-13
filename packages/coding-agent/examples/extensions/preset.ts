@@ -6,8 +6,8 @@
  * and can be activated via CLI flag, /preset command, or Ctrl+Shift+U to cycle.
  *
  * Config files (merged, project takes precedence):
- * - ~/.pi-core/agent/presets.json (global)
- * - <cwd>/.pi/presets.json (project-local)
+ * - ~/.agent-core/agent/presets.json (global)
+ * - <cwd>/.agent-core/presets.json (project-local)
  *
  * Example presets.json:
  * ```json
@@ -30,7 +30,7 @@
  * ```
  *
  * Usage:
- * - `pi --preset plan` - start with plan preset
+ * - `agent-core --preset plan` - start with plan preset
  * - `/preset` - show selector to switch presets mid-session
  * - `/preset implement` - switch to implement preset directly
  * - `Ctrl+Shift+U` - cycle through presets
@@ -40,10 +40,10 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/pi-core";
-import { CONFIG_DIR_NAME, DynamicBorder, getAgentDir } from "@liuxuedeng/pi-core";
-import type { Api, Model } from "@liuxuedeng/pi-core-ai";
-import { Container, Key, type SelectItem, SelectList, Text } from "@liuxuedeng/pi-core-tui";
+import type { ExtensionAPI, ExtensionContext } from "@liuxuedeng/agent-core";
+import { CONFIG_DIR_NAME, DynamicBorder, getAgentDir } from "@liuxuedeng/agent-core";
+import type { Api, Model } from "@liuxuedeng/agent-core-ai";
+import { Container, Key, type SelectItem, SelectList, Text } from "@liuxuedeng/agent-core-tui";
 
 // Preset configuration
 interface Preset {

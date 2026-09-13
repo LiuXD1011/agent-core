@@ -4,7 +4,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { CONFIG_DIR_NAME, getAgentDir, parseFrontmatter } from "@liuxuedeng/pi-core";
+import { CONFIG_DIR_NAME, getAgentDir, parseFrontmatter } from "@liuxuedeng/agent-core";
 
 export type AgentScope = "user" | "project" | "both";
 
