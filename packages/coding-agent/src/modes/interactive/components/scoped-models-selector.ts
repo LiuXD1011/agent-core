@@ -1,4 +1,4 @@
-import type { Model } from "@liuxuedeng/pi-core-ai";
+import type { Model } from "@liuxuedeng/agent-core-ai";
 import {
 	Container,
 	type Focusable,
@@ -9,7 +9,7 @@ import {
 	matchesKey,
 	Spacer,
 	Text,
-} from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
 import { getModelSearchText } from "../model-search.ts";
 import { theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";

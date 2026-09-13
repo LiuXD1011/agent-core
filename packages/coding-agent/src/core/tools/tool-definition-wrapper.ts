@@ -1,4 +1,4 @@
-import type { AgentTool } from "@liuxuedeng/pi-core-agent";
+import type { AgentTool } from "@liuxuedeng/agent-core-agent";
 import type { ExtensionContext, ToolDefinition } from "../extensions/types.ts";
 
 /** Wrap a ToolDefinition into an AgentTool for the core runtime. */

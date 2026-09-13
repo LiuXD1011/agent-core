@@ -1,4 +1,4 @@
-import type { Component } from "@liuxuedeng/pi-core-tui";
+import type { Component } from "@liuxuedeng/agent-core-tui";
 import { theme } from "../theme/theme.ts";
 
 /**

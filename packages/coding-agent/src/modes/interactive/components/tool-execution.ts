@@ -1,4 +1,4 @@
-import type { AgentToolResult } from "@liuxuedeng/pi-core-agent";
+import type { AgentToolResult } from "@liuxuedeng/agent-core-agent";
 import {
 	Box,
 	type Component,
@@ -10,7 +10,7 @@ import {
 	Text,
 	type TUI,
 	type TuiMouseEvent,
-} from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
 import type { ToolDefinition, ToolRenderContext, ToolRenderResultOptions } from "../../../core/extensions/types.ts";
 import type { Theme } from "../theme/theme.ts";
 

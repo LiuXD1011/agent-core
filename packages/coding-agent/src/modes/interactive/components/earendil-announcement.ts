@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import { Container, Image, Spacer, Text } from "@liuxuedeng/pi-core-tui";
+import { Container, Image, Spacer, Text } from "@liuxuedeng/agent-core-tui";
 import { getBundledInteractiveAssetPath } from "../../../config.ts";
 import { theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";

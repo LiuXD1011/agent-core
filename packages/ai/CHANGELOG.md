@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking Changes
+
+- Renamed the npm package from `@liuxuedeng/pi-core-ai` to `@liuxuedeng/agent-core-ai`; update dependency specifiers and import paths.
+- Removed the Radius gateway provider, the `radius` known provider ID, the `RADIUS_API_KEY` environment mapping, the Radius OAuth flow, and the `loadRadiusOAuth` loader/bundled registration. The generic `pi-messages` API remains available for custom providers.
+
+### Added
+
+- Initial Agent Core release, based on Pi v0.85.1.
+
+<!-- agent-core:upstream-boundary -->
+<!-- Entries below are inherited upstream Pi history (github.com/earendil-works/pi), kept verbatim for provenance. They are not Agent Core releases. -->
+
 ## [0.85.1] - 2026-09-05
 
 ### Added

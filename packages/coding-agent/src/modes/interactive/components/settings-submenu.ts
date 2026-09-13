@@ -9,7 +9,7 @@ import {
 	type SelectListLayoutOptions,
 	Spacer,
 	Text,
-} from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
 import { getSelectListTheme, theme } from "../theme/theme.ts";
 
 const SUBMENU_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {

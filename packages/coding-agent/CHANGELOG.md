@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking Changes
+
+- Renamed the package to `@liuxuedeng/agent-core` and the CLI binary from `pi-core` to `agent-core`; update install commands and any scripts or wrappers that invoke the old binary name.
+- Renamed the config directory from `~/.pi-core/` to `~/.agent-core/` and the environment variable prefix from `PI_CORE_*` to `AGENT_CORE_*`; the previous config directory is migrated automatically on startup.
+- Removed the Radius gateway integration: the built-in `radius` provider and login entry, the `oauth: "radius"` models.json provider option, the `RADIUS_API_KEY` mapping, and the Radius session-share upload. `/share` now always creates a private GitHub gist; legacy models.json `oauth` entries degrade to plain custom providers without network access.
+- Removed the experimental remote-session architecture and the `@liuxuedeng/agent-core-client`, `@liuxuedeng/agent-core-protocol`, and `@liuxuedeng/agent-core-server` packages, including the `./client` and `./experimental/plugin` subpath exports and the experimental CLI. The local SDK, stdio RPC, extensions, and tool subprocess behavior are unchanged.
+- Removed the pi.dev online model catalog overlay: built-in providers expose only their static local catalogs and no refresh path contacts the catalog service; stale overlay caches in `models-store.json` are ignored. Local catalogs, custom models, and dynamic extension provider refreshes are unchanged.
+- No longer injects the NVIDIA NIM `X-BILLING-INVOKE-ORIGIN` attribution header automatically; user-configured headers still apply.
+
+### Added
+
+- Initial Agent Core release, based on Pi v0.85.1.
+
+<!-- agent-core:upstream-boundary -->
+<!-- Entries below are inherited upstream Pi history (github.com/earendil-works/pi), kept verbatim for provenance. They are not Agent Core releases. -->
+
 ## [0.85.1] - 2026-09-05
 
 ### New Features

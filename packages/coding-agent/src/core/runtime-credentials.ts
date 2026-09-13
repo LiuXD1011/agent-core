@@ -1,4 +1,4 @@
-import type { AuthOperationOptions, Credential, CredentialInfo, CredentialStore } from "@liuxuedeng/pi-core-ai";
+import type { AuthOperationOptions, Credential, CredentialInfo, CredentialStore } from "@liuxuedeng/agent-core-ai";
 
 /** Async credential store overlay for non-persistent runtime API keys. */
 export class RuntimeCredentials implements CredentialStore {

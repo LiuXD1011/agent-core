@@ -3,15 +3,15 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"paths": {
-			"@liuxuedeng/pi-core-chord": ["../chord/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-chord/bundler": ["../chord/dist/bundler.d.ts"],
-			"@liuxuedeng/pi-core-chord/node": ["../chord/dist/node.d.ts"],
-			"@liuxuedeng/pi-core-agent": ["../agent/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-agent/*": ["../agent/dist/*.d.ts"],
-			"@liuxuedeng/pi-core-ai": ["../ai/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-ai/*": ["../ai/dist/*.d.ts", "../ai/dist/providers/*.d.ts"],
-			"@liuxuedeng/pi-core-tui": ["../tui/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-tui/*": ["../tui/dist/*.d.ts", "../tui/dist/components/*.d.ts"]
+			"@liuxuedeng/agent-core-chord": ["../chord/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-chord/bundler": ["../chord/dist/bundler.d.ts"],
+			"@liuxuedeng/agent-core-chord/node": ["../chord/dist/node.d.ts"],
+			"@liuxuedeng/agent-core-agent": ["../agent/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-agent/*": ["../agent/dist/*.d.ts"],
+			"@liuxuedeng/agent-core-ai": ["../ai/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-ai/*": ["../ai/dist/*.d.ts", "../ai/dist/providers/*.d.ts"],
+			"@liuxuedeng/agent-core-tui": ["../tui/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-tui/*": ["../tui/dist/*.d.ts", "../tui/dist/components/*.d.ts"]
 		},
 		"rootDir": "./src"
 	},

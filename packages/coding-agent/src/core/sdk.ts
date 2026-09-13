@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { Agent, type AgentMessage, setDefaultStreamFn, type ThinkingLevel } from "@liuxuedeng/pi-core-agent";
-import { clampThinkingLevel, type Message, type Model, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
+import { Agent, type AgentMessage, setDefaultStreamFn, type ThinkingLevel } from "@liuxuedeng/agent-core-agent";
+import { clampThinkingLevel, type Message, type Model, streamSimple } from "@liuxuedeng/agent-core-ai/compat";
 import { getAgentDir } from "../config.ts";
 import { resolvePath } from "../utils/paths.ts";
 import { AgentSession } from "./agent-session.ts";
@@ -39,7 +39,7 @@ setDefaultStreamFn(streamSimple);
 export interface CreateAgentSessionOptions {
 	/** Working directory for project-local discovery. Default: process.cwd() */
 	cwd?: string;
-	/** Global config directory. Default: ~/.pi-core/agent */
+	/** Global config directory. Default: ~/.agent-core/agent */
 	agentDir?: string;
 
 	/** Canonical model/auth runtime. Defaults to a runtime using agentDir/auth.json and models.json. */
@@ -144,7 +144,7 @@ function getDefaultAgentDir(): string {
  * const { session } = await createAgentSession();
  *
  * // With explicit model
- * import { getModel } from '@liuxuedeng/pi-core-ai';
+ * import { getModel } from '@liuxuedeng/agent-core-ai';
  * const { session } = await createAgentSession({
  *   model: getModel('anthropic', 'claude-opus-4-5'),
  *   thinkingLevel: 'high',

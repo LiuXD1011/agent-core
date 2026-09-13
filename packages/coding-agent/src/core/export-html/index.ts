@@ -1,4 +1,4 @@
-import type { AgentState } from "@liuxuedeng/pi-core-agent";
+import type { AgentState } from "@liuxuedeng/agent-core-agent";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { basename, join } from "path";
 import { APP_NAME, getExportTemplateDir } from "../../config.ts";

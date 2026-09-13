@@ -1,5 +1,5 @@
 {
-	"name": "@liuxuedeng/pi-core-ai",
+	"name": "@liuxuedeng/agent-core-ai",
 	"version": "0.1.0-alpha.1",
 	"description": "Unified LLM API with automatic model discovery and provider configuration",
 	"type": "module",
@@ -66,7 +66,7 @@
 	"dependencies": {
 		"@anthropic-ai/sdk": "0.123.0",
 		"@aws-sdk/client-bedrock-runtime": "3.1048.0",
-		"@liuxuedeng/pi-core-telemetry": "^0.1.0-alpha.1",
+		"@liuxuedeng/agent-core-telemetry": "^0.1.0-alpha.1",
 		"@google/genai": "1.52.0",
 		"@smithy/node-http-handler": "4.7.3",
 		"http-proxy-agent": "7.0.2",
@@ -85,11 +85,18 @@
 		"unified",
 		"api"
 	],
-	"author": "Mario Zechner",
+	"author": "LiuXD1011",
+	"contributors": [
+		"Mario Zechner (original Pi)"
+	],
 	"license": "MIT",
+	"homepage": "https://github.com/LiuXD1011/agent-core#readme",
+	"bugs": {
+		"url": "https://github.com/LiuXD1011/agent-core/issues"
+	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/earendil-works/pi.git",
+		"url": "git+https://github.com/LiuXD1011/agent-core.git",
 		"directory": "packages/ai"
 	},
 	"engines": {

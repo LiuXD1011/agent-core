@@ -7,8 +7,8 @@
  */
 
 import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } from "node:path";
-import type { ImageContent, TextContent } from "@liuxuedeng/pi-core-ai";
-import { Text } from "@liuxuedeng/pi-core-tui";
+import type { ImageContent, TextContent } from "@liuxuedeng/agent-core-ai";
+import { Text } from "@liuxuedeng/agent-core-tui";
 import { getReadmePath } from "../../../config.ts";
 import { keyHint, keyText } from "../../../modes/interactive/components/keybinding-hints.ts";
 import { getLanguageFromPath, highlightCode, type Theme } from "../../../modes/interactive/theme/theme.ts";

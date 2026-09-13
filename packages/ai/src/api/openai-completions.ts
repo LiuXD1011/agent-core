@@ -302,7 +302,7 @@ function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEn
 	if (cacheRetention) {
 		return cacheRetention;
 	}
-	if (getProviderEnvValue("PI_CORE_CACHE_RETENTION", env) === "long") {
+	if (getProviderEnvValue("AGENT_CORE_CACHE_RETENTION", env) === "long") {
 		return "long";
 	}
 	return "short";

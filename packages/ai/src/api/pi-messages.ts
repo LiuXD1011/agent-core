@@ -4,9 +4,9 @@
  * Streams pi's own message protocol directly to a backend: the request is a
  * single POST of `{ model, context, options }` to `<baseUrl>/messages`, the
  * response is an SSE stream of serialized assistant-message events plus a
- * terminal `done`/`error` event. This is the wire protocol spoken by the
- * Radius gateway, but any backend implementing it can be used, e.g. via a
- * models.json custom provider with `"api": "pi-messages"`.
+ * terminal `done`/`error` event. Any backend implementing this wire protocol
+ * can be used, e.g. via a models.json custom provider with
+ * `"api": "pi-messages"`.
  */
 
 import type {
@@ -347,7 +347,7 @@ function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEn
 		return cacheRetention;
 	}
 	// Backend defaults apply when unset; only the legacy env opt-in is mapped.
-	return getProviderEnvValue("PI_CORE_CACHE_RETENTION", env) === "long" ? "long" : undefined;
+	return getProviderEnvValue("AGENT_CORE_CACHE_RETENTION", env) === "long" ? "long" : undefined;
 }
 
 export const stream: StreamFunction<"pi-messages", PiMessagesOptions> = (

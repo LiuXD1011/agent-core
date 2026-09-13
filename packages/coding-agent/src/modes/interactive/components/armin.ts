@@ -2,7 +2,7 @@
  * Armin says hi! A fun easter egg with animated XBM art.
  */
 
-import type { Component, TUI } from "@liuxuedeng/pi-core-tui";
+import type { Component, TUI } from "@liuxuedeng/agent-core-tui";
 import { theme } from "../theme/theme.ts";
 
 // XBM image: 31x36 pixels, LSB first, 1=background, 0=foreground

@@ -1,9 +1,8 @@
-import type { Api, Model, ProviderHeaders } from "@liuxuedeng/pi-core-ai";
+import type { Api, Model, ProviderHeaders } from "@liuxuedeng/agent-core-ai";
 import type { SettingsManager } from "./settings-manager.ts";
 import { isInstallTelemetryEnabled } from "./telemetry.ts";
 
 const OPENROUTER_HOST = "openrouter.ai";
-const NVIDIA_NIM_HOST = "integrate.api.nvidia.com";
 const CLOUDFLARE_API_HOST = "api.cloudflare.com";
 const CLOUDFLARE_AI_GATEWAY_HOST = "gateway.ai.cloudflare.com";
 const OPENCODE_HOST = "opencode.ai";
@@ -18,10 +17,6 @@ function matchesHost(baseUrl: string, expectedHost: string): boolean {
 
 function isOpenRouterModel(model: Model<Api>): boolean {
 	return model.provider === "openrouter" || model.baseUrl.includes(OPENROUTER_HOST);
-}
-
-function isNvidiaNimModel(model: Model<Api>): boolean {
-	return model.provider === "nvidia" || matchesHost(model.baseUrl, NVIDIA_NIM_HOST);
 }
 
 function isCloudflareModel(model: Model<Api>): boolean {
@@ -43,21 +38,15 @@ function getDefaultAttributionHeaders(
 
 	if (isOpenRouterModel(model)) {
 		return {
-			"HTTP-Referer": "https://pi.dev",
-			"X-OpenRouter-Title": "pi",
+			"HTTP-Referer": "https://github.com/LiuXD1011/agent-core",
+			"X-OpenRouter-Title": "agent-core",
 			"X-OpenRouter-Categories": "cli-agent",
-		};
-	}
-
-	if (isNvidiaNimModel(model)) {
-		return {
-			"X-BILLING-INVOKE-ORIGIN": "Pi",
 		};
 	}
 
 	if (isCloudflareModel(model)) {
 		return {
-			"User-Agent": "pi-coding-agent",
+			"User-Agent": "agent-core",
 		};
 	}
 
@@ -73,7 +62,7 @@ function getSessionHeaders(model: Model<Api>, sessionId: string | undefined): Re
 	) {
 		return undefined;
 	}
-	return { "x-opencode-session": sessionId, "x-opencode-client": "pi" };
+	return { "x-opencode-session": sessionId, "x-opencode-client": "agent-core" };
 }
 
 export function mergeProviderAttributionHeaders(

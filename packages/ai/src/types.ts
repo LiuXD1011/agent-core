@@ -1,4 +1,4 @@
-import type { TelemetryContext } from "@liuxuedeng/pi-core-telemetry";
+import type { TelemetryContext } from "@liuxuedeng/agent-core-telemetry";
 import type { AnthropicOptions } from "./api/anthropic-messages.ts";
 import type { AzureOpenAIResponsesOptions } from "./api/azure-openai-responses.ts";
 import type { BedrockOptions } from "./api/bedrock-converse-stream.ts";
@@ -41,7 +41,6 @@ export type KnownProvider =
 	| "openai"
 	| "azure-openai-responses"
 	| "openai-codex"
-	| "radius"
 	| "nvidia"
 	| "deepseek"
 	| "github-copilot"

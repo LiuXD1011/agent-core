@@ -1,4 +1,4 @@
-import { Container, getKeybindings, Spacer, Text } from "@liuxuedeng/pi-core-tui";
+import { Container, getKeybindings, Spacer, Text } from "@liuxuedeng/agent-core-tui";
 import { APP_NAME } from "../../../config.ts";
 import { type TerminalTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";

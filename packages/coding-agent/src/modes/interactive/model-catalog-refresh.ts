@@ -1,4 +1,4 @@
-import type { ModelsRefreshResult } from "@liuxuedeng/pi-core-ai";
+import type { ModelsRefreshResult } from "@liuxuedeng/agent-core-ai";
 import type { ModelRuntime } from "../../core/model-runtime.ts";
 import { raceWithAbortSignal } from "../../utils/abort.ts";
 

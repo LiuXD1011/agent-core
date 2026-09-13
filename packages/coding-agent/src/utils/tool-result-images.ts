@@ -1,4 +1,4 @@
-import type { ImageContent, TextContent } from "@liuxuedeng/pi-core-ai";
+import type { ImageContent, TextContent } from "@liuxuedeng/agent-core-ai";
 import { processImage } from "./image-process.ts";
 
 export type ToolResultContent = TextContent | ImageContent;

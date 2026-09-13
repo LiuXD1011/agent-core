@@ -6,7 +6,7 @@
  * tool definition, so the tool's public shape is unchanged.
  */
 
-import { Container, Text, truncateToWidth } from "@liuxuedeng/pi-core-tui";
+import { Container, Text, truncateToWidth } from "@liuxuedeng/agent-core-tui";
 import { keyHint } from "../../../modes/interactive/components/keybinding-hints.ts";
 import { truncateToVisualLines } from "../../../modes/interactive/components/visual-truncate.ts";
 import { theme } from "../../../modes/interactive/theme/theme.ts";

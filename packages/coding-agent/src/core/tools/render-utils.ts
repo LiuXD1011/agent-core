@@ -1,7 +1,7 @@
 import * as os from "node:os";
 import { pathToFileURL } from "node:url";
-import type { ImageContent, TextContent } from "@liuxuedeng/pi-core-ai";
-import { getCapabilities, getImageDimensions, hyperlink, imageFallback } from "@liuxuedeng/pi-core-tui";
+import type { ImageContent, TextContent } from "@liuxuedeng/agent-core-ai";
+import { getCapabilities, getImageDimensions, hyperlink, imageFallback } from "@liuxuedeng/agent-core-tui";
 import type { Theme } from "../../modes/interactive/theme/theme.ts";
 import { stripAnsi } from "../../utils/ansi.ts";
 import { resolvePath } from "../../utils/paths.ts";

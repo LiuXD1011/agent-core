@@ -6,8 +6,8 @@
  */
 
 import { createInterface } from "node:readline";
-import { type ImageContent, modelsAreEqual } from "@liuxuedeng/pi-core-ai";
-import { setCapabilityOverrides } from "@liuxuedeng/pi-core-tui";
+import { type ImageContent, modelsAreEqual } from "@liuxuedeng/agent-core-ai";
+import { setCapabilityOverrides } from "@liuxuedeng/agent-core-tui";
 import chalk from "chalk";
 import { type Args, type Mode, normalizeSessionName, parseArgs, printHelp } from "./cli/args.ts";
 import {
@@ -562,10 +562,10 @@ export interface MainOptions {
 export async function main(args: string[], options?: MainOptions) {
 	resetTimings();
 	const extensionFactories = [...builtInExtensions, ...(options?.extensionFactories ?? [])];
-	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.PI_CORE_OFFLINE);
+	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.AGENT_CORE_OFFLINE);
 	if (offlineMode) {
-		process.env.PI_CORE_OFFLINE = "1";
-		process.env.PI_CORE_SKIP_VERSION_CHECK = "1";
+		process.env.AGENT_CORE_OFFLINE = "1";
+		process.env.AGENT_CORE_SKIP_VERSION_CHECK = "1";
 	}
 
 	if (await runAuthCommand(args)) {
@@ -911,9 +911,9 @@ export async function main(args: string[], options?: MainOptions) {
 		process.exit(1);
 	}
 
-	const startupBenchmark = isTruthyEnvFlag(process.env.PI_CORE_STARTUP_BENCHMARK);
+	const startupBenchmark = isTruthyEnvFlag(process.env.AGENT_CORE_STARTUP_BENCHMARK);
 	if (startupBenchmark && appMode !== "interactive") {
-		console.error(chalk.red("Error: PI_CORE_STARTUP_BENCHMARK only supports interactive mode"));
+		console.error(chalk.red("Error: AGENT_CORE_STARTUP_BENCHMARK only supports interactive mode"));
 		process.exit(1);
 	}
 

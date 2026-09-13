@@ -4,6 +4,7 @@
 
 import chalk from "chalk";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "fs";
+import { homedir } from "os";
 import { dirname, join } from "path";
 import { CONFIG_DIR_NAME, getAgentDir, getBinDir } from "./config.ts";
 import { migrateKeybindingsConfig } from "./core/keybindings.ts";
@@ -299,6 +300,28 @@ export async function showDeprecationWarnings(warnings: string[]): Promise<void>
 }
 
 /**
+ * Move the global config directory ~/.pi-core to ~/.agent-core (product rename).
+ * Skipped when a derivative build overrides the config dir to something else,
+ * and when the target already exists (never merge directories).
+ */
+function migrateConfigDirName(): void {
+	if (CONFIG_DIR_NAME !== ".agent-core") return;
+	const oldDir = join(homedir(), ".pi-core");
+	const newDir = join(homedir(), CONFIG_DIR_NAME);
+	if (!existsSync(oldDir) || existsSync(newDir)) return;
+	try {
+		renameSync(oldDir, newDir);
+		console.log(chalk.green(`Migrated config directory from ~/.pi-core to ~/.agent-core`));
+	} catch (err) {
+		console.log(
+			chalk.yellow(
+				`Warning: Could not migrate ~/.pi-core to ~/.agent-core: ${err instanceof Error ? err.message : err}`,
+			),
+		);
+	}
+}
+
+/**
  * Run all migrations. Called once on startup.
  *
  * @returns Object with migration results and deprecation warnings
@@ -307,6 +330,7 @@ export function runMigrations(cwd: string): {
 	migratedAuthProviders: string[];
 	deprecationWarnings: string[];
 } {
+	migrateConfigDirName();
 	const migratedAuthProviders = migrateAuthToAuthJson();
 	migrateSessionsFromAgentRoot();
 	migrateToolsToBin();

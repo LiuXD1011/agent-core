@@ -1,5 +1,5 @@
-import type { Terminal } from "@liuxuedeng/pi-core-tui";
-import { ProcessTerminal, type TUI, TuiAltScreen, TuiMainScreen } from "@liuxuedeng/pi-core-tui";
+import type { Terminal } from "@liuxuedeng/agent-core-tui";
+import { ProcessTerminal, type TUI, TuiAltScreen, TuiMainScreen } from "@liuxuedeng/agent-core-tui";
 import { copyToClipboard } from "../../utils/clipboard.ts";
 import { openBrowser } from "../../utils/open-browser.ts";
 import { keyDisplayText } from "./components/keybinding-hints.ts";

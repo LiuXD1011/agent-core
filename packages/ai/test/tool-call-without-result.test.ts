@@ -311,7 +311,7 @@ describe("Tool Call Without Result Tests", () => {
 	});
 
 	// =========================================================================
-	// OAuth-based providers (credentials from ~/.pi-core/agent/oauth.json)
+	// OAuth-based providers (credentials from ~/.agent-core/agent/oauth.json)
 	// =========================================================================
 
 	describe("Anthropic OAuth Provider", () => {

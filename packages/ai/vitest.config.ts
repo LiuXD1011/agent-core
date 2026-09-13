@@ -12,6 +12,6 @@ export default defineConfig({
 		silent: "passed-only",
 	},
 	resolve: {
-		alias: [{ find: /^@liuxuedeng\/pi-core-telemetry$/, replacement: telemetrySrcIndex }],
+		alias: [{ find: /^@liuxuedeng\/agent-core-telemetry$/, replacement: telemetrySrcIndex }],
 	},
 });

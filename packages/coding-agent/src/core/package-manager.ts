@@ -51,7 +51,7 @@ const UPDATE_CHECK_CONCURRENCY = 4;
 const GIT_UPDATE_CONCURRENCY = 4;
 
 function isOfflineModeEnabled(): boolean {
-	const value = process.env.PI_CORE_OFFLINE;
+	const value = process.env.AGENT_CORE_OFFLINE;
 	if (!value) return false;
 	return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
@@ -2415,7 +2415,7 @@ export class DefaultPackageManager implements PackageManager {
 		};
 
 		if (projectTrusted) {
-			// Project extensions from .pi-core/
+			// Project extensions from .agent-core/
 			addResources(
 				"extensions",
 				collectAutoExtensionEntries(projectDirs.extensions),
@@ -2424,7 +2424,7 @@ export class DefaultPackageManager implements PackageManager {
 				projectBaseDir,
 			);
 
-			// Project skills from .pi-core/
+			// Project skills from .agent-core/
 			addResources(
 				"skills",
 				collectAutoSkillEntries(projectDirs.skills, "pi"),
@@ -2467,7 +2467,7 @@ export class DefaultPackageManager implements PackageManager {
 			);
 		}
 
-		// User extensions from ~/.pi-core/agent/
+		// User extensions from ~/.agent-core/agent/
 		addResources(
 			"extensions",
 			collectAutoExtensionEntries(userDirs.extensions),
@@ -2476,7 +2476,7 @@ export class DefaultPackageManager implements PackageManager {
 			globalBaseDir,
 		);
 
-		// User skills from ~/.pi-core/agent/
+		// User skills from ~/.agent-core/agent/
 		addResources(
 			"skills",
 			collectAutoSkillEntries(userDirs.skills, "pi"),

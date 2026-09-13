@@ -2,7 +2,7 @@
  * CLI argument parsing and help display
  */
 
-import type { ThinkingLevel } from "@liuxuedeng/pi-core-agent";
+import type { ThinkingLevel } from "@liuxuedeng/agent-core-agent";
 import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME, ENV_AGENT_DIR, ENV_SESSION_DIR } from "../config.ts";
 import type { ExtensionFlag } from "../core/extensions/types.ts";
@@ -268,7 +268,7 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} install <source> [-l]     Install extension source and add to settings
   ${APP_NAME} remove <source> [-l]      Remove extension source from settings
   ${APP_NAME} uninstall <source> [-l]   Alias for remove
-  ${APP_NAME} update [source|self]      Update pi-core, extensions, or model catalogs
+  ${APP_NAME} update [source|self]      Update agent-core, extensions, or model catalogs
   ${APP_NAME} list                      List installed extensions from settings
   ${APP_NAME} config [-l]               Open TUI to enable/disable package resources (Tab switches scope)
   ${APP_NAME} auth <command>            Print credentials or check provider readiness
@@ -315,7 +315,7 @@ ${chalk.bold("Options:")}
   --tui-mode <mode>              TUI mode: regular (default) or fullscreen
   --approve, -a                  Trust project-local files for this run
   --no-approve, -na              Ignore project-local files for this run
-  --offline                      Disable startup network operations (same as PI_CORE_OFFLINE=1)
+  --offline                      Disable startup network operations (same as AGENT_CORE_OFFLINE=1)
   --                             End option parsing; treat remaining arguments as messages/files
   --help, -h                     Show this help
   --version, -v                  Show version number
@@ -429,10 +429,10 @@ ${chalk.bold("Environment Variables:")}
   AWS_REGION                       - AWS region for Amazon Bedrock (e.g., us-east-1)
   ${ENV_AGENT_DIR.padEnd(32)} - Config directory (default: ~/${CONFIG_DIR_NAME}/agent)
   ${ENV_SESSION_DIR.padEnd(32)} - Session storage directory (overridden by --session-dir)
-  PI_CORE_PACKAGE_DIR                   - Override package directory (for Nix/Guix store paths)
-  PI_CORE_OFFLINE                       - Disable startup network operations when set to 1/true/yes
-  PI_CORE_TELEMETRY                     - Override install telemetry when set to 1/true/yes or 0/false/no
-  PI_CORE_SHARE_VIEWER_URL              - Base URL for /share command (default: https://pi.dev/session/)
+  AGENT_CORE_PACKAGE_DIR                   - Override package directory (for Nix/Guix store paths)
+  AGENT_CORE_OFFLINE                       - Disable startup network operations when set to 1/true/yes
+  AGENT_CORE_TELEMETRY                     - Override install telemetry when set to 1/true/yes or 0/false/no
+  AGENT_CORE_SHARE_VIEWER_URL              - Base URL for /share command (default: https://pi.dev/session/)
 
 ${chalk.bold("Built-in Tool Names:")}
   read       - Read file contents

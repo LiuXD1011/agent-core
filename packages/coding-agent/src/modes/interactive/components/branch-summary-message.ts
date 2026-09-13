@@ -1,4 +1,4 @@
-import { Box, Markdown, type MarkdownTheme, Spacer, Text } from "@liuxuedeng/pi-core-tui";
+import { Box, Markdown, type MarkdownTheme, Spacer, Text } from "@liuxuedeng/agent-core-tui";
 import type { BranchSummaryMessage } from "../../../core/messages.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";
 import { keyText } from "./keybinding-hints.ts";

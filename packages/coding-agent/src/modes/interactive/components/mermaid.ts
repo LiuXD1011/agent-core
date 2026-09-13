@@ -1,4 +1,4 @@
-import { Marked, type Token } from "@liuxuedeng/pi-core-tui";
+import { Marked, type Token } from "@liuxuedeng/agent-core-tui";
 import { type MermaidArt, render, type Span } from "grok-mermaid";
 import type { MarkdownTransformer } from "../../../core/extensions/types.ts";
 import type { MermaidRenderingMode } from "../../../core/settings-manager.ts";

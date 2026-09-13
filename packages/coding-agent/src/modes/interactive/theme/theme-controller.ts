@@ -1,4 +1,4 @@
-import type { TUI } from "@liuxuedeng/pi-core-tui";
+import type { TUI } from "@liuxuedeng/agent-core-tui";
 import type { SettingsManager } from "../../../core/settings-manager.ts";
 import {
 	detectTerminalBackgroundFromEnv,

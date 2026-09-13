@@ -5,8 +5,8 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import type { AgentMessage, ThinkingLevel } from "@liuxuedeng/pi-core-agent";
-import type { ImageContent } from "@liuxuedeng/pi-core-ai";
+import type { AgentMessage, ThinkingLevel } from "@liuxuedeng/agent-core-agent";
+import type { ImageContent } from "@liuxuedeng/agent-core-ai";
 import type { SessionStats } from "../../core/agent-session.ts";
 import type { BashResult } from "../../core/bash-executor.ts";
 import type { CompactionResult } from "../../core/compaction/index.ts";

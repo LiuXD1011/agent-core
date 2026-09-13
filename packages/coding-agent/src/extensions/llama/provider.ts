@@ -6,8 +6,8 @@ import type {
 	Provider,
 	ProviderStreamOptions,
 	RefreshModelsContext,
-} from "@liuxuedeng/pi-core-ai";
-import { stream, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai";
+import { stream, streamSimple } from "@liuxuedeng/agent-core-ai/compat";
 import { LlamaClient, type LlamaModelInfo, llamaInferenceUrl, normalizeLlamaServerUrl } from "./client.ts";
 
 export const LLAMA_PROVIDER_ID = "llama.cpp";

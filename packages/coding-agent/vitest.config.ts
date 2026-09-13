@@ -9,7 +9,7 @@ export default mergeConfig(
 			environment: "node",
 			testTimeout: 30000,
 			// Tests run offline by default; opt in with allowNetwork() from test/test-network-env.ts.
-			env: { PI_CORE_OFFLINE: "1" },
+			env: { AGENT_CORE_OFFLINE: "1" },
 			unstubEnvs: true,
 			reporters: process.env.GITHUB_ACTIONS ? ["dot", "github-actions"] : ["dot"],
 			silent: "passed-only",
@@ -21,8 +21,8 @@ export default mergeConfig(
 		},
 		resolve: {
 			alias: [
-				{ find: /^@liuxuedeng\/pi-core-ai$/, replacement: workspaceSourcePaths.aiIndex },
-				{ find: /^@liuxuedeng\/pi-core-agent$/, replacement: workspaceSourcePaths.agentIndex },
+				{ find: /^@liuxuedeng\/agent-core-ai$/, replacement: workspaceSourcePaths.aiIndex },
+				{ find: /^@liuxuedeng\/agent-core-agent$/, replacement: workspaceSourcePaths.agentIndex },
 				{ find: /^@mariozechner\/pi-ai$/, replacement: workspaceSourcePaths.aiIndex },
 				{ find: /^@mariozechner\/pi-ai\/oauth$/, replacement: workspaceSourcePaths.aiOAuth },
 				{ find: /^@mariozechner\/pi-agent-core$/, replacement: workspaceSourcePaths.agentIndex },

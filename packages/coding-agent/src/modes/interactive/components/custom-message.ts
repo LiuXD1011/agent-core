@@ -1,6 +1,6 @@
-import type { TextContent } from "@liuxuedeng/pi-core-ai";
-import type { Component } from "@liuxuedeng/pi-core-tui";
-import { Box, Container, Markdown, type MarkdownTheme, Spacer, Text } from "@liuxuedeng/pi-core-tui";
+import type { TextContent } from "@liuxuedeng/agent-core-ai";
+import type { Component } from "@liuxuedeng/agent-core-tui";
+import { Box, Container, Markdown, type MarkdownTheme, Spacer, Text } from "@liuxuedeng/agent-core-tui";
 import type { MessageRenderer } from "../../../core/extensions/types.ts";
 import type { CustomMessage } from "../../../core/messages.ts";
 import { getMarkdownTheme, theme } from "../theme/theme.ts";

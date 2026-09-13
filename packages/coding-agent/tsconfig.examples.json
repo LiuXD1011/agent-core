@@ -3,10 +3,10 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"paths": {
-			"@liuxuedeng/pi-core": ["./src/index.ts"],
-			"@liuxuedeng/pi-core/hooks": ["./src/core/hooks/index.ts"],
-			"@liuxuedeng/pi-core-tui": ["../tui/src/index.ts"],
-			"@liuxuedeng/pi-core-ai": ["../ai/src/index.ts"],
+			"@liuxuedeng/agent-core": ["./src/index.ts"],
+			"@liuxuedeng/agent-core/hooks": ["./src/core/hooks/index.ts"],
+			"@liuxuedeng/agent-core-tui": ["../tui/src/index.ts"],
+			"@liuxuedeng/agent-core-ai": ["../ai/src/index.ts"],
 			"typebox": ["../../node_modules/typebox"]
 		},
 		"skipLibCheck": true

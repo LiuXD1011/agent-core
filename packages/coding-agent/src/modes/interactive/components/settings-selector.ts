@@ -1,5 +1,5 @@
-import type { ThinkingLevel } from "@liuxuedeng/pi-core-agent";
-import { getSupportedThinkingLevels, type Model, type Transport } from "@liuxuedeng/pi-core-ai";
+import type { ThinkingLevel } from "@liuxuedeng/agent-core-agent";
+import { getSupportedThinkingLevels, type Model, type Transport } from "@liuxuedeng/agent-core-ai";
 import {
 	type Component,
 	Container,
@@ -10,7 +10,7 @@ import {
 	SettingsList,
 	Spacer,
 	Text,
-} from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
 import { formatHttpIdleTimeoutMs, HTTP_IDLE_TIMEOUT_CHOICES } from "../../../core/http-dispatcher.ts";
 import type {
 	DefaultProjectTrust,

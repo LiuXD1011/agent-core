@@ -24,8 +24,8 @@ import type {
 	AgentTool,
 	PrepareNextTurnContext,
 	ThinkingLevel,
-} from "@liuxuedeng/pi-core-agent";
-import { contentText } from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-agent";
+import { contentText } from "@liuxuedeng/agent-core-ai";
 import type {
 	AssistantMessage,
 	AuthResult,
@@ -34,7 +34,7 @@ import type {
 	ProviderHeaders,
 	TextContent,
 	Usage,
-} from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
 import {
 	clampThinkingLevel,
 	cleanupSessionResources,
@@ -46,7 +46,7 @@ import {
 	type RetryCallbacks,
 	resetApiProviders,
 	streamSimple,
-} from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
 import { getThemeByName, theme } from "../modes/interactive/theme/theme.ts";
 import { stripFrontmatter } from "../utils/frontmatter.ts";
 import { sleep } from "../utils/sleep.ts";

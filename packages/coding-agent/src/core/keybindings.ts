@@ -5,7 +5,7 @@ import {
 	type KeyId,
 	TUI_KEYBINDINGS,
 	KeybindingsManager as TuiKeybindingsManager,
-} from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { getAgentDir } from "../config.ts";
@@ -66,7 +66,7 @@ export function useWindowsKeybindings(
 	return platform === "win32" || (platform === "linux" && Boolean(env.WSL_DISTRO_NAME || env.WSL_INTEROP));
 }
 
-declare module "@liuxuedeng/pi-core-tui" {
+declare module "@liuxuedeng/agent-core-tui" {
 	interface Keybindings extends AppKeybindings {}
 }
 
