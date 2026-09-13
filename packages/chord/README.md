@@ -1,10 +1,11 @@
-# @liuxuedeng/pi-core-chord
+# @liuxuedeng/agent-core-chord
 
 Chord is an application-composition runtime for systems assembled from
 plugins/extensions. It provides facets, services, replicated state, and a
 pluggable remote-service boundary. It is developed as a standalone package in
-the Pi monorepo, but it is not a Pi package: it does not depend on any other Pi
-workspace package and can be used by unrelated applications.
+the Agent Core monorepo, but it is not an Agent Core package in the product
+sense: it does not depend on any other workspace package and can be used by
+unrelated applications.
 
 ## What Chord is for
 
@@ -59,9 +60,9 @@ The design has a few connected pieces:
 
 The current runtime exports service tokens, singleton and keyed providers,
 remote bindings, replicated state, facet hosts, and facet loaders from
-`@liuxuedeng/pi-core-chord`. Import public types and general runtime APIs from the
+`@liuxuedeng/agent-core-chord`. Import public types and general runtime APIs from the
 package root. Context constants and functions live in
-`@liuxuedeng/pi-core-chord/context` because their generic names should not pollute
+`@liuxuedeng/agent-core-chord/context` because their generic names should not pollute
 the root API.
 Chord-owned identifiers use the `chord.*` namespace and its reserved service
 prefix is `$chord.*`.
@@ -88,10 +89,10 @@ outer protocol.
 
 ## Tracking JSON deltas
 
-Import the standalone delta primitive from `@liuxuedeng/pi-core-chord/delta`:
+Import the standalone delta primitive from `@liuxuedeng/agent-core-chord/delta`:
 
 ```ts
-import { apply, track } from "@liuxuedeng/pi-core-chord/delta";
+import { apply, track } from "@liuxuedeng/agent-core-chord/delta";
 
 const changes = track({ output: "", count: 0 });
 changes.flush(); // opening base batch
@@ -123,7 +124,7 @@ consumer-ownership rules.
 
 ## Bundling and loading facets
 
-`@liuxuedeng/pi-core-chord/bundler` uses esbuild to turn ESM or TypeScript application
+`@liuxuedeng/agent-core-chord/bundler` uses esbuild to turn ESM or TypeScript application
 entries into independent, content-addressed CommonJS files. The package-level API
 reads plugin identity and build configuration from `package.json`, then applies
 facet path conventions supplied by the host application:
@@ -134,7 +135,7 @@ facet path conventions supplied by the host application:
   "version": "1.0.0",
   "type": "module",
   "peerDependencies": {
-    "@liuxuedeng/pi-core-chord": "^0.84.4"
+    "@liuxuedeng/agent-core-chord": "^0.84.4"
   },
   "chord": {
     "facets": {
@@ -146,7 +147,7 @@ facet path conventions supplied by the host application:
 ```
 
 ```ts
-import { bundleFacetPackage } from "@liuxuedeng/pi-core-chord/bundler";
+import { bundleFacetPackage } from "@liuxuedeng/agent-core-chord/bundler";
 
 await bundleFacetPackage({
 	packagePath: "/path/to/my-plugin",
@@ -169,7 +170,7 @@ The output directory contains one `.cjs` file per entry plus
 loader:
 
 ```ts
-import { createFacetBundleLoader } from "@liuxuedeng/pi-core-chord/node";
+import { createFacetBundleLoader } from "@liuxuedeng/agent-core-chord/node";
 
 const loader = createFacetBundleLoader({
 	manifestPath: "/application-owned/plugin-builds/my-plugin/chord-facets.json",
@@ -201,5 +202,28 @@ remain incarnation-specific and replacements receive fresh generations. The
 bundler writes a complete temporary directory before replacing the previous
 output, so loaders do not observe partially built generations.
 
-See [PLANNING.md](PLANNING.md) for the broader RPC and generation-loading
-architecture.
+## Design constraints
+
+Constraints and recorded decisions that bind this implementation:
+
+- **Dependency boundary:** Chord imports no other workspace package, and the
+  vocabulary of this package must never grow Pi concepts (Session, Harness,
+  AgentLane, server, client, attachment, TUI, model, tool, hook, credential,
+  workspace). It stays buildable, testable, and packable standalone; an
+  automated boundary check enforces this.
+- **Layering:** the local service path must not require RPC serialization; the
+  remote path reuses identical semantics through a strict wire boundary.
+- **Context scope:** Chord provides no built-in telemetry, identity,
+  authentication, or application values. Hosts (including the agent harness)
+  layer those onto Context through their own value keys.
+- **Strict-JSON enforcement deferral:** Chord validates only structural control
+  envelopes at its own boundary; runtime rejection of non-JSON application data
+  is deferred to concrete serializers and adapters.
+- **Update-failure reporting:** reload failures are classified as load,
+  pre-cutover validation, deactivation, activation, or rebinding/loader-disposal
+  failures and reported as an aggregate.
+- **Status:** the symmetric RPC peer (`rpc/peer.ts`) and structural-generation
+  replacement remain planned; no `src/rpc/` implementation exists today.
+- **Open decisions:** Context value position, the metadata-carrier field,
+  unload wait-vs-cancel, sequence-gap recovery, bundler engine placement, and
+  the facet manifest schema remain unresolved where they affect new work.

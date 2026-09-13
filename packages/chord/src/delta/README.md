@@ -1,14 +1,14 @@
 # Chord Delta
 
 Chord Delta synchronizes JSON values from an authoritative producer to an
-ordered replica. It is available from `@liuxuedeng/pi-core-chord/delta`.
+ordered replica. It is available from `@liuxuedeng/agent-core-chord/delta`.
 
 A change is represented by an `Op`: a JSON tuple for replacing, setting,
 deleting, updating a string, or splicing an array. Producers use `track()`;
 replicas use `apply()` or `applyImmutable()`.
 
 ```ts
-import { apply, track } from "@liuxuedeng/pi-core-chord/delta";
+import { apply, track } from "@liuxuedeng/agent-core-chord/delta";
 
 const tracker = track({ output: "", entries: [] as string[] });
 let replica = apply(undefined, tracker.flush());
@@ -37,7 +37,7 @@ the encoded tuples, restores complete paths, and returns the `Op[]` required by
 `apply()`:
 
 ```ts
-import { apply, decoder, encoder, track } from "@liuxuedeng/pi-core-chord/delta";
+import { apply, decoder, encoder, track } from "@liuxuedeng/agent-core-chord/delta";
 
 const tracker = track({ output: "" });
 const enc = encoder(); // producer side
@@ -308,6 +308,11 @@ changed the replica.
 - Delta assumes one authoritative writer and ordered delivery. Sequence numbers,
   gap detection, retries, and persistence policy belong to the surrounding
   protocol or storage format.
+- The explicit text append/truncate API is a closed, rejected decision: do not add
+  an `appendText`/truncate API, text-specific dirty-node kinds, or proxy-to-tracker
+  lookup. The generic overlap path measured 17.8-18.7 microseconds per 200 KB
+  assistant flush and 2.43-2.46 microseconds per 50 KB window flush; reopen the
+  decision only if a production profile shows flush time is material.
 - Object identity is not replicated. Tracked mutable state must be a tree;
   immutable inputs may share references, but replicas need not preserve them.
 - Object key insertion order is not replicated. Do not compare or hash replicas
