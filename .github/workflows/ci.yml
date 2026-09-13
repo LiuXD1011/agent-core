@@ -41,4 +41,4 @@ jobs:
       - name: Test
         run: npm test
         env:
-          PI_CORE_NO_LOCAL_LLM: 1
+          AGENT_CORE_NO_LOCAL_LLM: 1

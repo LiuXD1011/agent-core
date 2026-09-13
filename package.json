@@ -1,5 +1,5 @@
 {
-	"name": "pi-monorepo",
+	"name": "agent-core-monorepo",
 	"private": true,
 	"type": "module",
 	"workspaces": [
@@ -13,10 +13,11 @@
 	],
 	"scripts": {
 		"clean": "npm run clean --workspaces",
-		"build": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../coding-agent && npm run build",
-		"build:offline": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build:offline && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../coding-agent && npm run build",
-		"check": "biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:shrinkwrap && npm run check:install-lock:coding-agent && tsgo --noEmit && npm run check:browser-smoke",
+		"build": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../coding-agent && npm run build",
+		"build:offline": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build:offline && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../coding-agent && npm run build",
+		"check": "biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:shrinkwrap && npm run check:install-lock:coding-agent && tsgo --noEmit && npm run check:browser-smoke && npm run check:branding",
 		"check:browser-smoke": "node scripts/check-browser-smoke.mjs",
+		"check:branding": "node scripts/check-branding.mjs",
 		"check:pinned-deps": "node scripts/check-pinned-deps.mjs",
 		"check:runtime-deps": "node scripts/check-runtime-deps.mjs",
 		"check:package-install": "node scripts/coding-agent-consumer.mjs",
@@ -29,7 +30,7 @@
 		"check:model-data": "npm --prefix packages/ai run check:model-data",
 		"generate:model-catalog": "npm --prefix packages/ai run generate-model-catalog",
 		"diff:model-catalog": "node scripts/diff-model-catalog.mjs",
-		"eval": "npm run eval --workspace=@liuxuedeng/pi-core-evals --",
+		"eval": "npm run eval --workspace=@liuxuedeng/agent-core-evals --",
 		"check:model-catalog": "node scripts/publish-model-catalog.mjs --input .artifacts/model-catalog --dry-run",
 		"profile:tui": "node scripts/profile-coding-agent-node.mjs --mode tui",
 		"profile:rpc": "node scripts/profile-coding-agent-node.mjs --mode rpc",
@@ -65,7 +66,7 @@
 	"engines": {
 		"node": ">=22.19.0"
 	},
-	"version": "0.0.3",
+	"version": "0.1.0-alpha.1",
 	"overrides": {
 		"protobufjs": "7.6.5",
 		"rimraf": "6.1.2",
