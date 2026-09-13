@@ -1,5 +1,5 @@
-import type { AssistantMessage } from "@liuxuedeng/pi-core-ai";
-import { Container } from "@liuxuedeng/pi-core-tui";
+import type { AssistantMessage } from "@liuxuedeng/agent-core-ai";
+import { Container } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, test } from "vitest";
 import { InteractiveMode } from "../src/modes/interactive/interactive-mode.ts";
 import { initTheme } from "../src/modes/interactive/theme/theme.ts";

@@ -7,7 +7,7 @@ import { ENV_AGENT_DIR } from "../src/config.ts";
 import { allowNetwork } from "./test-network-env.ts";
 
 const cliPath = resolve(__dirname, "../src/cli.ts");
-const sourceResolverPath = resolve(__dirname, "../src/experimental/source-resolver.ts");
+const sourceResolverPath = resolve(__dirname, "../src/cli/source-resolver.ts");
 
 const tempDirs: string[] = [];
 
@@ -31,7 +31,7 @@ async function runCli(args: string[]): Promise<{ stdout: string; stderr: string;
 	const tempRoot = createTempDir();
 	const agentDir = join(tempRoot, "agent");
 	const projectDir = join(tempRoot, "project");
-	const projectConfigDir = join(projectDir, ".pi-core");
+	const projectConfigDir = join(projectDir, ".agent-core");
 	mkdirSync(agentDir, { recursive: true });
 	mkdirSync(projectConfigDir, { recursive: true });
 

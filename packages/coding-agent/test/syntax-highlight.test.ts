@@ -1,4 +1,4 @@
-import { resetCapabilitiesCache, setCapabilities } from "@liuxuedeng/pi-core-tui";
+import { resetCapabilitiesCache, setCapabilities } from "@liuxuedeng/agent-core-tui";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { highlightCode, initTheme } from "../src/modes/interactive/theme/theme.ts";
 import {

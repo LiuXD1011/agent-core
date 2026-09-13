@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Provider } from "@liuxuedeng/pi-core-ai";
-import { getModel } from "@liuxuedeng/pi-core-ai/compat";
+import type { Provider } from "@liuxuedeng/agent-core-ai";
+import { getModel } from "@liuxuedeng/agent-core-ai/compat";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.ts";
 import { ModelRuntime } from "../src/core/model-runtime.ts";

@@ -1,4 +1,4 @@
-import type { Message } from "@liuxuedeng/pi-core-ai";
+import type { Message } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, it } from "vitest";
 import { serializeConversation } from "../src/core/compaction/utils.ts";
 

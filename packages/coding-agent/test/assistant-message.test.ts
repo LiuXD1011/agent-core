@@ -1,5 +1,5 @@
-import type { AssistantMessage } from "@liuxuedeng/pi-core-ai";
-import type { TuiMouseEvent } from "@liuxuedeng/pi-core-tui";
+import type { AssistantMessage } from "@liuxuedeng/agent-core-ai";
+import type { TuiMouseEvent } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, test } from "vitest";
 import { AssistantMessageComponent } from "../src/modes/interactive/components/assistant-message.ts";
 import { UserMessageComponent } from "../src/modes/interactive/components/user-message.ts";

@@ -1,5 +1,5 @@
-import type { AgentMessage, AgentTool } from "@liuxuedeng/pi-core-agent";
-import { fauxAssistantMessage, fauxToolCall } from "@liuxuedeng/pi-core-ai";
+import type { AgentMessage, AgentTool } from "@liuxuedeng/agent-core-agent";
+import { fauxAssistantMessage, fauxToolCall } from "@liuxuedeng/agent-core-ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { convertToLlm } from "../../../src/core/messages.ts";

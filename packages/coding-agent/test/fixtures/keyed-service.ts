@@ -1,4 +1,4 @@
-import { type Context, defineService, type ReplicatedState } from "@liuxuedeng/pi-core-chord";
+import { type Context, defineService, type ReplicatedState } from "@liuxuedeng/agent-core-chord";
 
 export interface KeyedProbe {
 	readonly state: ReplicatedState<{ value: string }>;

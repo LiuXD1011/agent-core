@@ -1,4 +1,4 @@
-import { setKeybindings, type TUI } from "@liuxuedeng/pi-core-tui";
+import { setKeybindings, type TUI } from "@liuxuedeng/agent-core-tui";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { KeybindingsManager } from "../../../src/core/keybindings.ts";
 import { ModelSelectorComponent } from "../../../src/modes/interactive/components/model-selector.ts";

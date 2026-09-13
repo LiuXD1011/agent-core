@@ -1,6 +1,6 @@
-import type { AgentMessage } from "@liuxuedeng/pi-core-agent";
-import type { AssistantMessage, ToolResultMessage, Usage } from "@liuxuedeng/pi-core-ai";
-import { Container, Text, type TUI } from "@liuxuedeng/pi-core-tui";
+import type { AgentMessage } from "@liuxuedeng/agent-core-agent";
+import type { AssistantMessage, ToolResultMessage, Usage } from "@liuxuedeng/agent-core-ai";
+import { Container, Text, type TUI } from "@liuxuedeng/agent-core-tui";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import type { AgentSessionEvent } from "../../../src/core/agent-session.ts";
 import type { SessionEntry } from "../../../src/core/session-manager.ts";

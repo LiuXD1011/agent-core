@@ -1,5 +1,5 @@
-import type { Api, Model, ModelsRefreshResult } from "@liuxuedeng/pi-core-ai";
-import { setKeybindings, type TUI } from "@liuxuedeng/pi-core-tui";
+import type { Api, Model, ModelsRefreshResult } from "@liuxuedeng/agent-core-ai";
+import { setKeybindings, type TUI } from "@liuxuedeng/agent-core-tui";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { KeybindingsManager } from "../../../src/core/keybindings.ts";
 import type { ScopedModelsSelectorComponent } from "../../../src/modes/interactive/components/scoped-models-selector.ts";

@@ -1,4 +1,4 @@
-import { setKeybindings } from "@liuxuedeng/pi-core-tui";
+import { setKeybindings } from "@liuxuedeng/agent-core-tui";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { KeybindingsManager } from "../src/core/keybindings.ts";
 import { ScopedModelsSelectorComponent } from "../src/modes/interactive/components/scoped-models-selector.ts";

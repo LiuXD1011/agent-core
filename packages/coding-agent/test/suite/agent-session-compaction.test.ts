@@ -1,4 +1,4 @@
-import type { AgentMessage, AgentTool } from "@liuxuedeng/pi-core-agent";
+import type { AgentMessage, AgentTool } from "@liuxuedeng/agent-core-agent";
 import {
 	type AssistantMessage,
 	type Context,
@@ -7,7 +7,7 @@ import {
 	fauxToolCall,
 	type Model,
 	type SimpleStreamOptions,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { estimateTokens } from "../../src/core/compaction/index.ts";

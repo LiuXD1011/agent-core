@@ -71,7 +71,7 @@ describe("buildSystemPrompt", () => {
 			expect(prompt).toContain(expected);
 		});
 
-		test("instructs models to resolve pi-core docs and examples under absolute base paths", () => {
+		test("instructs models to resolve agent-core docs and examples under absolute base paths", () => {
 			const prompt = buildSystemPrompt({
 				contextFiles: [],
 				skills: [],
@@ -79,7 +79,7 @@ describe("buildSystemPrompt", () => {
 			});
 
 			expect(prompt).toContain(
-				"- When reading pi-core docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
+				"- When reading agent-core docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
 			);
 			expect(prompt).toContain("environment variables (docs/environment-variables.md)");
 		});

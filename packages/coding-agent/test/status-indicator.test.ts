@@ -1,4 +1,4 @@
-import { type TUI, visibleWidth } from "@liuxuedeng/pi-core-tui";
+import { type TUI, visibleWidth } from "@liuxuedeng/agent-core-tui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { KeybindingsManager } from "../src/core/keybindings.ts";
 import { CustomEditor } from "../src/modes/interactive/components/custom-editor.ts";

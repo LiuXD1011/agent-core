@@ -1,4 +1,4 @@
-import { Container } from "@liuxuedeng/pi-core-tui";
+import { Container } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, test } from "vitest";
 import { createChatViewport } from "../src/modes/interactive/chat-viewport.ts";
 

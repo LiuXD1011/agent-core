@@ -1,4 +1,4 @@
-import { fauxAssistantMessage, fauxToolCall } from "@liuxuedeng/pi-core-ai";
+import { fauxAssistantMessage, fauxToolCall } from "@liuxuedeng/agent-core-ai";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 import type { ExtensionFactory } from "../../../src/index.ts";

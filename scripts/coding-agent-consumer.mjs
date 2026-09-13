@@ -7,8 +7,8 @@ import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
-const codingAgentName = "@liuxuedeng/pi-core";
-const developmentPackages = new Set(["client", "protocol", "server"].map((name) => `@liuxuedeng/pi-core-${name}`));
+const codingAgentName = "@liuxuedeng/agent-core";
+const developmentPackages = new Set(["client", "protocol", "server"].map((name) => `@liuxuedeng/agent-core-${name}`));
 
 function run(command, args, options = {}) {
 	console.log(`$ ${[command, ...args].join(" ")}`);
@@ -92,9 +92,9 @@ export function smokeTestCodingAgentConsumer(directory, runtime = process.execPa
 		LOCALAPPDATA: home,
 		XDG_CONFIG_HOME: home,
 		XDG_CACHE_HOME: home,
-		PI_CORE_CODING_AGENT_DIR: join(home, ".pi-core", "agent"),
-		PI_CORE_OFFLINE: "1",
-		PI_CORE_TELEMETRY: "0",
+		AGENT_CORE_CODING_AGENT_DIR: join(home, ".agent-core", "agent"),
+		AGENT_CORE_OFFLINE: "1",
+		AGENT_CORE_TELEMETRY: "0",
 	};
 	for (const name of ["SystemRoot", "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT"]) {
 		if (process.env[name]) env[name] = process.env[name];
@@ -106,14 +106,14 @@ assert.equal(typeof createAgentSession, "function");
 assert.equal(typeof SessionManager.inMemory, "function");
 assert.equal(typeof ModelRuntime.create, "function");
 for (const name of ["client", "protocol", "server"]) {
-  assert.throws(() => import.meta.resolve("@liuxuedeng/pi-core-" + name), /Cannot find|cannot find/, name + " must not be installed");
+  assert.throws(() => import.meta.resolve("@liuxuedeng/agent-core-" + name), /Cannot find|cannot find/, name + " must not be installed");
 }
 for (const subpath of ["/client", "/experimental/plugin"]) {
   assert.throws(() => import.meta.resolve("${codingAgentName}" + subpath), /not exported|not defined|Cannot find|cannot find/);
 }
 `);
 		run(runtime, [entry], { cwd: directory, env, timeout: 30_000 });
-		for (const cli of new Set([manifest.bin.pi, "dist/cli.js"])) {
+		for (const cli of new Set([manifest.bin["agent-core"], "dist/cli.js"])) {
 			const output = run(runtime, [join(packageDir, cli), "--version"], { cwd: directory, env, timeout: 30_000 });
 			if (output.trim() !== manifest.version) throw new Error(`Unexpected version from ${cli}: ${output}`);
 		}

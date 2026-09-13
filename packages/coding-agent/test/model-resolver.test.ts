@@ -1,10 +1,10 @@
 import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@liuxuedeng/pi-core-agent";
-import type { Model } from "@liuxuedeng/pi-core-ai";
-import { getModel, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
-import { getBuiltinModels, getBuiltinProviders } from "@liuxuedeng/pi-core-ai/providers/all";
+import { Agent } from "@liuxuedeng/agent-core-agent";
+import type { Model } from "@liuxuedeng/agent-core-ai";
+import { getModel, streamSimple } from "@liuxuedeng/agent-core-ai/compat";
+import { getBuiltinModels, getBuiltinProviders } from "@liuxuedeng/agent-core-ai/providers/all";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
 import { AuthStorage } from "../src/core/auth-storage.ts";

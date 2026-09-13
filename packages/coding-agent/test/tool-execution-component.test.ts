@@ -1,5 +1,5 @@
 import { join, resolve } from "node:path";
-import { Text, type TUI, type TuiMouseEvent } from "@liuxuedeng/pi-core-tui";
+import { Text, type TUI, type TuiMouseEvent } from "@liuxuedeng/agent-core-tui";
 import { Type } from "typebox";
 import { beforeAll, describe, expect, test } from "vitest";
 import { getReadmePath } from "../src/config.ts";
@@ -502,17 +502,17 @@ describe("ToolExecutionComponent parity", () => {
 		},
 		{
 			title: "AGENTS.md",
-			path: join(process.cwd(), ".pi-core", "AGENTS.md"),
+			path: join(process.cwd(), ".agent-core", "AGENTS.md"),
 			content: "Hidden resource instructions",
-			compact: "read resource .pi-core/AGENTS.md",
+			compact: "read resource .agent-core/AGENTS.md",
 			hidden: "Hidden resource instructions",
 			absent: undefined,
 		},
 		{
 			title: "AGENTS.override.md",
-			path: join(process.cwd(), ".pi-core", "AGENTS.override.md"),
+			path: join(process.cwd(), ".agent-core", "AGENTS.override.md"),
 			content: "Hidden override instructions",
-			compact: "read resource .pi-core/AGENTS.override.md",
+			compact: "read resource .agent-core/AGENTS.override.md",
 			hidden: "Hidden override instructions",
 			absent: undefined,
 		},

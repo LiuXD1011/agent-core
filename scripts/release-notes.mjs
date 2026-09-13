@@ -5,11 +5,12 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-const DEFAULT_REPO = "earendil-works/pi";
+const DEFAULT_REPO = "LiuXD1011/agent-core";
 const DEFAULT_BASE_PATH = "packages/coding-agent";
 const DEFAULT_CHANGELOG = "packages/coding-agent/CHANGELOG.md";
-const DEFAULT_FIX_SINCE_TAG = "v0.74.0";
-const LEGACY_REPO_RE = /^https:\/\/github\.com\/(?:badlogic|earendil-works)\/pi-mono(?=\/|$)/;
+// Links into the upstream Pi repositories are historical references; they are
+// preserved verbatim instead of being retargeted to the Agent Core repository.
+const UPSTREAM_REPO_RE = /^https:\/\/github\.com\/(?:badlogic|earendil-works)\/pi(?:-mono)?(?=\/|$)/;
 const URL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
 const INLINE_MARKDOWN_LINK_RE = /(!?\[[^\]\n]+\]\()([^\s)]+)((?:\s+[^)]*)?\))/g;
 
@@ -31,7 +32,7 @@ extract options:
 fix-github-releases options:
   --repo <owner/repo>     GitHub repository to patch (default: ${DEFAULT_REPO})
   --tag <vX.Y.Z>          Patch only one release tag
-  --since-tag <vX.Y.Z>    Oldest release tag to patch (default: ${DEFAULT_FIX_SINCE_TAG})
+  --since-tag <vX.Y.Z>    Oldest release tag to patch (default: all releases)
   --base-path <path>      Base path for relative changelog links (default: ${DEFAULT_BASE_PATH})
   --dry-run               Print releases that would change without updating GitHub
 `);
@@ -64,7 +65,7 @@ function parseOptions(args) {
 		dryRun: false,
 		out: undefined,
 		repo: DEFAULT_REPO,
-		sinceTag: DEFAULT_FIX_SINCE_TAG,
+		sinceTag: undefined,
 		tag: undefined,
 		version: undefined,
 	};
@@ -113,18 +114,53 @@ function versionFromTag(tag) {
 	return tag.startsWith("v") ? tag.slice(1) : tag;
 }
 
+function versionParts(tag) {
+	const version = versionFromTag(tag);
+	const hyphenIndex = version.indexOf("-");
+	const core = hyphenIndex === -1 ? version : version.slice(0, hyphenIndex);
+	const prerelease = hyphenIndex === -1 ? undefined : version.slice(hyphenIndex + 1);
+	return { core: core.split(".").map(Number), prerelease };
+}
+
+function comparePrereleaseIdentifiers(a, b) {
+	const aParts = a.split(".");
+	const bParts = b.split(".");
+
+	for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+		const aPart = aParts[i];
+		const bPart = bParts[i];
+		if (aPart === undefined) return -1;
+		if (bPart === undefined) return 1;
+
+		const aNumber = /^\d+$/.test(aPart) ? Number(aPart) : undefined;
+		const bNumber = /^\d+$/.test(bPart) ? Number(bPart) : undefined;
+		if (aNumber !== undefined && bNumber !== undefined) {
+			if (aNumber !== bNumber) return aNumber - bNumber;
+		} else if (aPart !== bPart) {
+			return aPart < bPart ? -1 : 1;
+		}
+	}
+
+	return 0;
+}
+
 function compareVersions(a, b) {
-	const aParts = versionFromTag(a).split(".").map(Number);
-	const bParts = versionFromTag(b).split(".").map(Number);
+	const aParts = versionParts(a);
+	const bParts = versionParts(b);
 
 	for (let i = 0; i < 3; i++) {
-		const diff = (aParts[i] || 0) - (bParts[i] || 0);
+		const diff = (aParts.core[i] || 0) - (bParts.core[i] || 0);
 		if (diff !== 0) {
 			return diff;
 		}
 	}
 
-	return 0;
+	if (aParts.prerelease === bParts.prerelease) {
+		return 0;
+	}
+	if (aParts.prerelease === undefined) return 1;
+	if (bParts.prerelease === undefined) return -1;
+	return comparePrereleaseIdentifiers(aParts.prerelease, bParts.prerelease);
 }
 
 function escapeRegExp(value) {
@@ -195,7 +231,11 @@ function isDirectoryTarget(originalPath, repositoryPath) {
 }
 
 function normalizeLinkTarget(target, options) {
-	let canonicalTarget = target.replace(LEGACY_REPO_RE, `https://github.com/${options.repo}`);
+	if (UPSTREAM_REPO_RE.test(target)) {
+		return target;
+	}
+
+	let canonicalTarget = target;
 	const repoUrl = `https://github.com/${options.repo}`;
 
 	for (const route of ["blob", "tree"]) {
@@ -310,7 +350,9 @@ function fixGithubReleases(options) {
 		throw new Error(`Release not found: ${tagFilter}`);
 	}
 
-	const releases = matchingReleases.filter((release) => compareVersions(release.tag_name, sinceTag) >= 0);
+	const releases = sinceTag
+		? matchingReleases.filter((release) => compareVersions(release.tag_name, sinceTag) >= 0)
+		: matchingReleases;
 	if (tagFilter && releases.length === 0) {
 		console.log(`Skipping ${tagFilter}: older than ${sinceTag}.`);
 		console.log(`${options.dryRun ? "Would update" : "Updated"} 0 releases.`);

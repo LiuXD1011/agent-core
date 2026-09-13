@@ -10,7 +10,7 @@ import { SettingsManager } from "../src/core/settings-manager.ts";
 import { createSessionManager } from "../src/main.ts";
 
 const cliPath = resolve(__dirname, "../src/cli.ts");
-const sourceResolverPath = resolve(__dirname, "../src/experimental/source-resolver.ts");
+const sourceResolverPath = resolve(__dirname, "../src/cli/source-resolver.ts");
 const tempDirs: string[] = [];
 
 afterEach(() => {
@@ -60,7 +60,7 @@ async function runCli(args: string[]): Promise<{ code: number | null; agentDir: 
 			env: {
 				...process.env,
 				[ENV_AGENT_DIR]: agentDir,
-				PI_CORE_OFFLINE: "1",
+				AGENT_CORE_OFFLINE: "1",
 			},
 			stdio: ["ignore", "ignore", "ignore"],
 		});

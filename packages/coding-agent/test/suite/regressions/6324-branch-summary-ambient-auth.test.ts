@@ -1,4 +1,4 @@
-import { createAssistantMessageEventStream } from "@liuxuedeng/pi-core-ai";
+import { createAssistantMessageEventStream } from "@liuxuedeng/agent-core-ai";
 import { afterEach, describe, expect, it } from "vitest";
 import { assistantMsg, userMsg } from "../../utilities.ts";
 import { createHarness, type Harness } from "../harness.ts";

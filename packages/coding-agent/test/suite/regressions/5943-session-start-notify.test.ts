@@ -1,5 +1,5 @@
-import { fauxAssistantMessage } from "@liuxuedeng/pi-core-ai";
-import { Container, Text } from "@liuxuedeng/pi-core-tui";
+import { fauxAssistantMessage } from "@liuxuedeng/agent-core-ai";
+import { Container, Text } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, it, vi } from "vitest";
 import type { AgentSessionEvent } from "../../../src/core/agent-session.ts";
 import type { ExtensionUIContext } from "../../../src/core/extensions/index.ts";

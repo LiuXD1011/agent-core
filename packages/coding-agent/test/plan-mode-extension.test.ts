@@ -1,5 +1,5 @@
-import type { AgentMessage } from "@liuxuedeng/pi-core-agent";
-import type { AssistantMessage } from "@liuxuedeng/pi-core-ai";
+import type { AgentMessage } from "@liuxuedeng/agent-core-agent";
+import type { AssistantMessage } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, it, vi } from "vitest";
 import planModeExtension from "../examples/extensions/plan-mode/index.ts";
 import type { ExtensionAPI, ExtensionContext } from "../src/core/extensions/index.ts";

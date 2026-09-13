@@ -1,4 +1,4 @@
-import type { Models } from "@liuxuedeng/pi-core-ai";
+import type { Models } from "@liuxuedeng/agent-core-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHarness, type Harness } from "../harness.ts";
 

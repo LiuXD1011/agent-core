@@ -1,4 +1,4 @@
-import { visibleWidth } from "@liuxuedeng/pi-core-tui";
+import { visibleWidth } from "@liuxuedeng/agent-core-tui";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { AgentSession } from "../src/core/agent-session.ts";
 import type { ReadonlyFooterDataProvider } from "../src/core/footer-data-provider.ts";

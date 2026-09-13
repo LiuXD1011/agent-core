@@ -6,10 +6,10 @@ import { createModelRegistry, getModelRuntime } from "./model-runtime-test-utils
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { Agent } from "@liuxuedeng/pi-core-agent";
-import type { OAuthCredentials } from "@liuxuedeng/pi-core-ai";
-import { getModel, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
-import { builtinProviders } from "@liuxuedeng/pi-core-ai/providers/all";
+import { Agent } from "@liuxuedeng/agent-core-agent";
+import type { OAuthCredentials } from "@liuxuedeng/agent-core-ai";
+import { getModel, streamSimple } from "@liuxuedeng/agent-core-ai/compat";
+import { builtinProviders } from "@liuxuedeng/agent-core-ai/providers/all";
 import { AgentSession } from "../src/core/agent-session.ts";
 import { AuthStorage } from "../src/core/auth-storage.ts";
 import { createEventBus } from "../src/core/event-bus.ts";
@@ -32,10 +32,10 @@ import { createCodingTools } from "../src/index.ts";
 export const API_KEY = process.env.ANTHROPIC_OAUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
 
 // ============================================================================
-// OAuth API key resolution from ~/.pi-core/agent/auth.json
+// OAuth API key resolution from ~/.agent-core/agent/auth.json
 // ============================================================================
 
-const AUTH_PATH = join(homedir(), ".pi-core", "agent", "auth.json");
+const AUTH_PATH = join(homedir(), ".agent-core", "agent", "auth.json");
 
 type ApiKeyCredential = {
 	type: "api_key";
@@ -72,7 +72,7 @@ function saveAuthStorage(storage: AuthStorageData): void {
 }
 
 /**
- * Resolve API key for a provider from ~/.pi-core/agent/auth.json
+ * Resolve API key for a provider from ~/.agent-core/agent/auth.json
  *
  * For API key credentials, returns the key directly.
  * For OAuth credentials, returns the access token (refreshing if expired and saving back).
@@ -104,7 +104,7 @@ export async function resolveApiKey(provider: string): Promise<string | undefine
 }
 
 /**
- * Check if a provider has credentials in ~/.pi-core/agent/auth.json
+ * Check if a provider has credentials in ~/.agent-core/agent/auth.json
  */
 export function hasAuthForProvider(provider: string): boolean {
 	const storage = loadAuthStorage();
@@ -112,10 +112,10 @@ export function hasAuthForProvider(provider: string): boolean {
 }
 
 /** Path to the real pi agent config directory */
-export const PI_CORE_AGENT_DIR = join(homedir(), ".pi-core", "agent");
+export const AGENT_CORE_AGENT_DIR = join(homedir(), ".agent-core", "agent");
 
 /**
- * Get an AuthStorage instance backed by ~/.pi-core/agent/auth.json
+ * Get an AuthStorage instance backed by ~/.agent-core/agent/auth.json
  * Use this for tests that need real OAuth credentials.
  */
 export function getRealAuthStorage(): AuthStorage {

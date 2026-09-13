@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getModel } from "@liuxuedeng/pi-core-ai/compat";
+import { getModel } from "@liuxuedeng/agent-core-ai/compat";
 import { Type } from "typebox";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DefaultResourceLoader } from "../src/core/resource-loader.ts";
@@ -74,24 +74,24 @@ describe("AgentSession dynamic tool registration", () => {
 
 		const bashTool = session.agent.state.tools.find((tool) => tool.name === "bash")!;
 		expect(session.systemPrompt).toContain(
-			"You can inspect PI_CORE_* environment variables for current model and session details.",
+			"You can inspect AGENT_CORE_* environment variables for current model and session details.",
 		);
 		await bashTool.execute("bash-env", { command: "printf ok" });
 		expect(sessionEnv).toMatchObject({
-			PI_CORE_SESSION_ID: session.sessionId,
-			PI_CORE_SESSION_FILE: session.sessionFile,
-			PI_CORE_PROVIDER: model.provider,
-			PI_CORE_MODEL: model.id,
-			PI_CORE_REASONING_LEVEL: session.thinkingLevel,
+			AGENT_CORE_SESSION_ID: session.sessionId,
+			AGENT_CORE_SESSION_FILE: session.sessionFile,
+			AGENT_CORE_PROVIDER: model.provider,
+			AGENT_CORE_MODEL: model.id,
+			AGENT_CORE_REASONING_LEVEL: session.thinkingLevel,
 		});
 
 		const optedOutBashTool = session.agent.state.tools.find((tool) => tool.name === "bash_without_session_env")!;
 		await optedOutBashTool.execute("bash-no-env", { command: "printf ok" });
-		expect(optedOutEnv).not.toHaveProperty("PI_CORE_SESSION_ID");
-		expect(optedOutEnv).not.toHaveProperty("PI_CORE_SESSION_FILE");
-		expect(optedOutEnv).not.toHaveProperty("PI_CORE_PROVIDER");
-		expect(optedOutEnv).not.toHaveProperty("PI_CORE_MODEL");
-		expect(optedOutEnv).not.toHaveProperty("PI_CORE_REASONING_LEVEL");
+		expect(optedOutEnv).not.toHaveProperty("AGENT_CORE_SESSION_ID");
+		expect(optedOutEnv).not.toHaveProperty("AGENT_CORE_SESSION_FILE");
+		expect(optedOutEnv).not.toHaveProperty("AGENT_CORE_PROVIDER");
+		expect(optedOutEnv).not.toHaveProperty("AGENT_CORE_MODEL");
+		expect(optedOutEnv).not.toHaveProperty("AGENT_CORE_REASONING_LEVEL");
 
 		session.dispose();
 	});

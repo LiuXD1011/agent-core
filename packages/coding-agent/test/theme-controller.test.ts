@@ -1,4 +1,4 @@
-import type { TUI } from "@liuxuedeng/pi-core-tui";
+import type { TUI } from "@liuxuedeng/agent-core-tui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SettingsManager } from "../src/core/settings-manager.ts";
 import { initTheme, type TerminalTheme, theme } from "../src/modes/interactive/theme/theme.ts";

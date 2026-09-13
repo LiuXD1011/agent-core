@@ -12,7 +12,7 @@ import {
 
 const execPathDescriptor = Object.getOwnPropertyDescriptor(process, "execPath");
 const originalPath = process.env.PATH;
-const originalPiPackageDir = process.env.PI_CORE_PACKAGE_DIR;
+const originalPiPackageDir = process.env.AGENT_CORE_PACKAGE_DIR;
 const originalArgv1 = process.argv[1];
 let tempDir: string | undefined;
 
@@ -33,9 +33,9 @@ afterEach(() => {
 		process.env.PATH = originalPath;
 	}
 	if (originalPiPackageDir === undefined) {
-		delete process.env.PI_CORE_PACKAGE_DIR;
+		delete process.env.AGENT_CORE_PACKAGE_DIR;
 	} else {
-		process.env.PI_CORE_PACKAGE_DIR = originalPiPackageDir;
+		process.env.AGENT_CORE_PACKAGE_DIR = originalPiPackageDir;
 	}
 	if (originalArgv1 === undefined) {
 		process.argv.splice(1, 1);
@@ -56,7 +56,7 @@ function createNpmPrefixInstall(template = "pi-prefix-"): { prefix: string; pack
 	const packageDir = join(scopeDir, "pi-coding-agent");
 	mkdirSync(packageDir, { recursive: true });
 	tempDir = prefix;
-	process.env.PI_CORE_PACKAGE_DIR = packageDir;
+	process.env.AGENT_CORE_PACKAGE_DIR = packageDir;
 	setExecPath(join(packageDir, "dist", "cli.js"));
 	return { prefix, packageDir };
 }
@@ -72,7 +72,7 @@ function createPnpmGlobalInstall(): { root: string; packageDir: string } {
 	chmodSync(join(binDir, process.platform === "win32" ? "pnpm.cmd" : "pnpm"), 0o755);
 	tempDir = temp;
 	process.env.PATH = `${binDir}${delimiter}${originalPath ?? ""}`;
-	process.env.PI_CORE_PACKAGE_DIR = packageDir;
+	process.env.AGENT_CORE_PACKAGE_DIR = packageDir;
 	setExecPath(
 		join(
 			root,
@@ -99,7 +99,7 @@ function createYarnGlobalInstall(): { globalDir: string; packageDir: string } {
 	chmodSync(join(binDir, process.platform === "win32" ? "yarn.cmd" : "yarn"), 0o755);
 	tempDir = temp;
 	process.env.PATH = `${binDir}${delimiter}${originalPath ?? ""}`;
-	process.env.PI_CORE_PACKAGE_DIR = packageDir;
+	process.env.AGENT_CORE_PACKAGE_DIR = packageDir;
 	setExecPath(join(globalDir, ".yarn", "@mariozechner", "pi-coding-agent", "dist", "cli.js"));
 	return { globalDir, packageDir };
 }
@@ -117,7 +117,7 @@ function createBunGlobalInstall(): { packageDir: string } {
 	chmodSync(join(bunBin, process.platform === "win32" ? "bun.cmd" : "bun"), 0o755);
 	tempDir = temp;
 	process.env.PATH = `${bunBin}${delimiter}${originalPath ?? ""}`;
-	process.env.PI_CORE_PACKAGE_DIR = packageDir;
+	process.env.AGENT_CORE_PACKAGE_DIR = packageDir;
 	setExecPath(join(packageDir, "dist", "cli.js"));
 	return { packageDir };
 }
@@ -166,8 +166,8 @@ describe("detectInstallMethod", () => {
 		);
 
 		expect(detectInstallMethod()).toBe("pnpm");
-		expect(getUpdateInstruction("@liuxuedeng/pi-core")).toBe(
-			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @liuxuedeng/pi-core",
+		expect(getUpdateInstruction("@liuxuedeng/agent-core")).toBe(
+			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @liuxuedeng/agent-core",
 		);
 	});
 
@@ -175,31 +175,39 @@ describe("detectInstallMethod", () => {
 		setExecPath("/usr/local/bin/node");
 
 		expect(detectInstallMethod()).toBe("unknown");
-		expect(getSelfUpdateCommand("@liuxuedeng/pi-core")).toBeUndefined();
-		expect(getUpdateInstruction("@liuxuedeng/pi-core")).toBe(
-			"Update @liuxuedeng/pi-core using the package manager, wrapper, or source checkout that provides this installation.",
+		expect(getSelfUpdateCommand("@liuxuedeng/agent-core")).toBeUndefined();
+		expect(getUpdateInstruction("@liuxuedeng/agent-core")).toBe(
+			"Update @liuxuedeng/agent-core using the package manager, wrapper, or source checkout that provides this installation.",
 		);
 	});
 
 	test("self-updates npm installs from custom prefixes", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@liuxuedeng/pi-core");
+		const command = getSelfUpdateCommand("@liuxuedeng/agent-core");
 
 		expect(detectInstallMethod()).toBe("npm");
 		expect(command).toEqual({
 			command: "npm",
-			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@liuxuedeng/pi-core"],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @liuxuedeng/pi-core`,
+			args: [
+				"--prefix",
+				prefix,
+				"install",
+				"-g",
+				"--ignore-scripts",
+				"--min-release-age=0",
+				"@liuxuedeng/agent-core",
+			],
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core`,
 		});
 	});
 
 	test("self-updates exact npm versions without uninstalling the current package", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@liuxuedeng/pi-core", undefined, {
-			packageName: "@liuxuedeng/pi-core",
-			installSpec: "@liuxuedeng/pi-core@1.2.3",
+		const command = getSelfUpdateCommand("@liuxuedeng/agent-core", undefined, {
+			packageName: "@liuxuedeng/agent-core",
+			installSpec: "@liuxuedeng/agent-core@1.2.3",
 		});
 
 		expect(command).toEqual({
@@ -211,9 +219,9 @@ describe("detectInstallMethod", () => {
 				"-g",
 				"--ignore-scripts",
 				"--min-release-age=0",
-				"@liuxuedeng/pi-core@1.2.3",
+				"@liuxuedeng/agent-core@1.2.3",
 			],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @liuxuedeng/pi-core@1.2.3`,
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core@1.2.3`,
 		});
 	});
 
@@ -244,19 +252,27 @@ describe("detectInstallMethod", () => {
 	test("self-update respects configured npmCommand", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@liuxuedeng/pi-core", ["npm", "--prefix", prefix]);
+		const command = getSelfUpdateCommand("@liuxuedeng/agent-core", ["npm", "--prefix", prefix]);
 
 		expect(command).toEqual({
 			command: "npm",
-			args: ["--prefix", prefix, "install", "-g", "--ignore-scripts", "--min-release-age=0", "@liuxuedeng/pi-core"],
-			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @liuxuedeng/pi-core`,
+			args: [
+				"--prefix",
+				prefix,
+				"install",
+				"-g",
+				"--ignore-scripts",
+				"--min-release-age=0",
+				"@liuxuedeng/agent-core",
+			],
+			display: `npm --prefix ${prefix} install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core`,
 		});
 	});
 
 	test("self-update treats empty npmCommand as unset", () => {
 		const { prefix } = createNpmPrefixInstall();
 
-		const command = getSelfUpdateCommand("@liuxuedeng/pi-core", []);
+		const command = getSelfUpdateCommand("@liuxuedeng/agent-core", []);
 
 		expect(command?.args).toEqual([
 			"--prefix",
@@ -265,41 +281,41 @@ describe("detectInstallMethod", () => {
 			"-g",
 			"--ignore-scripts",
 			"--min-release-age=0",
-			"@liuxuedeng/pi-core",
+			"@liuxuedeng/agent-core",
 		]);
 	});
 
 	test("quotes npm self-update display paths", () => {
 		const { prefix } = createNpmPrefixInstall("pi prefix ");
 
-		const command = getSelfUpdateCommand("@liuxuedeng/pi-core");
+		const command = getSelfUpdateCommand("@liuxuedeng/agent-core");
 
 		expect(command?.display).toBe(
-			`npm --prefix "${prefix}" install -g --ignore-scripts --min-release-age=0 @liuxuedeng/pi-core`,
+			`npm --prefix "${prefix}" install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core`,
 		);
 	});
 
 	test("does not infer Windows npm custom prefixes from package paths", () => {
 		const packageDir = "C:\\Users\\Admin\\npm prefix\\node_modules\\@earendil-works\\pi-coding-agent";
-		process.env.PI_CORE_PACKAGE_DIR = packageDir;
+		process.env.AGENT_CORE_PACKAGE_DIR = packageDir;
 		setExecPath(`${packageDir}\\dist\\cli.js`);
 
 		expect(detectInstallMethod()).toBe("npm");
-		expect(getUpdateInstruction("@liuxuedeng/pi-core")).toBe(
-			"Run: npm install -g --ignore-scripts --min-release-age=0 @liuxuedeng/pi-core",
+		expect(getUpdateInstruction("@liuxuedeng/agent-core")).toBe(
+			"Run: npm install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core",
 		);
 	});
 
 	test("self-updates bun global installs from bun pm bin", () => {
 		createBunGlobalInstall();
 
-		const command = getSelfUpdateCommand("@liuxuedeng/pi-core");
+		const command = getSelfUpdateCommand("@liuxuedeng/agent-core");
 
 		expect(detectInstallMethod()).toBe("bun");
 		expect(command).toEqual({
 			command: "bun",
-			args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=0", "@liuxuedeng/pi-core"],
-			display: "bun install -g --ignore-scripts --minimum-release-age=0 @liuxuedeng/pi-core",
+			args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=0", "@liuxuedeng/agent-core"],
+			display: "bun install -g --ignore-scripts --minimum-release-age=0 @liuxuedeng/agent-core",
 		});
 	});
 
@@ -333,7 +349,7 @@ describe("detectInstallMethod", () => {
 		const temp = mkdtempSync(join(tmpdir(), "pi-pnpm11-"));
 		const binDir = join(temp, "bin");
 		const root = join(temp, "Library", "pnpm", "global", "v11");
-		const packageName = "@liuxuedeng/pi-core";
+		const packageName = "@liuxuedeng/agent-core";
 		const globalPackageDir = join(root, "11e9a", "node_modules", "@earendil-works", "pi-coding-agent");
 		const storePackageDir = join(
 			temp,
@@ -358,7 +374,7 @@ describe("detectInstallMethod", () => {
 		chmodSync(join(binDir, process.platform === "win32" ? "pnpm.cmd" : "pnpm"), 0o755);
 		tempDir = temp;
 		process.env.PATH = `${binDir}${delimiter}${originalPath ?? ""}`;
-		process.env.PI_CORE_PACKAGE_DIR = storePackageDir;
+		process.env.AGENT_CORE_PACKAGE_DIR = storePackageDir;
 		process.argv[1] = join(globalPackageDir, "dist", "cli.js");
 		setExecPath(join(storePackageDir, "dist", "cli.js"));
 
@@ -427,7 +443,9 @@ describe("detectInstallMethod", () => {
 		const { packageDir } = createNpmPrefixInstall();
 		chmodSync(packageDir, 0o500);
 
-		expect(getSelfUpdateCommand("@liuxuedeng/pi-core")).toBeUndefined();
-		expect(getSelfUpdateUnavailableInstruction("@liuxuedeng/pi-core")).toContain("the install path is not writable");
+		expect(getSelfUpdateCommand("@liuxuedeng/agent-core")).toBeUndefined();
+		expect(getSelfUpdateUnavailableInstruction("@liuxuedeng/agent-core")).toContain(
+			"the install path is not writable",
+		);
 	});
 });

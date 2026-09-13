@@ -45,6 +45,6 @@ describe("Node SEA extension loading", () => {
 		expect(options.tryNative).toBe(false);
 		expect(options.alias).toBeUndefined();
 		expect(options.virtualModules?.typebox).toBeDefined();
-		expect(options.virtualModules?.["@liuxuedeng/pi-core"]).toBeDefined();
+		expect(options.virtualModules?.["@liuxuedeng/agent-core"]).toBeDefined();
 	});
 });

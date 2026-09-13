@@ -6,8 +6,8 @@ import { createModelRegistry, getModelRuntime } from "./model-runtime-test-utils
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@liuxuedeng/pi-core-agent";
-import { getModel, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
+import { Agent } from "@liuxuedeng/agent-core-agent";
+import { getModel, streamSimple } from "@liuxuedeng/agent-core-ai/compat";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
 import { AuthStorage } from "../src/core/auth-storage.ts";

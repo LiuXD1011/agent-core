@@ -1,4 +1,4 @@
-import { truncateToWidth, visibleWidth } from "@liuxuedeng/pi-core-tui";
+import { truncateToWidth, visibleWidth } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, it } from "vitest";
 
 /**

@@ -1,4 +1,4 @@
-import { InMemoryModelsStore } from "@liuxuedeng/pi-core-ai";
+import { InMemoryModelsStore } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, test, vi } from "vitest";
 import { parseArgs } from "../src/cli/args.ts";
 import { AuthCommandError, isAuthCommandHelp, parseAuthCommand } from "../src/cli/auth-command.ts";
@@ -75,7 +75,7 @@ describe("credential print commands", () => {
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
 			expect(stderr).toContain('Unknown option --credentails for "auth check".');
 			expect(stderr).toContain(
-				'Use "pi-core --help" or "pi-core auth check --provider <provider> [--json] [--credentials] [--no-refresh]".',
+				'Use "agent-core --help" or "agent-core auth check --provider <provider> [--json] [--credentials] [--no-refresh]".',
 			);
 			expect(process.exitCode).toBe(1);
 		} finally {

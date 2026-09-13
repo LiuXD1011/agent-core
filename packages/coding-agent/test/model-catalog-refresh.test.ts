@@ -1,4 +1,4 @@
-import type { ModelsRefreshOptions, ModelsRefreshResult } from "@liuxuedeng/pi-core-ai";
+import type { ModelsRefreshOptions, ModelsRefreshResult } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, it, vi } from "vitest";
 import { refreshModelCatalogs } from "../src/modes/interactive/model-catalog-refresh.ts";
 

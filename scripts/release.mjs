@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Release script for pi-mono
+ * Release script for agent-core
  *
  * Usage:
  *   node scripts/release.mjs <major|minor|patch>
@@ -16,7 +16,8 @@
  * 7. Commit and tag the release
  * 8. Add new [Unreleased] section to changelogs
  * 9. Commit next-cycle changelog updates
- * 10. Push main and the tag to trigger CI publication and verified pi.dev announcement
+ * 10. Push main and the tag. CI runs build, checks, and tests only; npm
+ *     publishing is manual (see AGENTS.md "Releasing").
  */
 
 import { execSync, spawnSync } from "node:child_process";
@@ -282,4 +283,4 @@ run("git push origin main");
 run(`git push origin v${version}`);
 console.log();
 
-console.log(`=== Prepared release v${version}; CI publication and pi.dev announcement start after the tag push ===`);
+console.log(`=== Release v${version} committed and tagged. Publish manually with npm publish (see AGENTS.md "Releasing") ===`);

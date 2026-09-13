@@ -2,12 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
 interface CodingAgentPackageJson {
-	bin: { "pi-core": string };
+	bin: { "agent-core": string };
 	main: string;
 	exports: {
 		".": { import: string; types: string };
-		"./client": { source: string };
-		"./experimental/plugin": { source: string };
 		"./rpc-entry": { import: string };
 	};
 }
@@ -18,15 +16,16 @@ const packageJson = JSON.parse(
 
 describe("package distribution entrypoints", () => {
 	test("uses the bundle for executables and modular output for libraries", () => {
-		expect(packageJson.bin["pi-core"]).toBe("dist/bundle/cli.js");
+		expect(packageJson.bin["agent-core"]).toBe("dist/bundle/cli.js");
 		expect(packageJson.main).toBe("./dist/index.js");
 		expect(packageJson.exports["."].import).toBe("./dist/index.js");
 		expect(packageJson.exports["./rpc-entry"].import).toBe("./dist/bundle/rpc-entry.js");
 	});
 
 	// Regression for #9132: internal experimental entrypoints must not be published runtime exports.
-	test("keeps experimental exports source-only", () => {
-		expect(packageJson.exports["./client"]).toEqual({ source: "./src/client/index.ts" });
-		expect(packageJson.exports["./experimental/plugin"]).toEqual({ source: "./src/experimental/plugin.ts" });
+	test("keeps experimental and remote-chain entrypoints out of the exports map", () => {
+		const exportsMap = packageJson.exports as Record<string, unknown>;
+		expect("./client" in exportsMap).toBe(false);
+		expect("./experimental/plugin" in exportsMap).toBe(false);
 	});
 });

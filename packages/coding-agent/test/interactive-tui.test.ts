@@ -1,5 +1,5 @@
-import type { Component, Terminal, TUI } from "@liuxuedeng/pi-core-tui";
-import { Container, getKeybindings, isViewportTUI, ScrollView, setKeybindings, Text } from "@liuxuedeng/pi-core-tui";
+import type { Component, Terminal, TUI } from "@liuxuedeng/agent-core-tui";
+import { Container, getKeybindings, isViewportTUI, ScrollView, setKeybindings, Text } from "@liuxuedeng/agent-core-tui";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VirtualTerminal } from "../../tui/test/virtual-terminal.ts";
 import { KeybindingsManager } from "../src/core/keybindings.ts";

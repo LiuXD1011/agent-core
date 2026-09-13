@@ -1,6 +1,5 @@
-import { Client } from "@liuxuedeng/pi-core-client";
-import { createAssistantMessageEventStream, Type } from "@liuxuedeng/pi-core-ai";
-import { complete, getModel, getProviders, streamSimple } from "@liuxuedeng/pi-core-ai/compat";
+import { createAssistantMessageEventStream, Type } from "@liuxuedeng/agent-core-ai";
+import { complete, getModel, getProviders, streamSimple } from "@liuxuedeng/agent-core-ai/compat";
 import {
 	Agent,
 	bashExecutionToText,
@@ -16,8 +15,7 @@ import {
 	streamProxy,
 	toError,
 	truncateHead,
-} from "@liuxuedeng/pi-core-agent";
-import { decodeCbor, encodeCbor, PROTOCOL_VERSION } from "@liuxuedeng/pi-core-protocol";
+} from "@liuxuedeng/agent-core-agent";
 
 // Keep this entry browser-safe. It is bundled by scripts/check-browser-smoke.mjs
 // to catch accidental Node-only runtime imports in browser-facing package exports.
@@ -57,7 +55,4 @@ console.log(
 	new FileError("not_found", "missing").code,
 	toError("boom").message,
 	typeof streamProxy,
-	typeof Client,
-	PROTOCOL_VERSION,
-	decodeCbor(encodeCbor({ browser: true })),
 );

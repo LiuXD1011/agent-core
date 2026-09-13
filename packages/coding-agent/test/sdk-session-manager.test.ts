@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getModel } from "@liuxuedeng/pi-core-ai/compat";
+import { getModel } from "@liuxuedeng/agent-core-ai/compat";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createAgentSession } from "../src/core/sdk.ts";
 import { SessionManager } from "../src/core/session-manager.ts";
@@ -105,13 +105,13 @@ describe("createAgentSession session manager defaults", () => {
 		});
 		expect(session.sessionFile).toBeTruthy();
 		expect(session.systemPrompt).toContain(
-			"You can inspect PI_CORE_* environment variables for current model and session details.",
+			"You can inspect AGENT_CORE_* environment variables for current model and session details.",
 		);
 
 		const bashTool = session.agent.state.tools.find((tool) => tool.name === "bash");
 		expect(bashTool).toBeTruthy();
 		const result = await bashTool!.execute("test", {
-			command: `printf '%s\\n' "$PI_CORE_SESSION_ID" "$PI_CORE_SESSION_FILE" "$PI_CORE_PROVIDER" "$PI_CORE_MODEL" "$PI_CORE_REASONING_LEVEL"`,
+			command: `printf '%s\\n' "$AGENT_CORE_SESSION_ID" "$AGENT_CORE_SESSION_FILE" "$AGENT_CORE_PROVIDER" "$AGENT_CORE_MODEL" "$AGENT_CORE_REASONING_LEVEL"`,
 		});
 		const output = result.content
 			.filter((item): item is { type: "text"; text: string } => item.type === "text")

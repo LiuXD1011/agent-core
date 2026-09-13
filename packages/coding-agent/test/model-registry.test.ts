@@ -7,8 +7,8 @@ import type {
 	Context,
 	Model,
 	OpenAICompletionsCompat,
-} from "@liuxuedeng/pi-core-ai/compat";
-import { getApiProvider, getModels, getSupportedThinkingLevels } from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
+import { getApiProvider, getModels, getSupportedThinkingLevels } from "@liuxuedeng/agent-core-ai/compat";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.ts";
 import type { ModelsJsonProvider } from "../src/core/model-config.ts";

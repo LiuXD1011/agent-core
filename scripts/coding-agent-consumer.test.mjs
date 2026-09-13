@@ -5,13 +5,13 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { installCodingAgentConsumer, packReleasePackages, smokeTestCodingAgentConsumer } from "./coding-agent-consumer.mjs";
 
-const codingAgentName = "@liuxuedeng/pi-core";
-const devPackages = ["client", "protocol", "server"].map((name) => `@liuxuedeng/pi-core-${name}`);
+const codingAgentName = "@liuxuedeng/agent-core";
+const devPackages = ["client", "protocol", "server"].map((name) => `@liuxuedeng/agent-core-${name}`);
 
 function createFixture(t, { importServer = false, declareServer = false } = {}) {
 	const root = mkdtempSync(join(tmpdir(), "pi-consumer-test-"));
 	t.after(() => rmSync(root, { recursive: true, force: true }));
-	const packages = [codingAgentName, "@liuxuedeng/pi-core-chord", ...devPackages].map((name) => ({
+	const packages = [codingAgentName, "@liuxuedeng/agent-core-chord", ...devPackages].map((name) => ({
 		name,
 		directory: join(root, "packages", name.split("/")[1]),
 	}));
@@ -27,10 +27,10 @@ function createFixture(t, { importServer = false, declareServer = false } = {}) 
 				"./experimental/plugin": { source: "./src/experimental/plugin.ts" },
 			} : "./dist/index.js",
 			...(isAgent ? {
-				bin: { pi: "dist/bundle/cli.js" },
+				bin: { "agent-core": "dist/bundle/cli.js" },
 				dependencies: {
-					"@liuxuedeng/pi-core-chord": "1.0.0",
-					...(declareServer ? { "@liuxuedeng/pi-core-server": "1.0.0" } : {}),
+					"@liuxuedeng/agent-core-chord": "1.0.0",
+					...(declareServer ? { "@liuxuedeng/agent-core-server": "1.0.0" } : {}),
 				},
 				devDependencies: Object.fromEntries(devPackages.map((name) => [name, "1.0.0"])),
 			} : {}),
@@ -38,8 +38,8 @@ function createFixture(t, { importServer = false, declareServer = false } = {}) 
 		const files = {
 			"package.json": JSON.stringify(manifest),
 			"dist/index.js": isAgent ? `
-${importServer ? 'import "@liuxuedeng/pi-core-server";' : ""}
-import { marker } from "@liuxuedeng/pi-core-chord";
+${importServer ? 'import "@liuxuedeng/agent-core-server";' : ""}
+import { marker } from "@liuxuedeng/agent-core-chord";
 if (marker !== "local tarball") throw new Error("Wrong Chord artifact");
 export function createAgentSession() {}
 export class SessionManager { static inMemory() {} }
@@ -72,10 +72,10 @@ test("installs only coding-agent directly and uses overrides only for declared r
 	}
 	smokeTestCodingAgentConsumer(directory);
 
-	const nested = join(directory, "node_modules", codingAgentName, "node_modules/@liuxuedeng/pi-core-server");
+	const nested = join(directory, "node_modules", codingAgentName, "node_modules/@liuxuedeng/agent-core-server");
 	mkdirSync(nested, { recursive: true });
-	writeFileSync(join(nested, "package.json"), JSON.stringify({ name: "@liuxuedeng/pi-core-server", version: "1.0.0" }));
-	assert.throws(() => smokeTestCodingAgentConsumer(directory), /pi-core-server must not be installed/);
+	writeFileSync(join(nested, "package.json"), JSON.stringify({ name: "@liuxuedeng/agent-core-server", version: "1.0.0" }));
+	assert.throws(() => smokeTestCodingAgentConsumer(directory), /agent-core-server must not be installed/);
 	rmSync(nested, { recursive: true });
 
 	const experimental = join(directory, "node_modules", codingAgentName, "dist/experimental");
@@ -86,10 +86,10 @@ test("installs only coding-agent directly and uses overrides only for declared r
 // #9132: smoke-test the public SDK, not just a bundled CLI that hides missing imports.
 test("fails when the SDK imports an undeclared server despite a working CLI", (t) => {
 	const directory = createFixture(t, { importServer: true });
-	assert.throws(() => smokeTestCodingAgentConsumer(directory), /Cannot find package '@liuxuedeng\/pi-core-server'/);
+	assert.throws(() => smokeTestCodingAgentConsumer(directory), /Cannot find package '@liuxuedeng\/agent-core-server'/);
 });
 
 test("fails if a development-only dependency is added back to the published dependency tree", (t) => {
 	const directory = createFixture(t, { declareServer: true });
-	assert.throws(() => smokeTestCodingAgentConsumer(directory), /pi-core-server must not be installed/);
+	assert.throws(() => smokeTestCodingAgentConsumer(directory), /agent-core-server must not be installed/);
 });

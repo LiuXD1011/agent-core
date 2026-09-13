@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ENV_AGENT_DIR } from "../src/config.ts";
 
 const cliPath = resolve(__dirname, "../src/cli.ts");
-const sourceResolverPath = resolve(__dirname, "../src/experimental/source-resolver.ts");
+const sourceResolverPath = resolve(__dirname, "../src/cli/source-resolver.ts");
 const tempDirs: string[] = [];
 
 afterEach(() => {
@@ -71,7 +71,7 @@ async function runCli(args: string[], dirs: CliDirs): Promise<CliResult> {
 		env: {
 			...process.env,
 			[ENV_AGENT_DIR]: dirs.agentDir,
-			PI_CORE_OFFLINE: "1",
+			AGENT_CORE_OFFLINE: "1",
 		},
 		stdio: ["ignore", "ignore", "pipe"],
 	});

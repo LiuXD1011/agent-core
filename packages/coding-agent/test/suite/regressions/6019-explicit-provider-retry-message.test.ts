@@ -1,4 +1,4 @@
-import { fauxAssistantMessage } from "@liuxuedeng/pi-core-ai";
+import { fauxAssistantMessage } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, it } from "vitest";
 import { createHarness } from "../harness.ts";
 

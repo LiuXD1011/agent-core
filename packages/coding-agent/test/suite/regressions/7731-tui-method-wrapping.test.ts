@@ -1,4 +1,4 @@
-import type { TUI } from "@liuxuedeng/pi-core-tui";
+import type { TUI } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, it, vi } from "vitest";
 import { createInteractiveTuiReference } from "../../../src/modes/interactive/interactive-mode.ts";
 

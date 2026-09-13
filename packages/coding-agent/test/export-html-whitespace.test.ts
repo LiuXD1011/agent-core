@@ -1,4 +1,4 @@
-import type { Component } from "@liuxuedeng/pi-core-tui";
+import type { Component } from "@liuxuedeng/agent-core-tui";
 import { readFileSync } from "fs";
 import { describe, expect, it } from "vitest";
 import { ansiLinesToHtml } from "../src/core/export-html/ansi-to-html.ts";

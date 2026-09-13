@@ -1,11 +1,11 @@
-import { Agent } from "@liuxuedeng/pi-core-agent";
+import { Agent } from "@liuxuedeng/agent-core-agent";
 import {
 	type AssistantMessage,
 	getModel,
 	streamSimple,
 	type ToolResultMessage,
 	type Usage,
-} from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
 import { describe, expect, it } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
 import { AuthStorage } from "../src/core/auth-storage.ts";

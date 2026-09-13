@@ -4,8 +4,8 @@
  * Run with: npx tsx test/streaming-render-debug.ts
  */
 
-import type { AssistantMessage } from "@liuxuedeng/pi-core-ai";
-import { ProcessTerminal, type TUI, TuiMainScreen } from "@liuxuedeng/pi-core-tui";
+import type { AssistantMessage } from "@liuxuedeng/agent-core-ai";
+import { ProcessTerminal, type TUI, TuiMainScreen } from "@liuxuedeng/agent-core-tui";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";

@@ -9,10 +9,10 @@ import {
 } from "../src/utils/version-check.ts";
 import { allowNetwork } from "./test-network-env.ts";
 
-const originalSkipVersionCheck = process.env.PI_CORE_SKIP_VERSION_CHECK;
+const originalSkipVersionCheck = process.env.AGENT_CORE_SKIP_VERSION_CHECK;
 
 beforeEach(() => {
-	vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
+	vi.stubEnv("AGENT_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
 	allowNetwork();
 });
 
@@ -20,9 +20,9 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.unstubAllEnvs();
 	if (originalSkipVersionCheck === undefined) {
-		delete process.env.PI_CORE_SKIP_VERSION_CHECK;
+		delete process.env.AGENT_CORE_SKIP_VERSION_CHECK;
 	} else {
-		process.env.PI_CORE_SKIP_VERSION_CHECK = originalSkipVersionCheck;
+		process.env.AGENT_CORE_SKIP_VERSION_CHECK = originalSkipVersionCheck;
 	}
 });
 
@@ -37,7 +37,7 @@ describe("version checks", () => {
 	});
 
 	it("returns only newer versions", async () => {
-		vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
+		vi.stubEnv("AGENT_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.3" }));
 		vi.stubGlobal("fetch", fetchMock);
 
@@ -46,7 +46,7 @@ describe("version checks", () => {
 	});
 
 	it("does not query any feed when no version check URL is configured", async () => {
-		delete process.env.PI_CORE_VERSION_CHECK_URL;
+		delete process.env.AGENT_CORE_VERSION_CHECK_URL;
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 
@@ -54,8 +54,31 @@ describe("version checks", () => {
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
-	it("uses the configured version check api with a pi-core user agent", async () => {
-		vi.stubEnv("PI_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
+	it("does not query any feed in offline mode even when a URL is configured", async () => {
+		vi.stubEnv("AGENT_CORE_OFFLINE", "1");
+		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(getLatestPiVersion("1.2.3")).resolves.toBeUndefined();
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it("returns undefined for invalid feed responses without throwing", async () => {
+		const fetchMock = vi.fn(async () => new Response("not found", { status: 404 }));
+		vi.stubGlobal("fetch", fetchMock);
+		await expect(getLatestPiVersion("1.2.3")).resolves.toBeUndefined();
+
+		const missingVersion = vi.fn(async () => Response.json({ packageName: "@liuxuedeng/agent-core" }));
+		vi.stubGlobal("fetch", missingVersion);
+		await expect(getLatestPiVersion("1.2.3")).resolves.toBeUndefined();
+
+		const emptyVersion = vi.fn(async () => Response.json({ version: "   " }));
+		vi.stubGlobal("fetch", emptyVersion);
+		await expect(getLatestPiVersion("1.2.3")).resolves.toBeUndefined();
+	});
+
+	it("uses the configured version check api with a agent-core user agent", async () => {
+		vi.stubEnv("AGENT_CORE_VERSION_CHECK_URL", "https://pi.dev/api/latest-version");
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 
@@ -64,7 +87,7 @@ describe("version checks", () => {
 			"https://pi.dev/api/latest-version",
 			expect.objectContaining({
 				headers: expect.objectContaining({
-					"User-Agent": expect.stringMatching(/^pi-core\/1\.2\.3 /),
+					"User-Agent": expect.stringMatching(/^agent-core\/1\.2\.3 /),
 					accept: "application/json",
 				}),
 			}),
@@ -125,7 +148,7 @@ describe("version checks", () => {
 	});
 
 	it("skips automatic api calls when version checks are disabled", async () => {
-		process.env.PI_CORE_SKIP_VERSION_CHECK = "1";
+		process.env.AGENT_CORE_SKIP_VERSION_CHECK = "1";
 		const fetchMock = vi.fn();
 		vi.stubGlobal("fetch", fetchMock);
 
@@ -134,7 +157,7 @@ describe("version checks", () => {
 	});
 
 	it("allows direct api calls when automatic version checks are disabled", async () => {
-		process.env.PI_CORE_SKIP_VERSION_CHECK = "1";
+		process.env.AGENT_CORE_SKIP_VERSION_CHECK = "1";
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 

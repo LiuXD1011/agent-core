@@ -1,5 +1,5 @@
-import type { Usage } from "@liuxuedeng/pi-core-ai";
-import { Container } from "@liuxuedeng/pi-core-tui";
+import type { Usage } from "@liuxuedeng/agent-core-ai";
+import { Container } from "@liuxuedeng/agent-core-tui";
 import { describe, expect, test, vi } from "vitest";
 import type { SessionEntry } from "../src/core/session-manager.ts";
 import { InteractiveMode } from "../src/modes/interactive/interactive-mode.ts";
