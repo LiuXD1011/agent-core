@@ -1,4 +1,4 @@
-import type { Usage } from "@liuxuedeng/pi-core-ai";
+import type { Usage } from "@liuxuedeng/agent-core-ai";
 import { type Static, Type } from "typebox";
 import type { AgentTool, AgentToolResult } from "../../src/types.ts";
 

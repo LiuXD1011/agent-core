@@ -1,4 +1,9 @@
-import { type AssistantMessageFrame, createModels, fauxAssistantMessage, fauxProvider } from "@liuxuedeng/pi-core-ai";
+import {
+	type AssistantMessageFrame,
+	createModels,
+	fauxAssistantMessage,
+	fauxProvider,
+} from "@liuxuedeng/agent-core-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type HarnessEvent, HarnessFault, type WatchHandle } from "../../../src/harness/agent-harness.ts";
 import { DEFAULT_COMPACTION_SETTINGS } from "../../../src/harness/compaction/compaction.ts";

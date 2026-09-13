@@ -1,5 +1,5 @@
 {
-	"name": "@liuxuedeng/pi-core-evals",
+	"name": "@liuxuedeng/agent-core-evals",
 	"version": "0.1.0-alpha.1",
 	"private": true,
 	"type": "module",
@@ -8,9 +8,22 @@
 		"eval": "node scripts/run-evals.mjs",
 		"test": "vitest run --config vitest.test.config.ts"
 	},
+	"author": "LiuXD1011",
+	"contributors": [
+		"Mario Zechner (original Pi)"
+	],
+	"homepage": "https://github.com/LiuXD1011/agent-core#readme",
+	"bugs": {
+		"url": "https://github.com/LiuXD1011/agent-core/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/LiuXD1011/agent-core.git",
+		"directory": "packages/evals"
+	},
 	"devDependencies": {
-		"@liuxuedeng/pi-core-ai": "^0.1.0-alpha.1",
-		"@liuxuedeng/pi-core": "^0.1.0-alpha.1",
+		"@liuxuedeng/agent-core-ai": "^0.1.0-alpha.1",
+		"@liuxuedeng/agent-core": "^0.1.0-alpha.1",
 		"@types/node": "22.19.19",
 		"shx": "0.4.0",
 		"typescript": "5.9.3",

@@ -1,4 +1,4 @@
-import type { RetryPolicy } from "@liuxuedeng/pi-core-ai";
+import type { RetryPolicy } from "@liuxuedeng/agent-core-ai";
 import type { QueueMode } from "../../types.ts";
 import type { AgentHarnessOptions, DriveOptions, DriveOutcome, HarnessEvent, Resources } from "../agent-harness.ts";
 import type { CompactionSettings } from "../compaction/compaction.ts";

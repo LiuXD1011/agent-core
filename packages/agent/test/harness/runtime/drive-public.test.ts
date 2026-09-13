@@ -1,4 +1,4 @@
-import { createModels, fauxAssistantMessage, fauxProvider } from "@liuxuedeng/pi-core-ai";
+import { createModels, fauxAssistantMessage, fauxProvider } from "@liuxuedeng/agent-core-ai";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	AgentHarness,

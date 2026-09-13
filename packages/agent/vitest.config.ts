@@ -17,10 +17,10 @@ export default defineConfig({
 	resolve: {
 		conditions: ["source"],
 		alias: [
-			{ find: /^@liuxuedeng\/pi-core-telemetry$/, replacement: telemetrySrcIndex },
-			{ find: /^@liuxuedeng\/pi-core-agent$/, replacement: agentSrcIndex },
-			{ find: /^@liuxuedeng\/pi-core-ai$/, replacement: aiSrcIndex },
-			{ find: /^@liuxuedeng\/pi-core-ai\/compat$/, replacement: aiSrcCompat },
+			{ find: /^@liuxuedeng\/agent-core-telemetry$/, replacement: telemetrySrcIndex },
+			{ find: /^@liuxuedeng\/agent-core-agent$/, replacement: agentSrcIndex },
+			{ find: /^@liuxuedeng\/agent-core-ai$/, replacement: aiSrcIndex },
+			{ find: /^@liuxuedeng\/agent-core-ai\/compat$/, replacement: aiSrcCompat },
 		],
 	},
 	ssr: { resolve: { conditions: ["source"] } },

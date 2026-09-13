@@ -6,7 +6,7 @@ import {
 	type Value,
 	type ValueList,
 	value,
-} from "@liuxuedeng/pi-core-agent";
+} from "@liuxuedeng/agent-core-agent";
 import { type SqlQuery, sql } from "../sql.ts";
 import type { SqliteDatabase } from "../types.ts";
 

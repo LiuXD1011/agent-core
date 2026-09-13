@@ -1,4 +1,4 @@
-import type { SimpleStreamOptions, Transport } from "@liuxuedeng/pi-core-ai";
+import type { SimpleStreamOptions, Transport } from "@liuxuedeng/agent-core-ai";
 import type { Static, TSchema } from "typebox";
 import type { AgentTool, AgentToolResult } from "../types.ts";
 import type { Context } from "./context.ts";

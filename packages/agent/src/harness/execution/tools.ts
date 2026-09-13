@@ -1,4 +1,4 @@
-import { type ToolResultMessage, validateToolArguments } from "@liuxuedeng/pi-core-ai";
+import { type ToolResultMessage, validateToolArguments } from "@liuxuedeng/agent-core-ai";
 import type { AgentToolCall, AgentToolResult } from "../../types.ts";
 import { type Context, withAbortSignal } from "../context.ts";
 import type { JsonValue } from "../session/types.ts";

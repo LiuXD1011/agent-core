@@ -3,7 +3,7 @@ import { appendFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { Reporter, SerializedError, TestCase, TestModule, TestRunEndReason, Vitest } from "vitest/node";
 import { isHarnessRun } from "vitest-evals/harness";
-import { PI_CORE_SESSION_SNAPSHOT_ARTIFACT, persistEvalArtifactReferences } from "./artifacts.ts";
+import { AGENT_CORE_SESSION_SNAPSHOT_ARTIFACT, persistEvalArtifactReferences } from "./artifacts.ts";
 import { EVAL_HARNESS_ITERATION_ARTIFACT, parseEvalHarnessIterationArtifact } from "./harness-table.ts";
 import { formatHarnessComparisonReport, type HarnessObservation, summarizeHarnessComparisons } from "./summary.ts";
 
@@ -12,7 +12,7 @@ function readFiniteNumber(value: unknown): number | undefined {
 }
 
 async function appendHarnessRunReport(test: TestCase): Promise<void> {
-	const artifactDirectory = process.env.PI_CORE_EVAL_ARTIFACT_DIR?.trim();
+	const artifactDirectory = process.env.AGENT_CORE_EVAL_ARTIFACT_DIR?.trim();
 	if (!artifactDirectory) return;
 	const harness = test.meta().harness;
 	if (!harness || !isHarnessRun(harness.run)) return;
@@ -22,7 +22,7 @@ async function appendHarnessRunReport(test: TestCase): Promise<void> {
 	const runId = typeof artifactRunId === "string" ? artifactRunId : randomUUID();
 	const metadata = Object.fromEntries(
 		Object.entries(run.artifacts ?? {}).filter(
-			([name]) => name !== "runId" && name !== PI_CORE_SESSION_SNAPSHOT_ARTIFACT,
+			([name]) => name !== "runId" && name !== AGENT_CORE_SESSION_SNAPSHOT_ARTIFACT,
 		),
 	);
 	const record = {

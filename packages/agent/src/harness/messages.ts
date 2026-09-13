@@ -1,4 +1,4 @@
-import type { ImageContent, Message, TextContent } from "@liuxuedeng/pi-core-ai";
+import type { ImageContent, Message, TextContent } from "@liuxuedeng/agent-core-ai";
 import type { AgentMessage } from "../types.ts";
 
 export const COMPACTION_SUMMARY_PREFIX = `The conversation history before this point was compacted into the following summary:

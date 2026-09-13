@@ -1,5 +1,5 @@
-import type { ImageContent, TextContent, Usage } from "@liuxuedeng/pi-core-ai";
-import { uuidv7 } from "@liuxuedeng/pi-core-ai/utils/uuid";
+import type { ImageContent, TextContent, Usage } from "@liuxuedeng/agent-core-ai";
+import { uuidv7 } from "@liuxuedeng/agent-core-ai/utils/uuid";
 import type { AgentMessage, ThinkingLevel } from "../../../types.ts";
 import type { Context } from "../../context.ts";
 import { createBranchSummaryMessage, createCompactionSummaryMessage } from "../../messages.ts";

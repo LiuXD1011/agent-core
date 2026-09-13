@@ -1,4 +1,4 @@
-import type { DeferredHandle } from "@liuxuedeng/pi-core-ai";
+import type { DeferredHandle } from "@liuxuedeng/agent-core-ai";
 import type { HarnessEvent } from "../../agent-harness.ts";
 import { getTelemetryContext } from "../../context.ts";
 import { SessionInvariantError } from "../../session/session.ts";

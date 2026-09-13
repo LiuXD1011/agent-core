@@ -1,5 +1,5 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from "node:assert/strict";
-import type { Usage } from "@liuxuedeng/pi-core-ai";
+import type { Usage } from "@liuxuedeng/agent-core-ai";
 import { BACKGROUND_CONTEXT } from "../../../context.ts";
 import { insertEntry, insertUsage } from "../../commit.ts";
 import type {

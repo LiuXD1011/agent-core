@@ -1,7 +1,10 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type ConformanceCase, createSessionRepoConformance } from "@liuxuedeng/pi-core-agent/harness/session/testing";
+import {
+	type ConformanceCase,
+	createSessionRepoConformance,
+} from "@liuxuedeng/agent-core-agent/harness/session/testing";
 import { describe, it } from "vitest";
 import { createNodeSqliteFactory, SqliteSessionRepo } from "../src/index.ts";
 

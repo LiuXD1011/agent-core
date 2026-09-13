@@ -1,4 +1,4 @@
-import type { Entry, EntryStructure, StorageBranchScan } from "@liuxuedeng/pi-core-agent";
+import type { Entry, EntryStructure, StorageBranchScan } from "@liuxuedeng/agent-core-agent";
 import { joinSqlFragments, type SqlQuery, sql } from "../sql.ts";
 import type { SqliteDatabase } from "../types.ts";
 import { decodeEntryRow, type EntryRow } from "./entries.ts";

@@ -1,8 +1,8 @@
 import { mkdir, open as openFile, readdir, realpath, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { Context, Entry, ForkOptions, SessionCreateOptions, StoredValue } from "@liuxuedeng/pi-core-agent";
-import { branchTip, createForkSnapshot, StorageBackedSession } from "@liuxuedeng/pi-core-agent";
-import { uuidv7 } from "@liuxuedeng/pi-core-ai";
+import type { Context, Entry, ForkOptions, SessionCreateOptions, StoredValue } from "@liuxuedeng/agent-core-agent";
+import { branchTip, createForkSnapshot, StorageBackedSession } from "@liuxuedeng/agent-core-agent";
+import { uuidv7 } from "@liuxuedeng/agent-core-ai";
 import { applyInitialSchema } from "./migrations.ts";
 import { appendEntryToBranchIndex, scanBranchEntries } from "./session/branch-entries.ts";
 import { decodeEntryRow, type EntryRow, EntryRowWriter } from "./session/entries.ts";

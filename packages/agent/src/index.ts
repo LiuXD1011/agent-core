@@ -1,4 +1,4 @@
-export { uuidv7 } from "@liuxuedeng/pi-core-ai";
+export { uuidv7 } from "@liuxuedeng/agent-core-ai";
 export type {
 	AttributeValue,
 	ExactTelemetryAttributes,
@@ -31,13 +31,13 @@ export type {
 	TelemetrySpanDefinition,
 	TelemetryStartAttributeDefinition,
 	TypedSpanStarter,
-} from "@liuxuedeng/pi-core-telemetry";
+} from "@liuxuedeng/agent-core-telemetry";
 export {
 	createTypedSpanStarter,
 	defineTelemetrySchema,
 	InMemoryTelemetryContext,
 	NOOP_TELEMETRY_CONTEXT,
-} from "@liuxuedeng/pi-core-telemetry";
+} from "@liuxuedeng/agent-core-telemetry";
 export * from "./agent.ts";
 export * from "./agent-loop.ts";
 export * from "./harness/agent-harness.ts";

@@ -14,7 +14,7 @@ describe("getNativeModuleCandidates", () => {
 			moduleUrl: pathToFileURL(bundledModule).href,
 			execPath: resolve("virtual", "node", "node.exe"),
 			resolvePackage: (specifier) => {
-				assert.equal(specifier, "@liuxuedeng/pi-core-tui");
+				assert.equal(specifier, "@liuxuedeng/agent-core-tui");
 				return join(packageRoot, "dist", "index.js");
 			},
 		});

@@ -14,7 +14,7 @@ describe("package boundary", () => {
 		};
 		expect(
 			Object.keys(manifest.dependencies ?? {}).filter(
-				(name) => name.startsWith("@earendil-works/pi-") || name.startsWith("@liuxuedeng/pi-core"),
+				(name) => name.startsWith("@earendil-works/pi-") || name.startsWith("@liuxuedeng/agent-core"),
 			),
 		).toEqual([]);
 
@@ -25,7 +25,7 @@ describe("package boundary", () => {
 			const source = await readFile(file, "utf8");
 			for (const match of source.matchAll(IMPORT_SPECIFIER)) {
 				const specifier = match[1]!;
-				if (specifier.startsWith("@earendil-works/pi-") || specifier.startsWith("@liuxuedeng/pi-core")) {
+				if (specifier.startsWith("@earendil-works/pi-") || specifier.startsWith("@liuxuedeng/agent-core")) {
 					violations.push(`${path}: ${specifier}`);
 				}
 				if (specifier.startsWith(".") && !resolve(dirname(file), specifier).startsWith(`${sourceDirectory}/`)) {

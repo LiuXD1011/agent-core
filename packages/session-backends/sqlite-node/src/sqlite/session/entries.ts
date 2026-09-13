@@ -6,7 +6,7 @@ import type {
 	EntryScan,
 	EntryStructure,
 	MessageEntry,
-} from "@liuxuedeng/pi-core-agent";
+} from "@liuxuedeng/agent-core-agent";
 import { joinSqlFragments, type SqlQuery, sql } from "../sql.ts";
 import type { SqliteDatabase, SqliteStatement } from "../types.ts";
 

@@ -1,9 +1,9 @@
-import { BACKGROUND_CONTEXT } from "@liuxuedeng/pi-core-agent";
+import { BACKGROUND_CONTEXT } from "@liuxuedeng/agent-core-agent";
 import {
 	type ConformanceCase,
 	createStorageConformance,
 	type StorageFixture,
-} from "@liuxuedeng/pi-core-agent/harness/session/testing";
+} from "@liuxuedeng/agent-core-agent/harness/session/testing";
 import { describe, it } from "vitest";
 import { createNodeSqliteFactory, SQLITE_STORAGE_VERSION, SqliteStorage, sql } from "../src/index.ts";
 import { applyInitialSchema } from "../src/sqlite/migrations.ts";

@@ -3,7 +3,7 @@ import {
 	STORAGE_READ_BENCHMARK_SCENARIOS,
 	STORAGE_WRITE_BENCHMARK_SCENARIOS,
 	seedStorageBenchmark,
-} from "@liuxuedeng/pi-core-agent/harness/session/testing";
+} from "@liuxuedeng/agent-core-agent/harness/session/testing";
 import { registerReadBenchmarks, registerWriteBenchmarks } from "../../../../agent/benchmark/session/benchmark.ts";
 import { storageBenchmarkTargets } from "./storage-targets.ts";
 

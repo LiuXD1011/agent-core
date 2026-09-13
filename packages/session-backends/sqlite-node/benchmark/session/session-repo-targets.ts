@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { BACKGROUND_CONTEXT, type SessionRepo } from "@liuxuedeng/pi-core-agent";
+import { BACKGROUND_CONTEXT, type SessionRepo } from "@liuxuedeng/agent-core-agent";
 import { createNodeSqliteFactory, SqliteSessionRepo } from "../../src/index.ts";
 import type { BenchmarkTarget } from "../../../../agent/benchmark/session/benchmark.ts";
 

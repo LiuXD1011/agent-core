@@ -9,7 +9,7 @@ import {
 	type Model,
 	type Models,
 	type Usage,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	type CompactionPreparation,

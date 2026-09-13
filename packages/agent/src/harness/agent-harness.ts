@@ -11,8 +11,8 @@ import type {
 	RetryPolicy,
 	ToolResultMessage,
 	Usage,
-} from "@liuxuedeng/pi-core-ai";
-import type { JsonRepresentation } from "@liuxuedeng/pi-core-chord";
+} from "@liuxuedeng/agent-core-ai";
+import type { JsonRepresentation } from "@liuxuedeng/agent-core-chord";
 import type { AgentMessage, AgentToolResult, QueueMode, ThinkingLevel } from "../types.ts";
 import type { BranchPreparation, BranchSummaryResult } from "./compaction/branch-summarization.ts";
 import type { CompactionPreparation, CompactionSettings, CompactResult } from "./compaction/compaction.ts";

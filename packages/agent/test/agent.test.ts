@@ -3,7 +3,7 @@ import {
 	type AssistantMessageEvent,
 	EventStream,
 	getModel,
-} from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 import {

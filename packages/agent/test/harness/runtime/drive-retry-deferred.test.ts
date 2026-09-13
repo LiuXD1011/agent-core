@@ -6,7 +6,7 @@ import {
 	fauxToolCall,
 	type MutableModels,
 	type Provider,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createModels } from "../../../../ai/src/models.ts";
 import type { HarnessEvent, WatchHandle } from "../../../src/harness/agent-harness.ts";

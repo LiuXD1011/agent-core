@@ -95,7 +95,11 @@ async function bundleEntry(input: {
 		entryNames: `${entryPrefix}-[hash]`,
 		entryPoints: [input.source],
 		external: [
-			...new Set(["@liuxuedeng/pi-core-chord", "@liuxuedeng/pi-core-chord/*", ...(input.options.external ?? [])]),
+			...new Set([
+				"@liuxuedeng/agent-core-chord",
+				"@liuxuedeng/agent-core-chord/*",
+				...(input.options.external ?? []),
+			]),
 		],
 		format: "cjs",
 		legalComments: "none",

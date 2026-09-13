@@ -6,8 +6,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const artifactDirectory = process.env.PI_CORE_EVAL_ARTIFACT_DIR
-	? resolve(packageRoot, process.env.PI_CORE_EVAL_ARTIFACT_DIR)
+const artifactDirectory = process.env.AGENT_CORE_EVAL_ARTIFACT_DIR
+	? resolve(packageRoot, process.env.AGENT_CORE_EVAL_ARTIFACT_DIR)
 	: resolve(
 			packageRoot,
 			".eval",
@@ -54,10 +54,10 @@ if (hasCliModelSelection) {
 		process.exit(1);
 	}
 } else {
-	provider = process.env.PI_CORE_PROVIDER?.trim() || undefined;
-	model = process.env.PI_CORE_MODEL?.trim() || undefined;
+	provider = process.env.AGENT_CORE_PROVIDER?.trim() || undefined;
+	model = process.env.AGENT_CORE_MODEL?.trim() || undefined;
 	if (Boolean(provider) !== Boolean(model)) {
-		console.error("Default model selection requires both PI_CORE_PROVIDER and PI_CORE_MODEL.");
+		console.error("Default model selection requires both AGENT_CORE_PROVIDER and AGENT_CORE_MODEL.");
 		process.exit(1);
 	}
 }
@@ -71,14 +71,14 @@ console.error(`[eval] default-model=${provider && model ? `${provider}/${model}`
 console.error(`[eval] artifacts=${artifactDirectory}`);
 const childEnvironment = {
 	...process.env,
-	PI_CORE_EVAL_ARTIFACT_DIR: artifactDirectory,
+	AGENT_CORE_EVAL_ARTIFACT_DIR: artifactDirectory,
 };
 if (provider && model) {
-	childEnvironment.PI_CORE_PROVIDER = provider;
-	childEnvironment.PI_CORE_MODEL = model;
+	childEnvironment.AGENT_CORE_PROVIDER = provider;
+	childEnvironment.AGENT_CORE_MODEL = model;
 } else {
-	delete childEnvironment.PI_CORE_PROVIDER;
-	delete childEnvironment.PI_CORE_MODEL;
+	delete childEnvironment.AGENT_CORE_PROVIDER;
+	delete childEnvironment.AGENT_CORE_MODEL;
 }
 const result = spawnSync(
 	process.execPath,

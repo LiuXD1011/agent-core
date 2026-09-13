@@ -1,4 +1,4 @@
-import type { ToolResultMessage } from "@liuxuedeng/pi-core-ai";
+import type { ToolResultMessage } from "@liuxuedeng/agent-core-ai";
 import type { AgentToolCall, AgentToolResult } from "../../../types.ts";
 import { AbortRequested } from "../../execution/effect-gate.ts";
 import {

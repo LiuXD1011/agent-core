@@ -1,4 +1,4 @@
-import type { Usage } from "@liuxuedeng/pi-core-ai";
+import type { Usage } from "@liuxuedeng/agent-core-ai";
 
 export function emptyUsage(): Usage {
 	return {

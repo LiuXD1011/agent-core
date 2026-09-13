@@ -10,7 +10,7 @@ import {
 	streamSimple,
 	type ToolResultMessage,
 	type UserMessage,
-} from "@liuxuedeng/pi-core-ai/compat";
+} from "@liuxuedeng/agent-core-ai/compat";
 import { afterEach, describe, expect, it } from "vitest";
 import { Agent, type AgentEvent } from "../src/index.ts";
 import { calculateTool } from "./utils/calculate.ts";

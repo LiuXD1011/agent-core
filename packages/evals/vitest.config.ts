@@ -14,7 +14,7 @@ export default mergeConfig(
 			reporters: ["vitest-evals/reporter", "./src/vitest-evals/reporter.ts"],
 		},
 		resolve: {
-			alias: [{ find: /^@liuxuedeng\/pi-core$/, replacement: workspaceSourcePaths.codingAgentIndex }],
+			alias: [{ find: /^@liuxuedeng\/agent-core$/, replacement: workspaceSourcePaths.codingAgentIndex }],
 		},
 	}),
 );

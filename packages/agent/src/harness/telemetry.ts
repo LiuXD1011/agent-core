@@ -9,7 +9,7 @@ import type {
 	TelemetrySchemaSpanStartAttributes,
 	TelemetrySchemaSpanUnion,
 	TelemetrySpan,
-} from "@liuxuedeng/pi-core-telemetry";
+} from "@liuxuedeng/agent-core-telemetry";
 import { type Context, getTelemetryContext, withTelemetryContext } from "./context.ts";
 
 export type {
@@ -37,7 +37,7 @@ export type {
 	TelemetrySpanDefinition,
 	TelemetryStartAttributeDefinition,
 	TypedSpanStarter,
-} from "@liuxuedeng/pi-core-telemetry";
+} from "@liuxuedeng/agent-core-telemetry";
 
 export const AI_TELEMETRY_SCHEMA = {
 	version: 1,

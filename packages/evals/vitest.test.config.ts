@@ -8,7 +8,7 @@ export default mergeConfig(
 			include: ["test/**/*.test.ts"],
 		},
 		resolve: {
-			alias: [{ find: /^@liuxuedeng\/pi-core$/, replacement: workspaceSourcePaths.codingAgentIndex }],
+			alias: [{ find: /^@liuxuedeng\/agent-core$/, replacement: workspaceSourcePaths.codingAgentIndex }],
 		},
 	}),
 );

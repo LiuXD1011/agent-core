@@ -1,4 +1,4 @@
-import type { Api, Model, Tool } from "@liuxuedeng/pi-core-ai";
+import type { Api, Model, Tool } from "@liuxuedeng/agent-core-ai";
 import type { AgentMessage } from "../../../types.ts";
 import { type Context, getTelemetryContext, withAbortSignal } from "../../context.ts";
 import { type HarnessAssistantStreamConfig, streamHarnessAssistant } from "../../execution/assistant.ts";

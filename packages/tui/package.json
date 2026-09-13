@@ -1,5 +1,5 @@
 {
-	"name": "@liuxuedeng/pi-core-tui",
+	"name": "@liuxuedeng/agent-core-tui",
 	"version": "0.1.0-alpha.1",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
 	"type": "module",
@@ -33,11 +33,18 @@
 		"typescript",
 		"cli"
 	],
-	"author": "Mario Zechner",
+	"author": "LiuXD1011",
+	"contributors": [
+		"Mario Zechner (original Pi)"
+	],
 	"license": "MIT",
+	"homepage": "https://github.com/LiuXD1011/agent-core#readme",
+	"bugs": {
+		"url": "https://github.com/LiuXD1011/agent-core/issues"
+	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/earendil-works/pi.git",
+		"url": "git+https://github.com/LiuXD1011/agent-core.git",
 		"directory": "packages/tui"
 	},
 	"engines": {

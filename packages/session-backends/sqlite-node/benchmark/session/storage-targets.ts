@@ -1,5 +1,5 @@
-import { BACKGROUND_CONTEXT } from "@liuxuedeng/pi-core-agent";
-import type { StorageFixture } from "@liuxuedeng/pi-core-agent/harness/session/testing";
+import { BACKGROUND_CONTEXT } from "@liuxuedeng/agent-core-agent";
+import type { StorageFixture } from "@liuxuedeng/agent-core-agent/harness/session/testing";
 import { createNodeSqliteFactory, SQLITE_STORAGE_VERSION, SqliteStorage, sql } from "../../src/index.ts";
 import { applyInitialSchema } from "../../src/sqlite/migrations.ts";
 import type { BenchmarkTarget } from "../../../../agent/benchmark/session/benchmark.ts";

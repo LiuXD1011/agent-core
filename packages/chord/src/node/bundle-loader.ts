@@ -326,11 +326,11 @@ function resolveExternalTarget(specifier: string, resolver?: FacetBundleExternal
 	const resolved = resolver?.(specifier);
 	if (resolved !== undefined) return typeof resolved === "string" ? resolved : resolved.href;
 	const extension = import.meta.url.endsWith(".ts") ? "ts" : "js";
-	if (specifier === "@liuxuedeng/pi-core-chord") return new URL(`../index.${extension}`, import.meta.url).href;
-	if (specifier === "@liuxuedeng/pi-core-chord/context") {
+	if (specifier === "@liuxuedeng/agent-core-chord") return new URL(`../index.${extension}`, import.meta.url).href;
+	if (specifier === "@liuxuedeng/agent-core-chord/context") {
 		return new URL(`../context/index.${extension}`, import.meta.url).href;
 	}
-	if (specifier === "@liuxuedeng/pi-core-chord/node") return new URL(`../node.${extension}`, import.meta.url).href;
+	if (specifier === "@liuxuedeng/agent-core-chord/node") return new URL(`../node.${extension}`, import.meta.url).href;
 	return import.meta.resolve(specifier);
 }
 

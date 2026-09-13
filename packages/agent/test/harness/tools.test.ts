@@ -669,7 +669,7 @@ describe("AgentHarness tools", () => {
 		it("prepares command, cwd, and an explicit environment with the turn context", async () => {
 			const env = new NodeExecutionEnv({
 				cwd: createTempDir(),
-				shellEnv: { PI_CORE_BASH_PREPARE_INHERITED: "inherited" },
+				shellEnv: { AGENT_CORE_BASH_PREPARE_INHERITED: "inherited" },
 			});
 			getOrThrow(await env.createDir("workspace", undefined, BACKGROUND_CONTEXT));
 			const context = { env, workspace: `${env.cwd}/workspace` };
@@ -682,9 +682,9 @@ describe("AgentHarness tools", () => {
 					receivedContext = turnContext;
 					receivedSignal = callContext.abortSignal;
 					execution.cwd = turnContext.workspace;
-					execution.env = { PI_CORE_BASH_PREPARE_EXPLICIT: "explicit" };
+					execution.env = { AGENT_CORE_BASH_PREPARE_EXPLICIT: "explicit" };
 					execution.inheritEnv = false;
-					execution.command += `\nprintf '%s:%s:%s:%s' "$prefix" "\${PI_CORE_BASH_PREPARE_INHERITED-}" "$PI_CORE_BASH_PREPARE_EXPLICIT" "$PWD"`;
+					execution.command += `\nprintf '%s:%s:%s:%s' "$prefix" "\${AGENT_CORE_BASH_PREPARE_INHERITED-}" "$AGENT_CORE_BASH_PREPARE_EXPLICIT" "$PWD"`;
 				},
 			});
 

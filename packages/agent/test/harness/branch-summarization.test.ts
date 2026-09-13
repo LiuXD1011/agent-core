@@ -1,4 +1,4 @@
-import type { AgentMessage } from "@liuxuedeng/pi-core-agent";
+import type { AgentMessage } from "@liuxuedeng/agent-core-agent";
 import { describe, expect, it } from "vitest";
 import { collectEntriesForBranchSummary } from "../../src/harness/compaction/branch-summarization.ts";
 import { BACKGROUND_CONTEXT } from "../../src/harness/context.ts";

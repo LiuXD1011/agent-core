@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking Changes
+
+- Renamed the npm package from `@liuxuedeng/pi-core-agent` to `@liuxuedeng/agent-core-agent`; update dependency specifiers and import paths.
+
+### Added
+
+- Initial Agent Core release, based on Pi v0.85.1.
+
+<!-- agent-core:upstream-boundary -->
+<!-- Entries below are inherited upstream Pi history (github.com/earendil-works/pi), kept verbatim for provenance. They are not Agent Core releases. -->
+
 ## [0.85.1] - 2026-09-05
 
 ## [0.85.0] - 2026-09-04

@@ -8,7 +8,7 @@ import type {
 	Model,
 	SimpleStreamOptions,
 	Tool,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
 import { type Context, getTelemetryContext } from "../context.ts";
 import type { SettledAssistantMessage } from "../session/types.ts";

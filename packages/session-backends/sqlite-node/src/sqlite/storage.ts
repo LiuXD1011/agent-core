@@ -16,8 +16,8 @@ import type {
 	Value,
 	ValueList,
 	Write,
-} from "@liuxuedeng/pi-core-agent";
-import { branchTip, prepareStorageCommit } from "@liuxuedeng/pi-core-agent";
+} from "@liuxuedeng/agent-core-agent";
+import { branchTip, prepareStorageCommit } from "@liuxuedeng/agent-core-agent";
 import { appendEntryToBranchIndex, scanBranchEntries, scanBranchEntryStructures } from "./session/branch-entries.ts";
 import { decodeEntryRow, EntryRowWriter, readAllEntryRows, readEntryRows, scanEntryRows } from "./session/entries.ts";
 import { advanceNextSeq, readNextSeq } from "./session/session-sequences.ts";

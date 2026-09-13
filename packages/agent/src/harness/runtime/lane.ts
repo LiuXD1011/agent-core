@@ -5,7 +5,7 @@ import {
 	type Models,
 	reduceAssistantMessageFrames,
 	type Usage,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 import type { AgentMessage, ThinkingLevel } from "../../types.ts";
 import type {
 	AbortRequestResult,

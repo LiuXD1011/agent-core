@@ -1,23 +1,23 @@
-# @liuxuedeng/pi-core-agent
+# @liuxuedeng/agent-core-agent
 
-Stateful agent with tool execution and event streaming. Built on `@liuxuedeng/pi-core-ai`.
+Stateful agent with tool execution and event streaming. Built on `@liuxuedeng/agent-core-ai`.
 
 ## Installation
 
 ```bash
-npm install @liuxuedeng/pi-core-agent
+npm install @liuxuedeng/agent-core-agent
 ```
 
 ### SQLite session backends
 
-The SQLite session backend and the `node:sqlite` adapter live in a separate package, `@liuxuedeng/pi-core-sqlite-node`, so the core package does not pull in runtime builtins or native SQLite dependencies by default. The backend accepts a runtime-specific SQLite factory, allowing other session backends to ship as their own packages in the future.
+The SQLite session backend and the `node:sqlite` adapter live in a separate package, `@liuxuedeng/agent-core-sqlite-node`, so the core package does not pull in runtime builtins or native SQLite dependencies by default. The backend accepts a runtime-specific SQLite factory, allowing other session backends to ship as their own packages in the future.
 
 ## Quick Start
 
 ```typescript
-import { Agent } from "@liuxuedeng/pi-core-agent";
-import { createModels } from "@liuxuedeng/pi-core-ai";
-import { anthropicProvider } from "@liuxuedeng/pi-core-ai/providers/anthropic";
+import { Agent } from "@liuxuedeng/agent-core-agent";
+import { createModels } from "@liuxuedeng/agent-core-ai";
+import { anthropicProvider } from "@liuxuedeng/agent-core-ai/providers/anthropic";
 
 const models = createModels();
 models.setProvider(anthropicProvider());
@@ -44,7 +44,7 @@ await agent.prompt("Hello!");
 
 ## Experimental facet services
 
-Transport-neutral facet-service primitives live in `@liuxuedeng/pi-core-chord`. The agent core does not export the service runtime.
+Transport-neutral facet-service primitives live in `@liuxuedeng/agent-core-chord`. The agent core does not export the service runtime.
 
 ## Core Concepts
 
@@ -382,7 +382,7 @@ Follow-up messages are checked only when there are no more tool calls and no ste
 Extend `AgentMessage` via declaration merging:
 
 ```typescript
-declare module "@liuxuedeng/pi-core-agent" {
+declare module "@liuxuedeng/agent-core-agent" {
   interface CustomAgentMessages {
     notification: { role: "notification"; text: string; timestamp: number };
   }
@@ -464,7 +464,7 @@ Return `terminate: true` from `execute()`, a blocked `beforeToolCall`, or `after
 For browser apps that proxy through a backend:
 
 ```typescript
-import { Agent, streamProxy } from "@liuxuedeng/pi-core-agent";
+import { Agent, streamProxy } from "@liuxuedeng/agent-core-agent";
 
 const agent = new Agent({
   streamFn: (model, context, options) =>
@@ -481,7 +481,7 @@ const agent = new Agent({
 For direct control without the Agent class:
 
 ```typescript
-import { agentLoop, agentLoopContinue } from "@liuxuedeng/pi-core-agent";
+import { agentLoop, agentLoopContinue } from "@liuxuedeng/agent-core-agent";
 
 const context: AgentContext = {
   systemPrompt: "You are helpful.",

@@ -1,4 +1,4 @@
-import type { Models, RetryPolicy } from "@liuxuedeng/pi-core-ai";
+import type { Models, RetryPolicy } from "@liuxuedeng/agent-core-ai";
 import type { QueueMode } from "../../types.ts";
 import type {
 	AcquireLaneOptions,

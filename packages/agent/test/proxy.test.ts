@@ -1,4 +1,4 @@
-import type { AssistantMessage, AssistantMessageEvent, Model } from "@liuxuedeng/pi-core-ai";
+import type { AssistantMessage, AssistantMessageEvent, Model } from "@liuxuedeng/agent-core-ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type ProxyAssistantMessageEvent, streamProxy } from "../src/proxy.ts";
 

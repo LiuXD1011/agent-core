@@ -1,4 +1,4 @@
-import type { ImageContent, TextContent } from "@liuxuedeng/pi-core-ai";
+import type { ImageContent, TextContent } from "@liuxuedeng/agent-core-ai";
 import { type Static, Type } from "typebox";
 import type { Context } from "../context.ts";
 import type { AgentHarnessTool } from "../types.ts";

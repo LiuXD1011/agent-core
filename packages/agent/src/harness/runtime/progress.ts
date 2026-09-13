@@ -1,4 +1,4 @@
-import type { AssistantMessageFrame } from "@liuxuedeng/pi-core-ai";
+import type { AssistantMessageFrame } from "@liuxuedeng/agent-core-ai";
 import type { AgentToolResult } from "../../types.ts";
 import type { Context } from "../context.ts";
 import type { SessionReader, Write } from "../session/types.ts";

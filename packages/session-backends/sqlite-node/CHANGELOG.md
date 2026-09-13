@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking Changes
+
+- Renamed the npm package from `@liuxuedeng/pi-core-sqlite-node` to `@liuxuedeng/agent-core-sqlite-node`; update dependency specifiers and import paths.
+
 ## [0.85.1] - 2026-09-05
 
 ## [0.85.0] - 2026-09-04

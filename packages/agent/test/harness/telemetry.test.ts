@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createTypedSpanStarter, NOOP_TELEMETRY_CONTEXT, type TelemetryContext } from "@liuxuedeng/pi-core-telemetry";
+import {
+	createTypedSpanStarter,
+	NOOP_TELEMETRY_CONTEXT,
+	type TelemetryContext,
+} from "@liuxuedeng/agent-core-telemetry";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { renderAgentTelemetrySchemaMarkdown } from "../../scripts/generate-telemetry-docs.ts";
 import { BACKGROUND_CONTEXT, withTelemetryContext } from "../../src/harness/context.ts";

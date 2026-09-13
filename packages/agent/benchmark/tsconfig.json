@@ -4,8 +4,8 @@
 		"baseUrl": "../../..",
 		"noEmit": true,
 		"paths": {
-			"@liuxuedeng/pi-core-ai": ["packages/ai/src/index.ts"],
-			"@liuxuedeng/pi-core-ai/*": ["packages/ai/src/*"]
+			"@liuxuedeng/agent-core-ai": ["packages/ai/src/index.ts"],
+			"@liuxuedeng/agent-core-ai/*": ["packages/ai/src/*"]
 		}
 	},
 	"include": ["./**/*.ts", "../src/**/*.ts"]

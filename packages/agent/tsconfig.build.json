@@ -3,10 +3,10 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"paths": {
-			"@liuxuedeng/pi-core-chord": ["../chord/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-telemetry": ["../telemetry/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-ai": ["../ai/dist/index.d.ts"],
-			"@liuxuedeng/pi-core-ai/*": ["../ai/dist/*.d.ts", "../ai/dist/providers/*.d.ts"]
+			"@liuxuedeng/agent-core-chord": ["../chord/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-telemetry": ["../telemetry/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-ai": ["../ai/dist/index.d.ts"],
+			"@liuxuedeng/agent-core-ai/*": ["../ai/dist/*.d.ts", "../ai/dist/providers/*.d.ts"]
 		},
 		"rootDir": "./src"
 	},

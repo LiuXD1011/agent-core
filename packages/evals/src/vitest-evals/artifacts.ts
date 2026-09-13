@@ -10,7 +10,7 @@ import {
 } from "vitest";
 import type { HarnessRun } from "vitest-evals/harness";
 
-export const PI_CORE_SESSION_SNAPSHOT_ARTIFACT = "piSessionJsonl";
+export const AGENT_CORE_SESSION_SNAPSHOT_ARTIFACT = "piSessionJsonl";
 
 const evalSessionArtifactKey = Symbol("pi-evals-session-artifact");
 const evalSourceArtifactKey = Symbol("pi-evals-source-artifact");
@@ -30,13 +30,13 @@ export interface SourceAttachment extends TestAttachment {
 }
 
 interface PiSessionArtifact extends TestArtifactBase {
-	type: "@liuxuedeng/pi-core-evals:session";
+	type: "@liuxuedeng/agent-core-evals:session";
 	runId: string;
 	attachments: [PiSessionAttachment] | [];
 }
 
 interface SourceArtifact extends TestArtifactBase {
-	type: "@liuxuedeng/pi-core-evals:source";
+	type: "@liuxuedeng/agent-core-evals:source";
 	runId: string;
 	attachments: [SourceAttachment] | [];
 }
@@ -53,13 +53,13 @@ export async function recordEvalSessionArtifact(
 	run: Pick<HarnessRun, "artifacts">,
 ): Promise<void> {
 	const runId = run.artifacts?.runId;
-	const session = run.artifacts?.[PI_CORE_SESSION_SNAPSHOT_ARTIFACT];
+	const session = run.artifacts?.[AGENT_CORE_SESSION_SNAPSHOT_ARTIFACT];
 	if (session === undefined) return;
 	if (typeof runId !== "string" || typeof session !== "string") {
 		throw new TypeError("Pi eval session artifact metadata is invalid.");
 	}
 	await recordArtifact(task, {
-		type: "@liuxuedeng/pi-core-evals:session",
+		type: "@liuxuedeng/agent-core-evals:session",
 		runId,
 		attachments: [
 			{
@@ -78,7 +78,7 @@ export async function recordEvalSourceArtifact(
 	attachment: SourceAttachment,
 ): Promise<void> {
 	await recordArtifact(task, {
-		type: "@liuxuedeng/pi-core-evals:source",
+		type: "@liuxuedeng/agent-core-evals:source",
 		runId,
 		attachments: [attachment],
 	});
@@ -92,13 +92,13 @@ export async function persistEvalArtifactReferences(
 	const references: Array<{ name: string; path: string }> = [];
 	for (const artifact of artifacts) {
 		if (
-			(artifact.type !== "@liuxuedeng/pi-core-evals:session" &&
-				artifact.type !== "@liuxuedeng/pi-core-evals:source") ||
+			(artifact.type !== "@liuxuedeng/agent-core-evals:session" &&
+				artifact.type !== "@liuxuedeng/agent-core-evals:source") ||
 			artifact.runId !== runId
 		) {
 			continue;
 		}
-		const category = artifact.type === "@liuxuedeng/pi-core-evals:session" ? "sessions" : "sources";
+		const category = artifact.type === "@liuxuedeng/agent-core-evals:session" ? "sessions" : "sources";
 		for (const attachment of artifact.attachments) {
 			const name = basename(attachment.name);
 			if (name !== attachment.name) throw new TypeError(`Invalid eval artifact name: ${attachment.name}`);

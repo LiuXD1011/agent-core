@@ -1,7 +1,7 @@
 {
-	"name": "@liuxuedeng/pi-core-sqlite-node",
+	"name": "@liuxuedeng/agent-core-sqlite-node",
 	"version": "0.1.0-alpha.1",
-	"description": "Node sqlite session backend for @liuxuedeng/pi-core-agent sessions",
+	"description": "Node sqlite session backend for @liuxuedeng/agent-core-agent sessions",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -24,19 +24,26 @@
 		"coverage": "vitest --run --coverage",
 		"prepublishOnly": "npm run clean && npm run build"
 	},
-	"author": "Earendil Works",
+	"author": "LiuXD1011",
+	"contributors": [
+		"Earendil Works (original Pi)"
+	],
 	"license": "MIT",
+	"homepage": "https://github.com/LiuXD1011/agent-core#readme",
+	"bugs": {
+		"url": "https://github.com/LiuXD1011/agent-core/issues"
+	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/earendil-works/pi.git",
+		"url": "git+https://github.com/LiuXD1011/agent-core.git",
 		"directory": "packages/session-backends/sqlite-node"
 	},
 	"engines": {
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@liuxuedeng/pi-core-ai": "^0.1.0-alpha.1",
-		"@liuxuedeng/pi-core-agent": "^0.1.0-alpha.1"
+		"@liuxuedeng/agent-core-ai": "^0.1.0-alpha.1",
+		"@liuxuedeng/agent-core-agent": "^0.1.0-alpha.1"
 	},
 	"devDependencies": {
 		"@vitest/coverage-v8": "4.1.9",

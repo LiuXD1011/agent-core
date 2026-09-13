@@ -1,4 +1,4 @@
-import type { Api, DeferredHandle, Model } from "@liuxuedeng/pi-core-ai";
+import type { Api, DeferredHandle, Model } from "@liuxuedeng/agent-core-ai";
 import { type Context, getTelemetryContext, withAbortSignal } from "../../context.ts";
 import { consumeAssistantStream } from "../../execution/assistant.ts";
 import { applyStreamOptionsPatch } from "../../hooks.ts";

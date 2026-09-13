@@ -1,4 +1,4 @@
-import type { AssistantMessage } from "@liuxuedeng/pi-core-ai";
+import type { AssistantMessage } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, it } from "vitest";
 import { BACKGROUND_CONTEXT } from "../../src/harness/context.ts";
 import type { CustomMessage } from "../../src/harness/messages.ts";

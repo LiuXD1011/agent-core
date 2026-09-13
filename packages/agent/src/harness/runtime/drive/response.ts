@@ -4,7 +4,7 @@ import {
 	isContextOverflow,
 	isRecoverableLength,
 	isRetryableAssistantError,
-} from "@liuxuedeng/pi-core-ai";
+} from "@liuxuedeng/agent-core-ai";
 import type { HarnessEvent } from "../../agent-harness.ts";
 import type { Context } from "../../context.ts";
 import type { AssistantResponseMetadata, AssistantStreamObserver } from "../../execution/assistant.ts";

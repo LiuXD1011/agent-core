@@ -1,4 +1,4 @@
-import { contentText, type Message } from "@liuxuedeng/pi-core-ai";
+import { contentText, type Message } from "@liuxuedeng/agent-core-ai";
 import type { AgentMessage } from "../../types.ts";
 
 /** File paths touched by a session branch or compaction range. */
