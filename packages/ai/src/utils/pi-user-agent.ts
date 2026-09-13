@@ -15,5 +15,5 @@ function loadNodeOs(): typeof NodeOs | null {
 const nodeOs = loadNodeOs();
 
 export function getPiUserAgent(): string {
-	return nodeOs ? `pi (${nodeOs.platform()} ${nodeOs.release()}; ${nodeOs.arch()})` : "pi (browser)";
+	return nodeOs ? `agent-core (${nodeOs.platform()} ${nodeOs.release()}; ${nodeOs.arch()})` : "agent-core (browser)";
 }
