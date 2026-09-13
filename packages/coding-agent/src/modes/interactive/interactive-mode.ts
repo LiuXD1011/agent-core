@@ -7,9 +7,9 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentMessage, ThinkingLevel } from "@liuxuedeng/pi-core-agent";
-import type { AuthEvent, AuthPrompt } from "@liuxuedeng/pi-core-ai";
-import type { AssistantMessage, ImageContent, Message, Model, Usage } from "@liuxuedeng/pi-core-ai/compat";
+import type { AgentMessage, ThinkingLevel } from "@liuxuedeng/agent-core-agent";
+import type { AuthEvent, AuthPrompt } from "@liuxuedeng/agent-core-ai";
+import type { AssistantMessage, ImageContent, Message, Model, Usage } from "@liuxuedeng/agent-core-ai/compat";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -21,8 +21,8 @@ import type {
 	OverlayOptions,
 	SlashCommand,
 	TuiMainScreenRenderState,
-} from "@liuxuedeng/pi-core-tui";
-import * as TuiLayouts from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
+import * as TuiLayouts from "@liuxuedeng/agent-core-tui";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -41,7 +41,7 @@ import {
 	TuiAltScreen,
 	TuiMainScreen,
 	visibleWidth,
-} from "@liuxuedeng/pi-core-tui";
+} from "@liuxuedeng/agent-core-tui";
 import chalk from "chalk";
 import { spawn } from "child_process";
 import {
@@ -99,7 +99,12 @@ import { withBuiltInRenderers } from "../../core/tools/renderers/index.ts";
 import type { TruncationResult } from "../../core/tools/truncate.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.ts";
 import { getUsageCostBreakdown } from "../../core/usage-totals.ts";
-import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.ts";
+import {
+	computeStartupChangelog,
+	getChangelogPath,
+	normalizeChangelogLinks,
+	parseChangelog,
+} from "../../utils/changelog.ts";
 import { copyToClipboard, readClipboardText } from "../../utils/clipboard.ts";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.ts";
 import { parseGitUrl } from "../../utils/git.ts";
@@ -762,7 +767,7 @@ export class InteractiveMode {
 		}
 		this.chatContainer.addChild(new DynamicBorder());
 		if (this.settingsManager.getCollapseChangelog()) {
-			const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+)\]?/);
+			const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\]?/);
 			const latestVersion = versionMatch ? versionMatch[1] : this.version;
 			const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
 			this.chatContainer.addChild(new Text(condensedText, 1, 0));
@@ -947,7 +952,7 @@ export class InteractiveMode {
 			);
 			const onboarding = theme.fg(
 				"dim",
-				`Pi can explain its own features and look up its docs. Ask it how to use or extend Pi.`,
+				`Agent Core can explain its own features and look up its docs. Ask it how to use or extend Agent Core.`,
 			);
 			this.builtInHeader = new ExpandableText(
 				() => `${logo}\n${compactInstructions}\n${compactOnboarding}\n\n${onboarding}`,
@@ -1032,7 +1037,7 @@ export class InteractiveMode {
 	async run(): Promise<void> {
 		await this.init();
 
-		if (!process.env.PI_CORE_OFFLINE) {
+		if (!process.env.AGENT_CORE_OFFLINE) {
 			const controller = new AbortController();
 			const timeout = setTimeout(() => controller.abort(), 15_000);
 			void refreshModelCatalogs(this.session.modelRuntime, controller.signal)
@@ -1139,7 +1144,7 @@ export class InteractiveMode {
 	}
 
 	private async checkForPackageUpdates(): Promise<string[]> {
-		if (process.env.PI_CORE_OFFLINE) {
+		if (process.env.AGENT_CORE_OFFLINE) {
 			return [];
 		}
 
@@ -1197,7 +1202,7 @@ export class InteractiveMode {
 		}
 
 		if (extendedKeysFormat === "xterm") {
-			return "tmux extended-keys-format is xterm. Pi works best with csi-u. Add `set -g extended-keys-format csi-u` to ~/.tmux.conf and restart tmux.";
+			return "tmux extended-keys-format is xterm. Agent Core works best with csi-u. Add `set -g extended-keys-format csi-u` to ~/.tmux.conf and restart tmux.";
 		}
 
 		return undefined;
@@ -1214,29 +1219,17 @@ export class InteractiveMode {
 		}
 
 		const lastVersion = this.settingsManager.getLastChangelogVersion();
-		const changelogPath = getChangelogPath();
-		const entries = parseChangelog(changelogPath);
-
-		if (!lastVersion) {
-			// Fresh install - record the version, send telemetry, don't show changelog
-			this.settingsManager.setLastChangelogVersion(VERSION);
+		const result = computeStartupChangelog(getChangelogPath(), lastVersion, VERSION);
+		if (result.seenVersion) {
+			this.settingsManager.setLastChangelogVersion(result.seenVersion);
 			this.reportInstallTelemetry(VERSION);
-			return undefined;
 		}
-
-		const newEntries = getNewEntries(entries, lastVersion);
-		if (newEntries.length > 0) {
-			this.settingsManager.setLastChangelogVersion(VERSION);
-			this.reportInstallTelemetry(VERSION);
-			return newEntries.map((e) => normalizeChangelogLinks(e.content, e)).join("\n\n");
-		}
-
-		return undefined;
+		return result.markdown;
 	}
 
 	private reportInstallTelemetry(version: string): void {
-		// Pi Core does not report installs to the upstream pi.dev telemetry endpoint.
-		// If Pi Core ever gets its own telemetry, wire it up here.
+		// Agent Core does not report installs to the upstream pi.dev telemetry endpoint.
+		// If Agent Core ever gets its own telemetry, wire it up here.
 		void version;
 	}
 
@@ -3882,7 +3875,7 @@ export class InteractiveMode {
 			new Text(
 				theme.fg(
 					"warning",
-					`This project is not trusted. Project ${CONFIG_DIR_NAME} resources and packages are ignored. Use /trust to save a trust decision, then restart pi.`,
+					`This project is not trusted. Project ${CONFIG_DIR_NAME} resources and packages are ignored. Use /trust to save a trust decision, then restart ${APP_NAME}.`,
 				),
 				1,
 				0,
@@ -4272,7 +4265,7 @@ export class InteractiveMode {
 	showNewVersionNotification(release: LatestPiRelease): void {
 		const action = theme.fg("accent", `${APP_NAME} update`);
 		const updateInstruction = theme.fg("muted", `New version ${release.version} is available. Run `) + action;
-		const changelogUrl = "https://pi.dev/changelog";
+		const changelogUrl = "https://github.com/LiuXD1011/agent-core/blob/main/packages/coding-agent/CHANGELOG.md";
 		const changelogLink = getCapabilities().hyperlinks
 			? hyperlink(theme.fg("accent", changelogUrl), changelogUrl)
 			: theme.fg("accent", changelogUrl);
@@ -5773,7 +5766,7 @@ export class InteractiveMode {
 			dialog.showDetails([
 				theme.fg("text", "You can also use an AWS profile, IAM keys, or role-based credentials."),
 				theme.fg("muted", "See:"),
-				theme.fg("accent", `  ${path.join(getDocsPath(), "providers.md")}`),
+				theme.fg("accent", `  ${path.join(getDocsPath(), "models.md")}`),
 			]);
 		}
 

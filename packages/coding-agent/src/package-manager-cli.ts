@@ -9,7 +9,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import { Markdown, type MarkdownTheme } from "@liuxuedeng/pi-core-tui";
+import { Markdown, type MarkdownTheme } from "@liuxuedeng/agent-core-tui";
 import chalk from "chalk";
 import lockfile from "proper-lockfile";
 import { selectConfig } from "./cli/config-selector.ts";
@@ -47,12 +47,11 @@ export type PackageCommand = "install" | "remove" | "update" | "list";
 
 type UpdateTarget = { type: "all" } | { type: "self" } | { type: "extensions"; source?: string } | { type: "models" };
 
-const DEFAULT_INSTALLER_API_BASE = "https://pi.dev/api/installer/releases";
 const MANAGED_INSTALL_MARKER = "managed-install.json";
 const MANAGED_RELEASE_VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 function getActiveManagedInstallRoot(): string | undefined {
-	const configuredRoot = process.env.PI_CORE_MANAGED_INSTALL_ROOT?.trim();
+	const configuredRoot = process.env.AGENT_CORE_MANAGED_INSTALL_ROOT?.trim();
 	if (!configuredRoot) return undefined;
 
 	const managedRoot = resolve(configuredRoot);
@@ -115,11 +114,13 @@ function verifyManagedRelease(releaseDir: string, expectedVersion: string): void
 	});
 	if (result.error || result.status !== 0) {
 		const reason = result.error?.message || result.stderr.trim() || `exit code ${result.status ?? "unknown"}`;
-		throw new Error(`Could not verify managed Pi ${expectedVersion}: ${reason}`);
+		throw new Error(`Could not verify managed ${APP_NAME} ${expectedVersion}: ${reason}`);
 	}
 	const installedVersion = result.stdout.trim();
 	if (installedVersion !== expectedVersion) {
-		throw new Error(`Managed Pi smoke test returned version ${installedVersion}; expected ${expectedVersion}.`);
+		throw new Error(
+			`Managed ${APP_NAME} smoke test returned version ${installedVersion}; expected ${expectedVersion}.`,
+		);
 	}
 }
 
@@ -168,7 +169,7 @@ export function cleanupManagedInstall(): void {
 	}
 }
 
-async function runManagedSelfUpdate(managedRoot: string, version: string): Promise<void> {
+export async function runManagedSelfUpdate(managedRoot: string, version: string): Promise<void> {
 	if (!MANAGED_RELEASE_VERSION_RE.test(version)) {
 		throw new Error(`Invalid managed release version: ${version}`);
 	}
@@ -178,18 +179,24 @@ async function runManagedSelfUpdate(managedRoot: string, version: string): Promi
 		releaseLock = await lockfile.lock(join(managedRoot, "update"), { realpath: false });
 	} catch (error: unknown) {
 		if (error instanceof Error && "code" in error && error.code === "ELOCKED") {
-			throw new Error("Another managed Pi update is already running.");
+			throw new Error(`Another managed ${APP_NAME} update is already running.`);
 		}
 		throw error;
 	}
 
 	let stageDir: string | undefined;
 	try {
+		// Managed updates need an explicitly configured Agent Core install source;
+		// the upstream installer manifest is never used implicitly. Terminate
+		// before staging or downloading anything.
+		const configuredInstallerApiBase = process.env.AGENT_CORE_INSTALLER_API_BASE?.trim();
+		if (!configuredInstallerApiBase) {
+			throw new Error(
+				`No managed update source is configured for ${APP_NAME}. Set AGENT_CORE_INSTALLER_API_BASE to a Agent Core release feed, or upgrade with: npm install -g ${PACKAGE_NAME}@latest`,
+			);
+		}
+		const installerApiBase = configuredInstallerApiBase.replace(/\/+$/, "");
 		cleanupManagedStaging(managedRoot);
-		const installerApiBase = (process.env.PI_CORE_INSTALLER_API_BASE?.trim() || DEFAULT_INSTALLER_API_BASE).replace(
-			/\/+$/,
-			"",
-		);
 		const releaseUrl = `${installerApiBase}/${encodeURIComponent(version)}`;
 		const stagingRoot = join(managedRoot, "staging");
 		const releasesRoot = join(managedRoot, "releases");
@@ -207,6 +214,13 @@ async function runManagedSelfUpdate(managedRoot: string, version: string): Promi
 			fetchInstallerArtifact(`${releaseUrl}/package.json`, "package.json"),
 			fetchInstallerArtifact(`${releaseUrl}/package-lock.json`, "package-lock.json"),
 		]);
+		// Never activate a manifest that installs a different product.
+		const stagedPackage = JSON.parse(packageJsonContent) as { name?: unknown };
+		if (stagedPackage.name !== PACKAGE_NAME) {
+			throw new Error(
+				`The managed update source serves ${typeof stagedPackage.name === "string" ? stagedPackage.name : "an unknown package"}, not ${PACKAGE_NAME}. Refusing to install a different product.`,
+			);
+		}
 		writeFileSync(join(stageDir, "package.json"), packageJsonContent);
 		writeFileSync(join(stageDir, "package-lock.json"), packageLockContent);
 
@@ -337,24 +351,24 @@ Examples:
 			console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("update")}
 
-Update pi, installed packages, or model catalogs.
+Update agent-core, installed packages, or model catalogs.
 
 Options:
-  --self                  Update pi only (default when no target is given)
+  --self                  Update agent-core only (default when no target is given)
   --extensions            Update installed packages only
   --models                Refresh model catalogs only
-  --all                   Update pi and installed packages
+  --all                   Update agent-core and installed packages
   --extension <source>    Update one package only
   -a, --approve           Trust project-local files for this command
   -na, --no-approve       Ignore project-local files for this command
-  --force                 Reinstall pi even if the current version is latest
+  --force                 Reinstall agent-core even if the current version is latest
 
 Short forms:
-  ${APP_NAME} update                Update pi only
-  ${APP_NAME} update --all          Update pi and all extensions
+  ${APP_NAME} update                Update agent-core only
+  ${APP_NAME} update --all          Update agent-core and all extensions
   ${APP_NAME} update --models       Refresh model catalogs only
   ${APP_NAME} update <source>       Update one package
-  ${APP_NAME} update pi             Update pi only (self works as alias to pi)
+  ${APP_NAME} update agent-core     Update agent-core only (self and pi work as aliases)
 `);
 			return;
 
@@ -531,7 +545,7 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 			}
 			updateTarget = { type: "extensions", source: extensionFlagSource };
 		} else if (source) {
-			const sourceIsSelf = source === "self" || source === "pi" || source === "pi-core";
+			const sourceIsSelf = source === "self" || source === "pi" || source === "agent-core";
 			if (sourceIsSelf) {
 				updateTarget = extensionsFlag ? { type: "all" } : { type: "self" };
 			} else {
@@ -659,7 +673,7 @@ interface SelfUpdatePlan {
 	note?: string;
 }
 
-async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
+export async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 	let latestRelease: Awaited<ReturnType<typeof getLatestPiRelease>>;
 	try {
 		latestRelease = await getLatestPiRelease(VERSION, { retry: true });
@@ -674,11 +688,18 @@ async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 		);
 	}
 
-	const packageName = latestRelease.packageName ?? PACKAGE_NAME;
-	const installSpec = `${packageName}@${latestRelease.version}`;
-	if (force || packageName !== PACKAGE_NAME || isNewerPackageVersion(latestRelease.version, VERSION)) {
+	// A version feed must never silently switch the installed product.
+	const feedPackageName = latestRelease.packageName;
+	if (feedPackageName && feedPackageName !== PACKAGE_NAME) {
+		throw new Error(
+			`The configured version feed serves ${feedPackageName}, not ${PACKAGE_NAME}. Refusing to install a different product. Upgrade with: npm install -g ${PACKAGE_NAME}@latest`,
+		);
+	}
+
+	const installSpec = `${PACKAGE_NAME}@${latestRelease.version}`;
+	if (force || isNewerPackageVersion(latestRelease.version, VERSION)) {
 		return {
-			packageName,
+			packageName: PACKAGE_NAME,
 			installSpec,
 			version: latestRelease.version,
 			...(latestRelease.note ? { note: latestRelease.note } : {}),
@@ -687,7 +708,7 @@ async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 	}
 
 	console.log(chalk.green(`${APP_NAME} is already up to date (v${VERSION})`));
-	return { packageName, installSpec, version: latestRelease.version, shouldRun: false };
+	return { packageName: PACKAGE_NAME, installSpec, version: latestRelease.version, shouldRun: false };
 }
 
 async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
