@@ -1,10 +1,9 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const dependencySections = ["dependencies", "devDependencies", "optionalDependencies"];
 const exactVersionPattern = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const ignoredDirectories = new Set([".git", "dist", "node_modules"]);
-const internalPackageNames = new Set(["@liuxuedeng/pi-core-chord"]);
 const packageJsonFiles = [];
 
 function collectPackageJsonFiles(directory) {
@@ -22,10 +21,40 @@ function collectPackageJsonFiles(directory) {
 	}
 }
 
+function collectWorkspacePackageNames() {
+	const rootPackageJson = JSON.parse(readFileSync("package.json", "utf8"));
+	const names = new Set();
+	const manifestPaths = [];
+	for (const pattern of rootPackageJson.workspaces ?? []) {
+		const starIndex = pattern.indexOf("*");
+		if (starIndex === -1) {
+			manifestPaths.push(pattern);
+			continue;
+		}
+		const parent = pattern.slice(0, starIndex);
+		const suffix = pattern.slice(starIndex + 1);
+		for (const entry of readdirSync(parent, { withFileTypes: true })) {
+			if (entry.isDirectory()) {
+				manifestPaths.push(`${parent}${entry.name}${suffix}`);
+			}
+		}
+	}
+	for (const manifestPath of manifestPaths) {
+		const manifestFile = join(manifestPath, "package.json");
+		if (existsSync(manifestFile)) {
+			const name = JSON.parse(readFileSync(manifestFile, "utf8")).name;
+			if (typeof name === "string") {
+				names.add(name);
+			}
+		}
+	}
+	return names;
+}
+
+const workspacePackageNames = collectWorkspacePackageNames();
+
 function isInternalWorkspaceDependency(name) {
-	return (
-		name.startsWith("@earendil-works/pi-") || name.startsWith("@liuxuedeng/pi-core") || internalPackageNames.has(name)
-	);
+	return workspacePackageNames.has(name);
 }
 
 function isNonRegistrySpecifier(specifier) {

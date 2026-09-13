@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,14 +9,40 @@ const repoRoot = resolve(scriptDir, "..");
 const codingAgentDir = join(repoRoot, "packages/coding-agent");
 const rootLockfilePath = join(repoRoot, "package-lock.json");
 const shrinkwrapPath = join(codingAgentDir, "npm-shrinkwrap.json");
-const internalPackagePrefix = "@earendil-works/pi-";
-const internalPackageNames = new Set(["@liuxuedeng/pi-core-chord"]);
-const piCorePackagePrefix = "@liuxuedeng/pi-core";
+function collectWorkspacePackageNames() {
+	const rootPackageJson = readJson(join(repoRoot, "package.json"));
+	const names = new Set();
+	const manifestPaths = [];
+	for (const pattern of rootPackageJson.workspaces ?? []) {
+		const starIndex = pattern.indexOf("*");
+		if (starIndex === -1) {
+			manifestPaths.push(pattern);
+			continue;
+		}
+		const parent = pattern.slice(0, starIndex);
+		const suffix = pattern.slice(starIndex + 1);
+		for (const entry of readdirSync(join(repoRoot, parent), { withFileTypes: true })) {
+			if (entry.isDirectory()) {
+				manifestPaths.push(`${parent}${entry.name}${suffix}`);
+			}
+		}
+	}
+	for (const manifestPath of manifestPaths) {
+		const manifestFile = join(repoRoot, manifestPath, "package.json");
+		if (existsSync(manifestFile)) {
+			const name = readJson(manifestFile).name;
+			if (typeof name === "string") {
+				names.add(name);
+			}
+		}
+	}
+	return names;
+}
+
+const workspacePackageNames = collectWorkspacePackageNames();
 
 function isInternalPackageName(name) {
-	return (
-		name.startsWith(internalPackagePrefix) || name.startsWith(piCorePackagePrefix) || internalPackageNames.has(name)
-	);
+	return workspacePackageNames.has(name);
 }
 const allowedInstallScriptPackages = new Map([
 	["@google/genai@1.52.0", "preinstall is a no-op in the published package"],
