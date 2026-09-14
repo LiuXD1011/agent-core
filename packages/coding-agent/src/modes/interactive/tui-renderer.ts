@@ -1,6 +1,5 @@
 import type { Terminal } from "@liuxuedeng/agent-core-tui";
 import { ProcessTerminal, type TUI, TuiAltScreen, TuiMainScreen } from "@liuxuedeng/agent-core-tui";
-import { copyToClipboard } from "../../utils/clipboard.ts";
 import { openBrowser } from "../../utils/open-browser.ts";
 import { keyDisplayText } from "./components/keybinding-hints.ts";
 import { theme } from "./theme/theme.ts";
@@ -11,7 +10,6 @@ export interface InteractiveTuiOptions {
 	readonly logDirectory: string;
 	readonly terminal?: Terminal;
 	readonly onRightClickPaste?: () => void;
-	readonly fullscreenCopyOnSelect?: boolean;
 }
 
 /** Composition root shared by coding-agent presentations. */
@@ -33,15 +31,6 @@ export function createInteractiveTui(options: InteractiveTuiOptions): TuiMainScr
 			},
 			openUrl: openBrowser,
 			onRightClickPaste: options.onRightClickPaste,
-			copyOnSelect: options.fullscreenCopyOnSelect,
-			copySelection: async (text) => {
-				try {
-					await copyToClipboard(text);
-					return true;
-				} catch {
-					return false;
-				}
-			},
 		});
 	}
 	return new TuiMainScreen(terminal, options.showHardwareCursor, options.logDirectory);

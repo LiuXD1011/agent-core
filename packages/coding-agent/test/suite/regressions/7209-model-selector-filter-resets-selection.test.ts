@@ -36,7 +36,7 @@ describe("model selector filter resets selection to top", () => {
 		}
 	});
 
-	it("moves selection to the first row in the All tab when typing a query", async () => {
+	it("moves selection to the first row when typing a query", async () => {
 		const harness = await createHarness({
 			models: [
 				{ id: "alpha-1", name: "Alpha One", reasoning: true },
@@ -52,7 +52,6 @@ describe("model selector filter resets selection to top", () => {
 			createFakeTui(),
 			current,
 			harness.session.modelRuntime,
-			[],
 			() => {},
 			() => {},
 		);
@@ -80,47 +79,5 @@ describe("model selector filter resets selection to top", () => {
 		expect(selectedModelId(rendered)).toBe("alpha-1");
 		// Sanity: the filter actually narrowed the list.
 		expect(rendered).not.toContain("beta-1");
-	});
-
-	it("moves selection to the first row in the Scoped tab when typing a query", async () => {
-		const harness = await createHarness({
-			models: [
-				{ id: "alpha-1", name: "Alpha One", reasoning: true },
-				{ id: "alpha-2", name: "Alpha Two", reasoning: true },
-				{ id: "alpha-3", name: "Alpha Three", reasoning: true },
-			],
-		});
-		harnesses.push(harness);
-
-		const alpha1 = harness.getModel("alpha-1")!;
-		const alpha2 = harness.getModel("alpha-2")!;
-		const alpha3 = harness.getModel("alpha-3")!;
-
-		// Scoped list is intentionally not in current-model-first order; the
-		// current model (alpha-1) sits at index 2.
-		const selector = new ModelSelectorComponent(
-			createFakeTui(),
-			alpha1,
-			harness.session.modelRuntime,
-			[{ model: alpha2 }, { model: alpha3 }, { model: alpha1 }],
-			() => {},
-			() => {},
-		);
-
-		await vi.waitFor(() => {
-			const rendered = stripAnsi(selector.render(120).join("\n"));
-			expect(rendered).toContain("Model catalogs refreshed.");
-		});
-
-		// Selection starts on the current model (alpha-1), which is row 2 here.
-		expect(selectedModelId(stripAnsi(selector.render(120).join("\n")))).toBe("alpha-1");
-
-		// Type a query matching all three scoped models. Selection must move to
-		// the top row (alpha-2), not stay clamped at index 2 (alpha-1).
-		for (const char of "alpha") {
-			selector.handleInput(char);
-		}
-
-		expect(selectedModelId(stripAnsi(selector.render(120).join("\n")))).toBe("alpha-2");
 	});
 });

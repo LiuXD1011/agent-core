@@ -84,7 +84,6 @@ export interface SettingsConfig {
 	tuiMode: TuiMode;
 	fullscreenExitOutput: FullscreenExitOutput;
 	fullscreenScrollbar: ScrollViewScrollbar;
-	fullscreenCopyOnSelect: boolean;
 	warnings: WarningSettings;
 }
 
@@ -121,7 +120,6 @@ export interface SettingsCallbacks {
 	onTuiModeChange: (mode: TuiMode) => void;
 	onFullscreenExitOutputChange: (output: FullscreenExitOutput) => void;
 	onFullscreenScrollbarChange: (mode: ScrollViewScrollbar) => void;
-	onFullscreenCopyOnSelectChange: (enabled: boolean) => void;
 	onWarningsChange: (warnings: WarningSettings) => void;
 	onCancel: () => void;
 }
@@ -696,13 +694,6 @@ export class SettingsSelectorComponent extends Container {
 				values: ["auto", "always", "hidden"],
 			},
 			{
-				id: "fullscreen-copy-on-select",
-				label: "Fullscreen copy on select",
-				description: "Automatically copy selected text in fullscreen mode; disable to copy selections with Ctrl+X",
-				currentValue: config.fullscreenCopyOnSelect ? "true" : "false",
-				values: ["true", "false"],
-			},
-			{
 				id: "theme",
 				label: "Theme",
 				description: "Color theme for the interface",
@@ -922,9 +913,6 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "fullscreen-scrollbar":
 						callbacks.onFullscreenScrollbarChange(newValue as ScrollViewScrollbar);
-						break;
-					case "fullscreen-copy-on-select":
-						callbacks.onFullscreenCopyOnSelectChange(newValue === "true");
 						break;
 					case "theme":
 						callbacks.onThemeChange(newValue);

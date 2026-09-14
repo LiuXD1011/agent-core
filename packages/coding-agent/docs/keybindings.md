@@ -43,7 +43,7 @@ Modifier combinations: `ctrl+shift+x`, `alt+ctrl+x`, `ctrl+shift+alt+x`, `super+
 | `tui.editor.pageUp` | `pageUp`, `ctrl+pageUp` | Scroll up by page |
 | `tui.editor.pageDown` | `pageDown`, `ctrl+pageDown` | Scroll down by page |
 
-The dedicated history actions always change history entries, regardless of the cursor position in a multiline prompt. Explicit history bindings take precedence over application actions while the main editor is focused, so binding `tui.editor.historyPrevious` to `ctrl+p` overrides model cycling in that context without changing `Ctrl+P` in selectors.
+The dedicated history actions always change history entries, regardless of the cursor position in a multiline prompt. Explicit history bindings take precedence over application actions while the main editor is focused, so binding `tui.editor.historyPrevious` to `ctrl+p` overrides the path display toggle in that context without changing `Ctrl+P` in selectors.
 
 ### TUI Editor Deletion
 
@@ -149,9 +149,7 @@ This routing remains configurable through the ordinary action bindings. For exam
 | Keybinding id | Default | Description |
 |--------|---------|-------------|
 | `app.model.select` | `ctrl+l` | Open model selector |
-| `app.model.cycleForward` | `ctrl+p` | Cycle to next model |
-| `app.model.cycleBackward` | `shift+ctrl+p` (`alt+p` on Windows and WSL) | Cycle to previous model |
-| `app.models.save` | `ctrl+s` | Save the selected default model or scoped model configuration to settings |
+| `app.models.save` | `ctrl+s` | Save the selected default model to settings |
 | `app.thinking.cycle` | `shift+tab` | Cycle thinking level |
 | `app.thinking.save` | `ctrl+s` | Save current thinking level to settings |
 | `app.thinking.toggle` | `ctrl+t` | Collapse or expand thinking blocks |
@@ -161,7 +159,6 @@ This routing remains configurable through the ordinary action bindings. For exam
 | Keybinding id | Default | Description |
 |--------|---------|-------------|
 | `app.tools.expand` | `ctrl+o` | Collapse or expand tool output |
-| `app.message.copy` | `ctrl+x` | Copy the selected message in `/tree`; otherwise copy the last assistant message, or the active fullscreen text selection when `fullscreenCopyOnSelect` is disabled |
 | `app.message.followUp` | `alt+enter` (`ctrl+q` on Windows and WSL) | Queue follow-up message |
 | `app.message.dequeue` | `alt+up` (`alt+q` on Windows and WSL) | Restore queued messages to editor |
 
@@ -180,18 +177,6 @@ This routing remains configurable through the ordinary action bindings. For exam
 | `app.tree.filter.all` | `ctrl+a` | Toggle tree filter that shows all entries |
 | `app.tree.filter.cycleForward` | `ctrl+o` | Cycle tree filter forward |
 | `app.tree.filter.cycleBackward` | `shift+ctrl+o` | Cycle tree filter backward |
-
-### Scoped Models Selector
-
-Used inside the scoped models selector (opened via `/scoped-models`).
-
-| Keybinding id | Default | Description |
-|--------|---------|-------------|
-| `app.models.enableAll` | `ctrl+a` | Enable all models (or all matching the current search) |
-| `app.models.clearAll` | `ctrl+x` | Clear all models (or all matching the current search) |
-| `app.models.toggleProvider` | `ctrl+p` | Toggle all models for the current provider |
-| `app.models.reorderUp` | `alt+up` | Move the selected model up in the cycle order |
-| `app.models.reorderDown` | `alt+down` | Move the selected model down in the cycle order |
 
 ## Custom Configuration
 

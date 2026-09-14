@@ -16,9 +16,9 @@ const CHANGELOG_LINK_BASE_PATH = "packages/coding-agent";
 const UPSTREAM_REPO_RE = /^https:\/\/github\.com\/(?:badlogic|earendil-works)\/pi(?:-mono)?(?=\/|$)/;
 const URL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
 const INLINE_MARKDOWN_LINK_RE = /(!?\[[^\]\n]+\]\()([^\s)]+)((?:\s+[^)]*)?\))/g;
-// Changelogs keep inherited upstream Pi history below this marker for
-// provenance. Those entries are not Agent Core releases and must never take part
-// in "what's new" comparisons, so parsing stops at the marker.
+// An optional marker separates Agent Core entries from imported history that may
+// sit below it. Those entries are not Agent Core releases and must never take
+// part in "what's new" comparisons, so parsing stops at the marker.
 const UPSTREAM_BOUNDARY_LINE = "<!-- agent-core:upstream-boundary -->";
 
 function entryVersion(entry: ChangelogEntry): string {
@@ -154,8 +154,8 @@ export function normalizeChangelogLinks(markdown: string, version: string | Chan
 /**
  * Parse changelog entries from CHANGELOG.md
  * Scans for ## lines and collects content until next ## or EOF.
- * Stops at the Agent Core/upstream history boundary: inherited upstream Pi
- * entries below the marker are provenance, not Agent Core releases.
+ * Stops at an optional history boundary marker: entries below it are imported
+ * history, not Agent Core releases.
  */
 export function parseChangelog(changelogPath: string): ChangelogEntry[] {
 	if (!existsSync(changelogPath)) {
@@ -251,7 +251,7 @@ export interface StartupChangelogResult {
 
 /**
  * Compute the startup "what's new" markdown for the current product version.
- * Only Agent Core entries (above the upstream history boundary) participate.
+ * Only Agent Core entries participate.
  * A fresh install records the version without displaying anything.
  */
 export function computeStartupChangelog(

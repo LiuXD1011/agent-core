@@ -69,7 +69,6 @@ describe("issue #6999 models.json hot reload", () => {
 			tui,
 			undefined,
 			modelRuntime,
-			[],
 			() => {},
 			() => {},
 		);

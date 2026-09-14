@@ -61,6 +61,32 @@ class RecordingTerminal extends VirtualTerminal {
 	}
 }
 
+/** Visible text of every inverse-video selection highlight in the terminal write stream. */
+function highlightedSegments(terminal: RecordingTerminal): string[] {
+	const segments: string[] = [];
+	for (const event of terminal.events) {
+		if (event.type !== "write") continue;
+		let cursor = 0;
+		while (cursor < event.data.length) {
+			const start = event.data.indexOf("\x1b[7m", cursor);
+			if (start === -1) break;
+			const end = event.data.indexOf("\x1b[27m", start + 4);
+			if (end === -1) break;
+			segments.push(stripTerminalSequences(event.data.slice(start + 4, end)));
+			cursor = end + 5;
+		}
+	}
+	return segments;
+}
+
+function assertHighlighted(terminal: RecordingTerminal, text: string): void {
+	const segments = highlightedSegments(terminal);
+	assert.ok(
+		segments.some((segment) => segment.includes(text)),
+		`expected a selection highlight covering ${JSON.stringify(text)}; got ${JSON.stringify(segments)}`,
+	);
+}
+
 describe("TuiAltScreen", () => {
 	it("renders a terminal-height viewport and preserves manual scroll position", async () => {
 		const terminal = new VirtualTerminal(20, 4);
@@ -455,7 +481,6 @@ describe("TuiAltScreen", () => {
 
 		terminal.sendInput("\x1b[<0;10;10m");
 		await terminal.waitForRender();
-		assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1b]52;c;")));
 		tui.stop();
 	});
 
@@ -1209,7 +1234,7 @@ describe("TuiAltScreen", () => {
 		tui.stop();
 	});
 
-	it("selects visible text with the mouse and copies it with OSC 52 after a generic release", async () => {
+	it("highlights visible text selected with the mouse after a generic release", async () => {
 		const terminal = new RecordingTerminal(20, 4);
 		const tui = new TuiAltScreen(terminal);
 		tui.addChild(new Text("\x1b[1mal\x1b[0mpha\nbeta\ngamma\ndelta", 0, 0));
@@ -1221,131 +1246,12 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<3;4;2m");
 		await terminal.waitForRender();
 
-		const expectedClipboardSequence = `\x1b]52;c;${Buffer.from("alpha\nbeta").toString("base64")}\x07`;
-		const clipboardWrites = terminal.events.filter(
-			(event) => event.type === "write" && event.data.includes("\x1b]52;c;"),
-		);
-		assert.ok(
-			clipboardWrites.some((event) => event.type === "write" && event.data.includes(expectedClipboardSequence)),
-			JSON.stringify(clipboardWrites),
-		);
+		assertHighlighted(terminal, "alpha");
+		assertHighlighted(terminal, "beta");
 		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1b[7m")));
 		assert.ok(
 			terminal.events.some((event) => event.type === "write" && event.data.includes("al\x1b[0m\x1b[7mpha")),
 			"selection inverse must be reapplied after a reset inside the selection",
-		);
-		assert.ok(terminal.getViewport().some((line) => line.includes("Copied!")));
-
-		tui.stop();
-	});
-
-	it("uses an injected copySelection handler instead of OSC 52 and reports success", async () => {
-		const terminal = new RecordingTerminal(20, 4);
-		const copied: string[] = [];
-		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			copySelection: async (text) => {
-				copied.push(text);
-				return true;
-			},
-		});
-		tui.addChild(new Text("alpha\nbeta\ngamma\ndelta", 0, 0));
-		tui.start();
-		await terminal.waitForRender();
-
-		terminal.sendInput("\x1b[<0;1;1M");
-		terminal.sendInput("\x1b[<32;4;2M");
-		terminal.sendInput("\x1b[<0;4;2m");
-		await terminal.waitForRender();
-
-		assert.deepStrictEqual(copied, ["alpha\nbeta"]);
-		assert.ok(
-			terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1b]52;c;")),
-			"must not emit OSC 52 when a copySelection handler is provided",
-		);
-		assert.ok(terminal.getViewport().some((line) => line.includes("Copied!")));
-
-		tui.stop();
-	});
-
-	it("leaves selections visible without copying when copyOnSelect is disabled", async () => {
-		const terminal = new RecordingTerminal(20, 4);
-		const copied: string[] = [];
-		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			copyOnSelect: false,
-			copySelection: async (text) => {
-				copied.push(text);
-				return true;
-			},
-		});
-		tui.addChild(new Text("alpha\nbeta\ngamma\ndelta", 0, 0));
-		tui.start();
-		await terminal.waitForRender();
-
-		terminal.sendInput("\x1b[<0;1;1M");
-		terminal.sendInput("\x1b[<32;4;2M");
-		terminal.sendInput("\x1b[<0;4;2m");
-		await terminal.waitForRender();
-
-		assert.deepStrictEqual(copied, []);
-		assert.strictEqual(tui.hasActiveSelection(), true);
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1b[7m")));
-		assert.ok(terminal.getViewport().every((line) => !line.includes("Copied!")));
-
-		tui.stop();
-	});
-
-	it("copies an active selection programmatically", async () => {
-		const terminal = new RecordingTerminal(20, 4);
-		const copied: string[] = [];
-		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			copySelection: async (text) => {
-				copied.push(text);
-				return true;
-			},
-		});
-		tui.addChild(new Text("alpha\nbeta\ngamma\ndelta", 0, 0));
-		tui.start();
-		await terminal.waitForRender();
-
-		assert.strictEqual(tui.hasActiveSelection(), false);
-		assert.strictEqual(await tui.copyActiveSelectionToClipboard(), false);
-
-		terminal.sendInput("\x1b[<0;1;1M");
-		terminal.sendInput("\x1b[<32;4;2M");
-		terminal.sendInput("\x1b[<0;4;2m");
-		await terminal.waitForRender();
-
-		assert.deepStrictEqual(copied, ["alpha\nbeta"]);
-		assert.strictEqual(tui.hasActiveSelection(), true);
-
-		copied.length = 0;
-		assert.strictEqual(await tui.copyActiveSelectionToClipboard(), true);
-		await terminal.waitForRender();
-
-		assert.deepStrictEqual(copied, ["alpha\nbeta"]);
-		assert.ok(terminal.getViewport().some((line) => line.includes("Copied!")));
-
-		tui.stop();
-	});
-
-	it("flashes an error when the injected copySelection handler fails", async () => {
-		const terminal = new RecordingTerminal(20, 4);
-		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			copySelection: async () => false,
-		});
-		tui.addChild(new Text("alpha\nbeta\ngamma\ndelta", 0, 0));
-		tui.start();
-		await terminal.waitForRender();
-
-		terminal.sendInput("\x1b[<0;1;1M");
-		terminal.sendInput("\x1b[<32;4;2M");
-		terminal.sendInput("\x1b[<0;4;2m");
-		await terminal.waitForRender();
-
-		assert.ok(terminal.getViewport().some((line) => line.includes("Copy failed")));
-		assert.ok(
-			terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1b]52;c;")),
-			"must not emit OSC 52 when a copySelection handler is provided",
 		);
 
 		tui.stop();
@@ -1372,14 +1278,8 @@ describe("TuiAltScreen", () => {
 			{ line: "extensions/starline/fixed-editor/compositor.ts", needle: "starline" },
 			{ line: "earendil-works/pi-tui", needle: "works" },
 		]) {
-			const copied: string[] = [];
 			const terminal = new RecordingTerminal(80, 1);
-			const tui = new TuiAltScreen(terminal, undefined, undefined, {
-				copySelection: async (text) => {
-					copied.push(text);
-					return true;
-				},
-			});
+			const tui = new TuiAltScreen(terminal);
 			tui.addChild(new Text(line, 0, 0));
 			tui.start();
 			await terminal.waitForRender();
@@ -1391,7 +1291,7 @@ describe("TuiAltScreen", () => {
 			terminal.sendInput(`\x1b[<0;${oneBasedClickColumn};1m`);
 			await terminal.waitForRender();
 
-			assert.deepStrictEqual(copied, [line]);
+			assertHighlighted(terminal, line);
 			tui.stop();
 		}
 	});
@@ -1426,9 +1326,7 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<0;10;1M");
 		terminal.sendInput("\x1b[<0;10;1m");
 		await terminal.waitForRender();
-		const alpha = `\x1b]52;c;${Buffer.from("alpha").toString("base64")}\x07`;
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(alpha)));
-
+		assertHighlighted(terminal, "alpha");
 		// A double-click drag includes each word touched, rather than partial words.
 		terminal.sendInput("\x1b[<0;12;1M");
 		terminal.sendInput("\x1b[<0;12;1m");
@@ -1436,8 +1334,8 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<32;3;2M");
 		terminal.sendInput("\x1b[<0;3;2m");
 		await terminal.waitForRender();
-		const words = `\x1b]52;c;${Buffer.from("beta\ngamma").toString("base64")}\x07`;
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(words)));
+		assertHighlighted(terminal, "beta");
+		assertHighlighted(terminal, "gamma");
 
 		terminal.sendInput("\x1b[<0;7;2M");
 		terminal.sendInput("\x1b[<0;7;2m");
@@ -1446,8 +1344,7 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<0;11;2M");
 		terminal.sendInput("\x1b[<0;11;2m");
 		await terminal.waitForRender();
-		const line = `\x1b]52;c;${Buffer.from("gamma delta").toString("base64")}\x07`;
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(line)));
+		assertHighlighted(terminal, "gamma delta");
 
 		tui.stop();
 	});
@@ -1460,8 +1357,8 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 
 		const writeCount = () => terminal.events.filter((event) => event.type === "write").length;
-		const clipboardWriteCount = () =>
-			terminal.events.filter((event) => event.type === "write" && event.data.includes("\x1b]52;c;")).length;
+		const highlightWriteCount = () =>
+			terminal.events.filter((event) => event.type === "write" && event.data.includes("\x1b[7m")).length;
 
 		const idleWriteCount = writeCount();
 		terminal.sendInput("\x1b[O");
@@ -1475,7 +1372,7 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<32;4;2M");
 		terminal.sendInput("\x1b[<0;4;2m");
 		await terminal.waitForRender();
-		assert.strictEqual(clipboardWriteCount(), 0);
+		assert.strictEqual(highlightWriteCount(), 0);
 
 		// Losing focus after a press without a drag cancels the press without repainting.
 		terminal.sendInput("\x1b[<0;1;3M");
@@ -1488,7 +1385,7 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<32;4;2M");
 		terminal.sendInput("\x1b[<0;4;2m");
 		await terminal.waitForRender();
-		assert.strictEqual(clipboardWriteCount(), 0);
+		assert.strictEqual(highlightWriteCount(), 0);
 		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1b[?1004h")));
 
 		tui.stop();
@@ -1521,7 +1418,6 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<32;4;2M");
 		terminal.sendInput("\x1b[<0;4;2m");
 		await terminal.waitForRender();
-		assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1b]52;c;")));
 		tui.stop();
 	});
 
@@ -1598,11 +1494,9 @@ describe("TuiAltScreen", () => {
 
 		const selectedLines = Array.from({ length: 8 - selectionTop }, (_, index) => `line ${selectionTop + index + 1}`);
 		selectedLines.push("l");
-		const expectedClipboardSequence = `\x1b]52;c;${Buffer.from(selectedLines.join("\n")).toString("base64")}\x07`;
-		assert.ok(
-			terminal.events.some((event) => event.type === "write" && event.data.includes(expectedClipboardSequence)),
-			JSON.stringify(terminal.events.filter((event) => event.type === "write" && event.data.includes("\x1b]52;c;"))),
-		);
+		for (const selectedLine of selectedLines) {
+			assertHighlighted(terminal, selectedLine);
+		}
 		tui.stop();
 	});
 
@@ -1613,31 +1507,25 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		const wideSelection = `\x1b]52;c;${Buffer.from("界🙂").toString("base64")}\x07`;
 		terminal.sendInput("\x1b[<0;3;1M");
 		terminal.sendInput("\x1b[<32;4;1M");
 		terminal.sendInput("\x1b[<0;4;1m");
 		await terminal.waitForRender();
-		assert.strictEqual(
-			terminal.events.filter((event) => event.type === "write" && event.data.includes(wideSelection)).length,
-			1,
-		);
+		assertHighlighted(terminal, "界🙂");
 
 		terminal.sendInput("\x1b[<0;5;1M");
 		terminal.sendInput("\x1b[<32;2;1M");
 		terminal.sendInput("\x1b[<0;2;1m");
 		await terminal.waitForRender();
-		assert.strictEqual(
-			terminal.events.filter((event) => event.type === "write" && event.data.includes(wideSelection)).length,
-			2,
-		);
+		assertHighlighted(terminal, "界🙂");
 
 		const combiningSelection = `\x1b]52;c;${Buffer.from("éZ").toString("base64")}\x07`;
 		terminal.sendInput("\x1b[<0;6;1M");
 		terminal.sendInput("\x1b[<32;7;1M");
 		terminal.sendInput("\x1b[<0;7;1m");
 		await terminal.waitForRender();
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(combiningSelection)));
+		const combiningText = Buffer.from(combiningSelection.slice(7, -1), "base64").toString("utf8");
+		assertHighlighted(terminal, combiningText);
 
 		tui.stop();
 	});
@@ -1685,7 +1573,7 @@ describe("TuiAltScreen", () => {
 		terminal.sendInput("\x1b[<0;4;2m");
 		await terminal.waitForRender();
 		assert.strictEqual(clicks, 1);
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1b]52;c;")));
+		assertHighlighted(terminal, "clickable");
 		tui.stop();
 	});
 

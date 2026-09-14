@@ -405,7 +405,6 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 		type TestModel = { id: string; provider: string; name: string };
 		type FakeInteractiveMode = {
 			session: {
-				scopedModels: Array<{ model: TestModel }>;
 				modelRuntime: { getAvailableSnapshot: () => TestModel[] };
 				promptTemplates: [];
 				extensionRunner: { getRegisteredCommands: () => [] };
@@ -428,7 +427,6 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 		];
 		const fakeThis: FakeInteractiveMode = {
 			session: {
-				scopedModels: [],
 				modelRuntime: { getAvailableSnapshot: () => models },
 				promptTemplates: [],
 				extensionRunner: { getRegisteredCommands: () => [] },
@@ -455,7 +453,6 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 	test("matches login command arguments by provider id and name", async () => {
 		type FakeInteractiveMode = {
 			session: {
-				scopedModels: [];
 				modelRuntime: { getAvailableSnapshot: () => [] };
 				promptTemplates: [];
 				extensionRunner: { getRegisteredCommands: () => [] };
@@ -475,7 +472,6 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 		).prototype.createBaseAutocompleteProvider;
 		const fakeThis: FakeInteractiveMode = {
 			session: {
-				scopedModels: [],
 				modelRuntime: { getAvailableSnapshot: () => [] },
 				promptTemplates: [],
 				extensionRunner: { getRegisteredCommands: () => [] },

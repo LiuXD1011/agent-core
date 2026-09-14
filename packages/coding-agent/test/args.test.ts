@@ -150,11 +150,6 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--thinking", "high"]);
 			expect(result.thinking).toBe("high");
 		});
-
-		test("parses --models as comma-separated list", () => {
-			const result = parseArgs(["--models", "gpt-4o,claude-sonnet,gemini-pro"]);
-			expect(result.models).toEqual(["gpt-4o", "claude-sonnet", "gemini-pro"]);
-		});
 	});
 
 	describe("--name flag", () => {

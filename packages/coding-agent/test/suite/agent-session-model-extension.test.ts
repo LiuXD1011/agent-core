@@ -1,5 +1,5 @@
-import type { AgentTool, ThinkingLevel } from "@liuxuedeng/agent-core-agent";
-import { fauxAssistantMessage, fauxToolCall, type Model, type Usage } from "@liuxuedeng/agent-core-ai";
+import type { AgentTool } from "@liuxuedeng/agent-core-agent";
+import { fauxAssistantMessage, fauxToolCall, type Usage } from "@liuxuedeng/agent-core-ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import type { BuildSystemPromptOptions, ExtensionAPI } from "../../src/index.ts";
@@ -81,7 +81,7 @@ describe("AgentSession model and extension characterization", () => {
 		expect(harness.settingsManager.getDefaultThinkingLevel()).toBe("max");
 	});
 
-	it("cycleModel and cycleThinkingLevel are session-only by default", async () => {
+	it("cycleThinkingLevel is session-only by default", async () => {
 		const harness = await createHarness({
 			models: [
 				{ id: "faux-1", name: "One", reasoning: true },
@@ -94,10 +94,6 @@ describe("AgentSession model and extension characterization", () => {
 			},
 		});
 		harnesses.push(harness);
-
-		await harness.session.cycleModel();
-		expect(harness.session.model?.id).toBe("faux-2");
-		expect(harness.settingsManager.getDefaultModel()).toBe("faux-1");
 
 		harness.session.setThinkingLevel("off");
 		expect(harness.session.cycleThinkingLevel()).toBe("minimal");
@@ -163,31 +159,6 @@ describe("AgentSession model and extension characterization", () => {
 		const model2 = harness.getModel("faux-2")!;
 		await harness.session.setModel(model2);
 		expect(harness.session.thinkingLevel).toBe("minimal");
-	});
-
-	it("cycles through scoped models and preserves the scoped thinking preference", async () => {
-		const harness = await createHarness({
-			models: [
-				{ id: "faux-1", name: "One", reasoning: true },
-				{ id: "faux-2", name: "Two", reasoning: false },
-			],
-		});
-		harnesses.push(harness);
-		const modelOne = harness.getModel("faux-1")!;
-		const modelTwo = harness.getModel("faux-2")!;
-		harness.session.setScopedModels([{ model: modelOne, thinkingLevel: "high" }, { model: modelTwo }] as Array<{
-			model: Model<string>;
-			thinkingLevel?: ThinkingLevel;
-		}>);
-		harness.session.setThinkingLevel("high");
-
-		await harness.session.cycleModel();
-		expect(harness.session.model?.id).toBe("faux-2");
-		expect(harness.session.thinkingLevel).toBe("off");
-
-		await harness.session.cycleModel();
-		expect(harness.session.model?.id).toBe("faux-1");
-		expect(harness.session.thinkingLevel).toBe("high");
 	});
 
 	it("clamps thinking levels to model capabilities and cycles available levels", async () => {

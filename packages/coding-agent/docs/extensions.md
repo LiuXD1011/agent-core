@@ -337,7 +337,7 @@ user sends another prompt ◄─────────────────
   ├─► session_before_tree (can cancel or customize)
   └─► session_tree
 
-/model or Ctrl+P (model selection/cycling)
+/model or Ctrl+L (model selection)
   ├─► thinking_level_select (if model change changes/clamps thinking level)
   └─► model_select
 
@@ -739,13 +739,13 @@ Header availability depends on provider and transport. Providers that abstract H
 
 #### model_select
 
-Fired when the model changes via `/model` command, model cycling (`Ctrl+P`), or session restore.
+Fired when the model changes via the `/model` command or session restore.
 
 ```typescript
 pi.on("model_select", async (event, ctx) => {
   // event.model - newly selected model
   // event.previousModel - previous model (undefined if first selection)
-  // event.source - "set" | "cycle" | "restore"
+  // event.source - "set" | "restore"
 
   const prev = event.previousModel
     ? `${event.previousModel.provider}/${event.previousModel.id}`
@@ -1010,11 +1010,10 @@ ctx.sessionManager.buildContextEntries()    // Active branch entries with compac
 ctx.sessionManager.getLeafId()              // Current leaf entry ID
 ```
 
-### ctx.modelRegistry / ctx.model / ctx.thinkingLevel / ctx.scopedModels
+### ctx.modelRegistry / ctx.model / ctx.thinkingLevel
 
 Access to models, providers, and resolved authentication. `ctx.modelRegistry.getProvider(id)` returns the effective pi-ai provider, while `getProviderAuth(id)` resolves its current API key, headers, base URL, and provider-scoped environment without requiring a loaded model. `ctx.model` is the active model, and `ctx.thinkingLevel` is its current effective thinking level.
 
-`ctx.scopedModels` is the read-only list of models scoped to the current session — the same set the `/scoped-models` command shows. It is resolved at session start from the `--models` CLI flag and the `enabledModels` setting (matched against the available catalogue with minimatch on `provider/modelId` or a bare `modelId`). It is empty when no scoping is configured, meaning every available model is usable. Each entry is `{ model, thinkingLevel? }`, where `thinkingLevel` is set only when a pattern pinned it (e.g. `anthropic/*:high`). Use it to populate a model picker that mirrors the built-in one instead of enumerating the whole catalogue via `ctx.modelRegistry.getAvailable()`.
 
 ### ctx.signal
 

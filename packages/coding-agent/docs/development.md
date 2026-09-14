@@ -38,13 +38,12 @@ Change `name`, `configDir`, and `bin` field for your own fork. Affects CLI banne
 
 Names that are deliberately **not** rebranded, because they are protocols, historical inputs, or third-party contracts:
 
-- **Source and license history:** upstream Pi copyright, `LICENSE`, historical changelog entries, and upstream issue links stay as-is.
+- **Source and license history:** upstream Pi copyright, `LICENSE`, and upstream issue links stay as-is.
 - **Persistent namespaces `pi.*`:** storage value namespaces, fork policies, and telemetry schema names are interdependent with stored data; renaming would make old sessions unreadable.
 - **Resource manifest keys:** `piConfig` in `package.json` and the `pi` resource manifest (`pi.extensions`, `pi.skills`, `pi.prompts`, `pi.themes`) are the configuration format; the `pi-package` npm keyword remains the ecosystem discovery convention.
 - **`pi-messages` API** in `packages/ai`: an independent adapter protocol, kept independent of product naming.
 - **`pi-managed-install` marker and update aliases:** the install-layout recognition marker and the `update pi` alias are compatibility protocols; changing them requires a coordinated writer/reader/test change.
 - **OAuth originator/referrer fields** (OpenAI Codex, xAI): literal values that providers may contract on; verify the official contract before changing.
-- **Share viewer:** `/share` uploads to an external viewer (`DEFAULT_SHARE_VIEWER_URL`); it is an external service, not self-hosted.
 - **Third-party names** (pi-doom, pi.dev gallery, vendor highlight libraries, math `pi`) keep their real names.
 
 Integrations this project does **not** actively verify: Termux/Android (page kept as-is, unverified), third-party managed sandboxes (excluded from the containerization page), and upstream services (the npm gallery, install statistics, release feeds — all contacts disabled).

@@ -38,18 +38,16 @@ Use `argument-hint` in frontmatter to show expected arguments in autocomplete. U
 
 ```markdown
 ---
-description: Review PRs from URLs with structured issue and code analysis
-argument-hint: "<PR-URL>"
+description: Deploy the current branch
+argument-hint: "<environment> [--dry-run]"
 ---
 ```
 
 This renders in the autocomplete dropdown as:
 
 ```
-→ pr   <PR-URL>       — Review PRs from URLs with structured issue and code analysis
-  is   <issue>        — Analyze GitHub issues (bugs or feature requests)
-  wr   [instructions] — Finish the current task end-to-end
-  cl   — Audit changelog entries before release
+→ deploy   <environment> [--dry-run]   — Deploy the current branch
+  review                               — Review staged git changes
 ```
 
 ## Usage

@@ -17,7 +17,6 @@ export {
 	type AgentSessionConfig,
 	type AgentSessionEvent,
 	type AgentSessionEventListener,
-	type ModelCycleResult,
 	type ParsedSkillBlock,
 	type PromptOptions,
 	parseSkillBlock,
@@ -174,14 +173,7 @@ export {
 export type { ReadonlyFooterDataProvider } from "./core/footer-data-provider.ts";
 export { convertToLlm } from "./core/messages.ts";
 export { ModelRegistry } from "./core/model-registry.ts";
-export {
-	type ModelScopeDiagnostic,
-	type ResolveCliModelResult,
-	type ResolveModelScopeResult,
-	resolveCliModel,
-	resolveModelScopeWithDiagnostics,
-	type ScopedModel,
-} from "./core/model-resolver.ts";
+export { type ResolveCliModelResult, resolveCliModel } from "./core/model-resolver.ts";
 export {
 	type CreateModelRuntimeOptions,
 	CredentialSynchronizationError,
@@ -415,7 +407,6 @@ export {
 	type ThemeColor,
 } from "./modes/interactive/theme/theme.ts";
 // Clipboard utilities
-export { copyToClipboard } from "./utils/clipboard.ts";
 export { parseFrontmatter, stripFrontmatter } from "./utils/frontmatter.ts";
 export { convertToPng } from "./utils/image-convert.ts";
 export { formatDimensionNote, type ResizedImage, resizeImage } from "./utils/image-resize.ts";

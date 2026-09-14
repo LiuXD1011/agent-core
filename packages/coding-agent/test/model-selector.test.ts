@@ -38,7 +38,6 @@ describe("model selector", () => {
 			createFakeTui(),
 			currentModel,
 			harness.session.modelRuntime,
-			[],
 			() => {},
 			() => {},
 		);
@@ -65,7 +64,6 @@ describe("model selector", () => {
 			createFakeTui(),
 			currentModel,
 			harness.session.modelRuntime,
-			[],
 			() => {},
 			() => {},
 			undefined,
@@ -93,7 +91,6 @@ describe("model selector", () => {
 			createFakeTui(),
 			harness.getModel(),
 			harness.session.modelRuntime,
-			[],
 			() => {},
 			() => {},
 		);

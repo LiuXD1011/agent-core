@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 - Renamed the npm package from `@liuxuedeng/pi-core-tui` to `@liuxuedeng/agent-core-tui`; update dependency specifiers and import paths.
+- Removed selection copy from `TuiAltScreen`: the `copyOnSelect` and `copySelection` options, `getCopyOnSelect()`/`setCopyOnSelect()`, `hasActiveSelection()`, and `copyActiveSelectionToClipboard()`. Mouse drags still highlight selected text but no longer write to the clipboard.
 
 ### Added
 

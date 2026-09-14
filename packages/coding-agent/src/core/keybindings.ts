@@ -18,14 +18,11 @@ export interface AppKeybindings {
 	"app.suspend": true;
 	"app.thinking.cycle": true;
 	"app.thinking.save": true;
-	"app.model.cycleForward": true;
-	"app.model.cycleBackward": true;
 	"app.model.select": true;
 	"app.tools.expand": true;
 	"app.thinking.toggle": true;
 	"app.session.toggleNamedFilter": true;
 	"app.editor.external": true;
-	"app.message.copy": true;
 	"app.message.followUp": true;
 	"app.message.dequeue": true;
 	"app.clipboard.pasteImage": true;
@@ -43,11 +40,6 @@ export interface AppKeybindings {
 	"app.session.delete": true;
 	"app.session.deleteNoninvasive": true;
 	"app.models.save": true;
-	"app.models.enableAll": true;
-	"app.models.clearAll": true;
-	"app.models.toggleProvider": true;
-	"app.models.reorderUp": true;
-	"app.models.reorderDown": true;
 	"app.tree.filter.default": true;
 	"app.tree.filter.noTools": true;
 	"app.tree.filter.userOnly": true;
@@ -105,14 +97,6 @@ export const KEYBINDINGS = {
 		defaultKeys: "ctrl+s",
 		description: "Save thinking level",
 	},
-	"app.model.cycleForward": {
-		defaultKeys: "ctrl+p",
-		description: "Cycle to next model",
-	},
-	"app.model.cycleBackward": {
-		defaultKeys: windowsKeybindings ? "alt+p" : "shift+ctrl+p",
-		description: "Cycle to previous model",
-	},
 	"app.model.select": { defaultKeys: "ctrl+l", description: "Open model selector" },
 	"app.tools.expand": { defaultKeys: "ctrl+o", description: "Toggle tool output" },
 	"app.thinking.toggle": {
@@ -126,10 +110,6 @@ export const KEYBINDINGS = {
 	"app.editor.external": {
 		defaultKeys: "ctrl+g",
 		description: "Open external editor",
-	},
-	"app.message.copy": {
-		defaultKeys: "ctrl+x",
-		description: "Copy message to clipboard",
 	},
 	"app.message.followUp": {
 		defaultKeys: windowsKeybindings ? "ctrl+q" : "alt+enter",
@@ -186,26 +166,6 @@ export const KEYBINDINGS = {
 	"app.models.save": {
 		defaultKeys: "ctrl+s",
 		description: "Save model selection",
-	},
-	"app.models.enableAll": {
-		defaultKeys: "ctrl+a",
-		description: "Enable all models",
-	},
-	"app.models.clearAll": {
-		defaultKeys: "ctrl+x",
-		description: "Clear all models",
-	},
-	"app.models.toggleProvider": {
-		defaultKeys: "ctrl+p",
-		description: "Toggle all models for provider",
-	},
-	"app.models.reorderUp": {
-		defaultKeys: "alt+up",
-		description: "Move model up in order",
-	},
-	"app.models.reorderDown": {
-		defaultKeys: "alt+down",
-		description: "Move model down in order",
 	},
 	"app.tree.filter.default": {
 		defaultKeys: "ctrl+d",
@@ -274,8 +234,6 @@ const KEYBINDING_NAME_MIGRATIONS = {
 	exit: "app.exit",
 	suspend: "app.suspend",
 	cycleThinkingLevel: "app.thinking.cycle",
-	cycleModelForward: "app.model.cycleForward",
-	cycleModelBackward: "app.model.cycleBackward",
 	selectModel: "app.model.select",
 	expandTools: "app.tools.expand",
 	toggleThinking: "app.thinking.toggle",

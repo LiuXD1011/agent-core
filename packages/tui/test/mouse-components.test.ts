@@ -8,6 +8,15 @@ import { Container, type TuiMouseEvent, type TuiMouseEventType } from "../src/tu
 import { TuiAltScreen } from "../src/tui-alt-screen.ts";
 import { VirtualTerminal } from "./virtual-terminal.ts";
 
+class RecordingTerminal extends VirtualTerminal {
+	readonly writes: string[] = [];
+
+	override write(data: string): void {
+		this.writes.push(data);
+		super.write(data);
+	}
+}
+
 function mouse(type: TuiMouseEventType, x: number, y: number, width = 80, height = 10): TuiMouseEvent {
 	return {
 		type,
@@ -221,15 +230,9 @@ describe("mouse-aware components", () => {
 		tui.stop();
 	});
 
-	it("selects and copies editor text on drag instead of moving the cursor", async () => {
-		const terminal = new VirtualTerminal(20, 6);
-		const copied: string[] = [];
-		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			copySelection: async (text) => {
-				copied.push(text);
-				return true;
-			},
-		});
+	it("selects editor text on drag instead of moving the cursor", async () => {
+		const terminal = new RecordingTerminal(20, 6);
+		const tui = new TuiAltScreen(terminal);
 		const editor = new Editor(tui, editorTheme);
 		editor.setText("hello world");
 		tui.addChild(editor);
@@ -242,7 +245,10 @@ describe("mouse-aware components", () => {
 		terminal.sendInput("\x1b[<0;5;2m");
 		await terminal.waitForRender();
 
-		assert.deepStrictEqual(copied, ["hello"]);
+		assert.ok(
+			terminal.writes.some((data) => data.includes("hello\x1b[27m")),
+			"drag must highlight the selected editor text",
+		);
 		assert.deepStrictEqual(editor.getCursor(), cursorBefore);
 		tui.stop();
 	});

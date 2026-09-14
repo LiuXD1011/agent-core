@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 import { setupCli } from "../src/cli/setup.ts";
-import { APP_NAME, getShareViewerUrl } from "../src/config.ts";
+import { APP_NAME } from "../src/config.ts";
 import { mergeProviderAttributionHeaders } from "../src/core/provider-attribution.ts";
 import type { SettingsManager } from "../src/core/settings-manager.ts";
 
@@ -42,28 +42,6 @@ describe("process markers identify Agent Core in both entry points", () => {
 		});
 		expect(result.status).toBe(0);
 		expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/);
-	});
-});
-
-describe("share viewer URL", () => {
-	const originalViewerUrl = process.env.AGENT_CORE_SHARE_VIEWER_URL;
-
-	afterEach(() => {
-		if (originalViewerUrl === undefined) {
-			delete process.env.AGENT_CORE_SHARE_VIEWER_URL;
-		} else {
-			process.env.AGENT_CORE_SHARE_VIEWER_URL = originalViewerUrl;
-		}
-	});
-
-	it("defaults to the upstream Pi share viewer, which is an external service", () => {
-		delete process.env.AGENT_CORE_SHARE_VIEWER_URL;
-		expect(getShareViewerUrl("gist-123")).toBe("https://pi.dev/session/#gist-123");
-	});
-
-	it("can be overridden to a Agent Core-controlled viewer", () => {
-		process.env.AGENT_CORE_SHARE_VIEWER_URL = "https://example.invalid/viewer/";
-		expect(getShareViewerUrl("gist-123")).toBe("https://example.invalid/viewer/#gist-123");
 	});
 });
 

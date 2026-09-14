@@ -86,7 +86,6 @@ interface AgentSession {
   // Model control
   setModel(model: Model): Promise<void>;
   setThinkingLevel(level: ThinkingLevel): void;
-  cycleModel(): Promise<ModelCycleResult | undefined>;
   cycleThinkingLevel(): ThinkingLevel | undefined;
 
   // State access
@@ -396,12 +395,6 @@ const { session } = await createAgentSession({
   model: opus,
   thinkingLevel: "medium", // off, minimal, low, medium, high, xhigh, max
   
-  // Models for cycling (Ctrl+P in interactive mode)
-  scopedModels: [
-    { model: opus, thinkingLevel: "high" },
-    { model: haiku, thinkingLevel: "off" },
-  ],
-  
   modelRuntime,
 });
 ```
@@ -416,10 +409,7 @@ Remote catalogs are persisted locally so later runtimes can restore them without
 To match CLI model parsing, use the exported resolver helpers:
 
 ```typescript
-import {
-  resolveCliModel,
-  resolveModelScopeWithDiagnostics,
-} from "@liuxuedeng/agent-core";
+import { resolveCliModel } from "@liuxuedeng/agent-core";
 
 const cliModel = resolveCliModel({
   cliModel: "anthropic/claude-opus-4-5:high",
@@ -427,17 +417,8 @@ const cliModel = resolveCliModel({
 });
 if (cliModel.error) throw new Error(cliModel.error);
 if (cliModel.warning) console.warn(cliModel.warning);
-
-const { scopedModels, diagnostics } = await resolveModelScopeWithDiagnostics(
-  ["anthropic/*:high", "gpt-5"],
-  modelRuntime,
-);
-for (const diagnostic of diagnostics) {
-  console.warn(diagnostic.message);
-}
 ```
 
-`resolveCliModel()` uses all registered models so `--api-key` style first-time setup can resolve a model before stored auth exists. `resolveModelScopeWithDiagnostics()` matches `--models` and `enabledModels` semantics while returning warnings instead of printing them.
 
 > See [examples/sdk/02-custom-model.ts](../examples/sdk/02-custom-model.ts)
 
@@ -1185,7 +1166,6 @@ ModelRuntime // implements pi-ai Models and owns credential storage
 ModelRegistry // synchronous extension compatibility facade
 CredentialSynchronizationError
 resolveCliModel
-resolveModelScopeWithDiagnostics
 
 // Resource loading
 DefaultResourceLoader

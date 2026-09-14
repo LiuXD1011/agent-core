@@ -182,13 +182,6 @@ export interface TuiAltScreenOptions {
 	openUrl?: (url: string) => void;
 	/** Handle an unmodified secondary-button press for clipboard paste. Currently enabled on Windows only. */
 	onRightClickPaste?: () => void;
-	/** Automatically copy selected text to the clipboard on mouse release (default: true). */
-	copyOnSelect?: boolean;
-	/**
-	 * Copy selected text to the system clipboard. Return `true` on success; the caller flashes
-	 * an error otherwise. When omitted, the selection is copied via an OSC 52 write.
-	 */
-	copySelection?: (text: string) => Promise<boolean>;
 }
 
 /** Alternate-screen TUI with a scrollable, application-owned viewport. */
@@ -242,8 +235,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 	private readonly scrollToEndIndicator?: () => string;
 	private readonly openUrl?: (url: string) => void;
 	private readonly onRightClickPaste?: () => void;
-	private copyOnSelect: boolean;
-	private readonly copySelection?: (text: string) => Promise<boolean>;
 
 	constructor(
 		terminal: Terminal,
@@ -269,8 +260,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		this.scrollToEndIndicator = options.scrollToEndIndicator;
 		this.openUrl = options.openUrl;
 		this.onRightClickPaste = options.onRightClickPaste;
-		this.copyOnSelect = options.copyOnSelect ?? true;
-		this.copySelection = options.copySelection;
 		this.addInputListener((data) => this.handleViewportInput(data));
 	}
 
@@ -280,26 +269,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 
 	get isFollowingOutput(): boolean {
 		return this.getPrimaryScrollView().isFollowingEnd;
-	}
-
-	getCopyOnSelect(): boolean {
-		return this.copyOnSelect;
-	}
-
-	setCopyOnSelect(enabled: boolean): void {
-		this.copyOnSelect = enabled;
-	}
-
-	/** Whether the fullscreen viewport has a non-empty active text selection. */
-	hasActiveSelection(): boolean {
-		return this.getActiveSelectionText() !== undefined;
-	}
-
-	/** Copy the active fullscreen text selection, if any, using the configured selection clipboard path. */
-	async copyActiveSelectionToClipboard(): Promise<boolean> {
-		const text = this.getActiveSelectionText();
-		if (!text) return false;
-		return this.copyTextToClipboard(text);
 	}
 
 	setLayoutRoot(component: Component | undefined): void {
@@ -1340,7 +1309,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 					return;
 				}
 			}
-			if (this.copyOnSelect) void this.copySelectionToClipboard();
 			this.requestRender();
 			return;
 		}
@@ -1414,51 +1382,6 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 				: (getGraphemeCellRange(line, selection.end.col)?.end ?? Math.min(selection.end.col + 1, lineWidth));
 		}
 		return { start: Math.max(minColumn, start), end: Math.min(maxColumn, end) };
-	}
-
-	private getActiveSelectionText(): string | undefined {
-		const selection = this.getSelectionBounds();
-		if (!selection) return undefined;
-		let sourceLines: readonly string[] = this.previousScreen;
-		if (selection.start.scrollView) {
-			if (!this.currentLayout) return undefined;
-			const box = getScrollViewBox(this.currentLayout, selection.start.scrollView);
-			if (!box?.scrollContentLines) return undefined;
-			sourceLines = box.scrollContentLines;
-		}
-		const lines: string[] = [];
-		for (let row = selection.start.row; row <= selection.end.row; row++) {
-			const line = sourceLines[row] ?? "";
-			const columns = this.getSelectionColumns(line, row, selection);
-			lines.push(
-				stripTerminalSequences(
-					sliceByColumn(line, columns.start, Math.max(0, columns.end - columns.start), true),
-				).trimEnd(),
-			);
-		}
-		const text = lines.join("\n");
-		return text.length === 0 ? undefined : text;
-	}
-
-	private async copySelectionToClipboard(): Promise<boolean> {
-		const text = this.getActiveSelectionText();
-		if (!text) return false;
-		return this.copyTextToClipboard(text);
-	}
-
-	private async copyTextToClipboard(text: string): Promise<boolean> {
-		// Prefer an injected clipboard implementation (native clipboard + platform tools with a
-		// verified success path) when the host app provides one. A bare OSC 52 write can show
-		// "Copied!" while leaving the system clipboard untouched (e.g. macOS Terminal.app, tmux
-		// without OSC 52 clipboard passthrough), so only report success when it actually copies.
-		if (this.copySelection) {
-			const ok = await this.copySelection(text);
-			this.flash(ok ? "Copied!" : "Copy failed");
-			return ok;
-		}
-		this.terminal.write(`\x1b]52;c;${Buffer.from(text).toString("base64")}\x07`);
-		this.flash("Copied!");
-		return true;
 	}
 
 	private applySearchTextHighlight(text: string, current: boolean): string {

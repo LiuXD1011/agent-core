@@ -124,7 +124,6 @@ export interface Settings {
 	enableSkillCommands?: boolean; // default: true - register skills as /skill:name commands
 	terminal?: TerminalSettings;
 	images?: ImageSettings;
-	enabledModels?: string[]; // Model patterns for cycling (same format as --models CLI flag)
 	defaultTools?: string[]; // Initial built-in tool selection
 	doubleEscapeAction?: "fork" | "tree" | "none"; // Action for double-escape with empty editor (default: "tree")
 	treeFilterMode?: "default" | "no-tools" | "user-only" | "labeled-only" | "all"; // Default filter when opening /tree
@@ -142,7 +141,6 @@ export interface Settings {
 	tuiMode?: TuiMode; // default: "regular"
 	fullscreenExitOutput?: FullscreenExitOutput; // default: "transcript"; no effect in regular TUI mode
 	fullscreenScrollbar?: ScrollViewScrollbar; // default: "auto"; no effect in regular TUI mode
-	fullscreenCopyOnSelect?: boolean; // default: true; no effect in regular TUI mode
 }
 
 function isMergeableObject(value: unknown): value is Record<string, unknown> {
@@ -454,6 +452,9 @@ export class SettingsManager {
 				delete settings.skills;
 			}
 		}
+
+		// Drop removed enabledModels setting (scoped models feature was deleted)
+		delete settings.enabledModels;
 
 		// Migrate retry.maxDelayMs -> retry.provider.maxRetryDelayMs
 		if (
@@ -1230,16 +1231,6 @@ export class SettingsManager {
 		this.save();
 	}
 
-	getFullscreenCopyOnSelect(): boolean {
-		return this.settings.fullscreenCopyOnSelect ?? true;
-	}
-
-	setFullscreenCopyOnSelect(enabled: boolean): void {
-		this.globalSettings.fullscreenCopyOnSelect = enabled;
-		this.markModified("fullscreenCopyOnSelect");
-		this.save();
-	}
-
 	getImageAutoResize(): boolean {
 		return this.settings.images?.autoResize ?? true;
 	}
@@ -1266,19 +1257,9 @@ export class SettingsManager {
 		this.save();
 	}
 
-	getEnabledModels(): string[] | undefined {
-		return this.settings.enabledModels;
-	}
-
 	getDefaultTools(): string[] | undefined {
 		const tools = this.settings.defaultTools;
 		return tools ? [...tools] : undefined;
-	}
-
-	setEnabledModels(patterns: string[] | undefined): void {
-		this.globalSettings.enabledModels = patterns;
-		this.markModified("enabledModels");
-		this.save();
 	}
 
 	getDoubleEscapeAction(): "fork" | "tree" | "none" {

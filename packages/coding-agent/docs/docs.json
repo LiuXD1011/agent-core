@@ -141,10 +141,6 @@
       "to": "models.md"
     },
     {
-      "from": "llama-cpp.md",
-      "to": "models.md"
-    },
-    {
       "from": "json.md",
       "to": "rpc.md"
     },

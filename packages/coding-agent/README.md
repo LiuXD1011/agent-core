@@ -33,7 +33,7 @@ By default, Agent Core gives the model four tools: `read`, `write`, `edit`, and 
 ## Documentation
 
 - [Using Agent Core](docs/usage.md) — install, authenticate, interactive mode, slash commands, sessions, context files, and CLI reference.
-- [Models and Providers](docs/models.md) — built-in providers, subscriptions, API keys, custom models, and local llama.cpp models.
+- [Models and Providers](docs/models.md) — built-in providers, subscriptions, API keys, and custom models.
 - [Settings](docs/settings.md), [Security](docs/security.md), [Containerization](docs/containerization.md), [Terminal setup](docs/terminal-setup.md) (Windows, tmux, shell aliases).
 - [Extensions](docs/extensions.md), [Skills](docs/skills.md), [Prompt templates](docs/prompt-templates.md), [Themes](docs/themes.md), [Agent Core packages](docs/packages.md), [Custom providers](docs/custom-provider.md).
 - [SDK](docs/sdk.md), [RPC mode](docs/rpc.md), [TUI components](docs/tui.md).

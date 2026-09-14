@@ -31,7 +31,7 @@ Authenticate with `/login` for subscription providers, or set an API key such as
 ## Start here
 
 - [Using Agent Core](usage.md) - install, authenticate, interactive mode, slash commands, sessions, context files, and CLI reference.
-- [Models and Providers](models.md) - built-in providers, authentication, custom models, and local llama.cpp models.
+- [Models and Providers](models.md) - built-in providers, authentication, and custom models.
 - [Security](security.md) - project trust, sandbox boundaries, and vulnerability reporting.
 - [Containerization](containerization.md) - sandbox Agent Core with Gondolin or Docker.
 - [Settings](settings.md) - global and project settings.

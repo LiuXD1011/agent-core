@@ -26,7 +26,7 @@ describe("SettingsManager", () => {
 	});
 
 	describe("preserves externally added settings", () => {
-		it("should preserve enabledModels when changing thinking level", async () => {
+		it("should strip the removed enabledModels setting when saving", async () => {
 			// Create initial settings file
 			const settingsPath = join(agentDir, "settings.json");
 			writeFileSync(
@@ -40,7 +40,7 @@ describe("SettingsManager", () => {
 			// Create SettingsManager (simulates pi starting up)
 			const manager = SettingsManager.create(projectDir, agentDir);
 
-			// Simulate user editing settings.json externally to add enabledModels
+			// Simulate user editing settings.json externally with a legacy enabledModels list
 			const currentSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
 			currentSettings.enabledModels = ["claude-opus-4-5", "gpt-5.2-codex"];
 			writeFileSync(settingsPath, JSON.stringify(currentSettings, null, 2));
@@ -49,9 +49,9 @@ describe("SettingsManager", () => {
 			manager.setDefaultThinkingLevel("high");
 			await manager.flush();
 
-			// Verify enabledModels is preserved
+			// Verify the removed setting is stripped while other settings are preserved
 			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-			expect(savedSettings.enabledModels).toEqual(["claude-opus-4-5", "gpt-5.2-codex"]);
+			expect(savedSettings.enabledModels).toBeUndefined();
 			expect(savedSettings.defaultThinkingLevel).toBe("high");
 			expect(savedSettings.theme).toBe("dark");
 			expect(savedSettings.defaultModel).toBe("claude-sonnet");
@@ -458,16 +458,13 @@ describe("SettingsManager", () => {
 		const manager = SettingsManager.create(projectDir, agentDir);
 		expect(manager.getFullscreenExitOutput()).toBe("transcript");
 		expect(manager.getFullscreenScrollbar()).toBe("auto");
-		expect(manager.getFullscreenCopyOnSelect()).toBe(true);
 
 		manager.setFullscreenExitOutput("resume-hint");
 		manager.setFullscreenScrollbar("hidden");
-		manager.setFullscreenCopyOnSelect(false);
 		await manager.flush();
 		const savedSettings = JSON.parse(readFileSync(join(agentDir, "settings.json"), "utf-8"));
 		expect(savedSettings.fullscreenExitOutput).toBe("resume-hint");
 		expect(savedSettings.fullscreenScrollbar).toBe("hidden");
-		expect(savedSettings.fullscreenCopyOnSelect).toBe(false);
 
 		writeFileSync(
 			join(agentDir, "settings.json"),
@@ -476,7 +473,6 @@ describe("SettingsManager", () => {
 		const reloadedManager = SettingsManager.create(projectDir, agentDir);
 		expect(reloadedManager.getFullscreenExitOutput()).toBe("transcript");
 		expect(reloadedManager.getFullscreenScrollbar()).toBe("auto");
-		expect(reloadedManager.getFullscreenCopyOnSelect()).toBe(true);
 	});
 
 	describe("outputPad", () => {

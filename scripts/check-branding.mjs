@@ -199,20 +199,7 @@ function allowedBy(line, entries) {
 // ---------------------------------------------------------------------------
 
 /** Unreleased-changelog allowlist: file -> { lineIncludes, pattern, reason }[] */
-const changelogUnreleasedAllowlist = {
-	"packages/coding-agent/CHANGELOG.md": [
-		{
-			lineIncludes: "to `AGENT_CORE_*`",
-			pattern: oldEnvPattern,
-			reason: "breaking-change entry describing the environment-variable rename",
-		},
-		{
-			lineIncludes: "Removed the pi.dev",
-			pattern: upstreamLinkPattern,
-			reason: "removal note for the disabled upstream catalog contact",
-		},
-	],
-};
+const changelogUnreleasedAllowlist = {};
 
 function checkMarkdown(files, root) {
 	// Schema URLs also live in JSON resource fixtures; scan those narrowly.
@@ -369,11 +356,6 @@ function checkSource(files, root) {
 
 	// Retained upstream services: allowed only on their documented definition lines.
 	const retainedServiceLines = [
-		{
-			file: "packages/coding-agent/src/config.ts",
-			lineIncludes: "DEFAULT_SHARE_VIEWER_URL",
-			message: "unexpected upstream service reference outside the retained share-viewer default",
-		},
 		{
 			file: "packages/coding-agent/src/utils/version-check.ts",
 			lineIncludes: "upstream pi.dev release feed",

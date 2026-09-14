@@ -86,7 +86,6 @@ These variables are read by Agent Core itself:
 | `AGENT_CORE_SKIP_VERSION_CHECK` | Skip the version check for this run, even when `AGENT_CORE_VERSION_CHECK_URL` is configured |
 | `AGENT_CORE_TELEMETRY` | Controls optional provider attribution headers (OpenRouter, Cloudflare, NVIDIA NIM): `1`/`true`/`yes` or `0`/`false`/`no`. Install/update telemetry is disabled in Agent Core and sends nothing |
 | `AGENT_CORE_CACHE_RETENTION` | Set to `long` for extended provider prompt caching where supported |
-| `AGENT_CORE_SHARE_VIEWER_URL` | Override the base URL used by `/share` |
 | `AGENT_CORE_HARDWARE_CURSOR` | Set to `1` to show the hardware cursor; see [Terminal setup](terminal-setup.md) |
 | `AGENT_CORE_HYPERLINKS` | Override OSC 8 hyperlink detection with `1`, `0`, or `auto` |
 | `AGENT_CORE_IMAGE_PROTOCOL` | Override inline image detection with `kitty`, `iterm2`, `none`, or `auto` |
