@@ -13,8 +13,10 @@
 	],
 	"scripts": {
 		"clean": "npm run clean --workspaces",
-		"build": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../coding-agent && npm run build",
-		"build:offline": "cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build:offline && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../coding-agent && npm run build",
+		"build": "npm run clean && cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../coding-agent && npm run build",
+		"build:offline": "npm run clean && cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../ai && npm run build:offline && cd ../agent && npm run build && cd ../session-backends/sqlite-node && npm run build && cd ../../coding-agent && npm run build",
+		"agent": "bash scripts/auto-agent-core.sh",
+		"agent:dev": "bash agent-core-test.sh",
 		"check": "biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:shrinkwrap && npm run check:install-lock:coding-agent && tsgo --noEmit && npm run check:browser-smoke && npm run check:branding",
 		"check:browser-smoke": "node scripts/check-browser-smoke.mjs",
 		"check:branding": "node scripts/check-branding.mjs",

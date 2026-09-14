@@ -105,6 +105,8 @@ for (const pkg of packageStates) {
 		continue;
 	}
 
-	run("npm", ["publish", "--access", "public", "--provenance", "--ignore-scripts"], { cwd: pkg.directory });
+	// --provenance needs a supported CI OIDC provider (GitHub Actions); local runs must omit it.
+	const provenance = process.env.GITHUB_ACTIONS === "true" ? ["--provenance"] : [];
+	run("npm", ["publish", "--access", "public", ...provenance, "--ignore-scripts"], { cwd: pkg.directory });
 	console.log();
 }
