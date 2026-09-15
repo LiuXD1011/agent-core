@@ -17,4 +17,6 @@
 
 ### Added
 
+- Added opt-in built-in SoL-Pi efficiency mechanisms: fused mutation/validation, archived observations with exact recall, verified diagnostic-log reduction, and plan-boundary native compaction with continuation. Existing tool policies and custom tools take precedence.
+
 - Initial Agent Core release.

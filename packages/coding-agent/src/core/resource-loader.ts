@@ -9,6 +9,8 @@ export type { ResourceCollision, ResourceDiagnostic } from "./diagnostics.ts";
 
 import { canonicalizePath, isLocalPath, resolvePath } from "../utils/paths.ts";
 import { stripBom } from "../utils/text.ts";
+import { loadSolPiConfig } from "./efficiency/config.ts";
+import { registerConfiguredFeatures } from "./efficiency/index.ts";
 import { createEventBus, type EventBus } from "./event-bus.ts";
 import {
 	clearExtensionCache,
@@ -454,6 +456,59 @@ export class DefaultResourceLoader implements ResourceLoader {
 			: this.mergePaths(cliEnabledExtensions, enabledExtensions);
 
 		const extensionsResult = await this.loadFinalExtensionSet(extensionPaths, preTrustExtensions);
+		if (!this.noExtensions) {
+			const config = loadSolPiConfig(this.cwd, this.agentDir, this.settingsManager.isProjectTrusted());
+			if (
+				config.actionFusion ||
+				config.observationPack ||
+				config.evidencePreservingReducer ||
+				config.onlineContextCompact
+			) {
+				const canFuse = () =>
+					extensionsResult.runtime.getActiveTools().includes("bash") &&
+					extensionsResult.runtime
+						.getAllTools()
+						.filter((tool) => ["bash", "edit", "write"].includes(tool.name))
+						.every((tool) => tool.sourceInfo.source === "builtin") &&
+					!extensionsResult.extensions.some(
+						(extension) =>
+							extension.path !== "<builtin:efficiency>" &&
+							(extension.handlers.has("tool_call") ||
+								extension.handlers.has("tool_result") ||
+								["bash", "edit", "write"].some((name) => extension.tools.has(name))),
+					);
+				const ownedTools = new Set(extensionsResult.extensions.flatMap((extension) => [...extension.tools.keys()]));
+				const extension = await loadExtensionFromFactory(
+					(pi) =>
+						registerConfiguredFeatures(
+							pi,
+							{
+								...config,
+								actionFusion:
+									config.actionFusion && !["edit", "write", "bash"].some((name) => ownedTools.has(name)),
+								observationPack: config.observationPack && !ownedTools.has("obs_recall"),
+								onlineContextCompact: config.onlineContextCompact && !ownedTools.has("update_plan"),
+							},
+							{
+								deferActionFusion: true,
+								actionFusion: {
+									canFuse,
+									bashOptions: {
+										commandPrefix: this.settingsManager.getShellCommandPrefix(),
+										shellPath: this.settingsManager.getShellPath(),
+									},
+								},
+								keepRecentTokens: this.settingsManager.getCompactionSettings().keepRecentTokens,
+							},
+						),
+					this.cwd,
+					this.eventBus,
+					extensionsResult.runtime,
+					"<builtin:efficiency>",
+				);
+				extensionsResult.extensions.push(extension);
+			}
+		}
 		for (const p of this.additionalExtensionPaths) {
 			if (isLocalPath(p)) {
 				const resolved = this.resolveResourcePath(p);
