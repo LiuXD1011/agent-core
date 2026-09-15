@@ -9,7 +9,7 @@ export type { ResourceCollision, ResourceDiagnostic } from "./diagnostics.ts";
 
 import { canonicalizePath, isLocalPath, resolvePath } from "../utils/paths.ts";
 import { stripBom } from "../utils/text.ts";
-import { loadSolPiConfig } from "./efficiency/config.ts";
+import { loadEfficiencyConfig } from "./efficiency/config.ts";
 import { registerConfiguredFeatures } from "./efficiency/index.ts";
 import { createEventBus, type EventBus } from "./event-bus.ts";
 import {
@@ -457,7 +457,7 @@ export class DefaultResourceLoader implements ResourceLoader {
 
 		const extensionsResult = await this.loadFinalExtensionSet(extensionPaths, preTrustExtensions);
 		if (!this.noExtensions) {
-			const config = loadSolPiConfig(this.cwd, this.agentDir, this.settingsManager.isProjectTrusted());
+			const config = loadEfficiencyConfig(this.cwd, this.agentDir, this.settingsManager.isProjectTrusted());
 			if (
 				config.actionFusion ||
 				config.observationPack ||

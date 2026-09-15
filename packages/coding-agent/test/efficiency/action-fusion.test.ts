@@ -119,9 +119,13 @@ describe("action fusion then_run", () => {
 	});
 
 	it.each([
-		{ label: "default checkout name", cwd: join(tmpdir(), "SoL-Pi"), path: "target.ts" },
+		{ label: "default checkout name", cwd: join(tmpdir(), "Efficiency"), path: "target.ts" },
 		{ label: "unrelated checkout name", cwd: join(tmpdir(), "plain-checkout"), path: "target.ts" },
-		{ label: "repository name in the target path", cwd: join(tmpdir(), "plain-checkout"), path: "SoL-Pi/target.ts" },
+		{
+			label: "repository name in the target path",
+			cwd: join(tmpdir(), "plain-checkout"),
+			path: "Efficiency/target.ts",
+		},
 	])("renders a fused mutation as an English lightning savings call ($label)", ({ cwd, path }) => {
 		const { write } = loadFusedTools();
 		const fusedArgs = {
@@ -139,10 +143,10 @@ describe("action fusion then_run", () => {
 			args: plainArgs,
 		} as never);
 
-		expect(componentText(fused)).toContain("SoL-Pi · Action Fusion");
+		expect(componentText(fused)).toContain("Action Fusion");
 		expect(componentText(fused)).toContain("Efficiency · 1 model round-trip avoided");
 		// A normal path or its OSC 8 hyperlink may contain the repository name.
-		expect(componentText(plain)).not.toContain("SoL-Pi · Action Fusion");
+		expect(componentText(plain)).not.toContain("Action Fusion");
 		expect(componentText(plain)).not.toContain("Efficiency · 1 model round-trip avoided");
 	});
 
@@ -190,7 +194,7 @@ describe("action fusion then_run", () => {
 			createContext(dir, { mode: "tui", hasUI: true, ui: { notify, setStatus } as never }),
 		);
 
-		expect(notify).toHaveBeenCalledWith("SoL-Pi · Action Fusion\nEfficiency · 1 model round-trip avoided", "info");
+		expect(notify).toHaveBeenCalledWith("Action Fusion\nEfficiency · 1 model round-trip avoided", "info");
 	});
 
 	it("runs edit then_run after the edited content is visible", async () => {

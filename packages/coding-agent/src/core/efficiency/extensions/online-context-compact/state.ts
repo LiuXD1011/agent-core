@@ -5,7 +5,7 @@
 import type { ExtensionAPI, SessionEntry } from "../../host.ts";
 import { type PlanStep, parsePlanSteps } from "./plan.ts";
 
-export const ONLINE_STATE_ENTRY = "sol-pi-online-context-state-v1";
+export const ONLINE_STATE_ENTRY = "efficiency-online-context-state-v1";
 
 export type ProgressSummary = {
 	readonly stepId: string;

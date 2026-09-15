@@ -1,10 +1,10 @@
 # Built-in efficiency mechanisms
 
-Agent Core integrates the four MIT-licensed SoL-Pi mechanisms into its default resource loader. No external package installation is needed. Interactive, print, JSON and stdio RPC modes use this loader, as does the default SDK session. A completely custom ResourceLoader controls its own integrations.
+Agent Core implements file-action fusion, observation archiving, diagnostic-log reduction, and plan-boundary context compaction. No external package installation is needed. Interactive, print, JSON and stdio RPC modes use this loader, as does the default SDK session. A completely custom ResourceLoader controls its own integrations.
 
 ## Configuration
 
-The trusted project's `.agent-core/sol-pi.json` replaces the global `<agentDir>/sol-pi.json`. Untrusted project configuration is ignored. No file means all four flags are false. Unknown fields and invalid values are errors. `--no-extensions` disables automatic efficiency loading. Restart or `/reload` after editing configuration.
+The trusted project's `.agent-core/efficiency.json` replaces the global `<agentDir>/efficiency.json`. Untrusted project configuration is ignored. No file means all four flags are false. Unknown fields and invalid values are errors. `--no-extensions` disables automatic efficiency loading. Restart or `/reload` after editing configuration.
 
 ```json
 {
@@ -28,16 +28,15 @@ Log reduction is enabled in this project with explicit user authorization to pro
 - **Evidence-Preserving Reducer** processes eligible build/test/check logs of at least 4 KiB. It archives the source, invokes ModelRegistry.complete, and verifies source hash, observed status and every quote. Invalid receipts, unavailable models, likely secrets or failures preserve the original result. Verified quotes do not prove completeness; original logs remain authoritative and the agent owns diagnosis and final adjudication. Source-file reads are not delegated.
 - **Online Context Compact** exposes `update_plan`. Completed steps can trigger economic/window-pressure checks using the actual retained-tail setting. The existing native compaction runs and successful compaction continues the parent task. The original prompt waits for continuation settlement. Cancellation/failed compaction schedules no continuation. Native threshold compaction remains separate; set `onlineContextCompact` false to disable this boundary policy.
 
-Archives remain at `<sessionDir>/sol-pi/<sessionId>/` after exit. Resume in the same directory preserves recall. Do not remove archives for sessions still in use. No automatic retention policy is added.
+New sessions store archives under the efficiency namespace. Older archive directories and serialized records are not rewritten by this change; start a fresh session to use the new naming.
+
+Archives remain at `<sessionDir>/efficiency/<sessionId>/` after exit. Resume in the same directory preserves recall. Do not remove archives for sessions still in use. No automatic retention policy is added.
 
 ## Disable
 
 Set the four flags to false and reload for ordinary execution and context projection. Existing archives and session records remain. This does not undo file edits. No dependency migration is involved.
 
-## Upstream attribution and license
-
-Adapted from https://github.com/NVlabs/SoL-Pi at commit `2b791687a489a1d24da816cf1634d8ae1d36befd`.
-Adaptations include native imports, direct ModelRegistry completion, trusted automatic loading, host shell settings, tool-policy guards and the real compaction tail. The fallback for older Pi releases is not included.
+## Third-party license
 
 Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 

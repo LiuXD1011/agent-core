@@ -10,7 +10,7 @@ import type { AssistantMessage, Context, Model } from "@liuxuedeng/agent-core-ai
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_CONFIG } from "../../src/core/efficiency/config.ts";
 import { REDUCER_RECEIPT_SCHEMA } from "../../src/core/efficiency/extensions/evidence-preserving-reducer/index.ts";
-import { createSolPiExtension, registerConfiguredFeatures } from "../../src/core/efficiency/index.ts";
+import { createEfficiencyRuntime, registerConfiguredFeatures } from "../../src/core/efficiency/index.ts";
 import { FakePi, fakeContext } from "./helpers.ts";
 import type { ExtensionContext, ToolResultEvent } from "./host.ts";
 
@@ -52,7 +52,7 @@ function bashEvent(body: string): ToolResultEvent {
 	} as ToolResultEvent;
 }
 
-describe("SoL-Pi entrypoint", () => {
+describe("Efficiency entrypoint", () => {
 	it("registers no tools or events when every feature is disabled", () => {
 		const pi = new FakePi();
 		registerConfiguredFeatures(pi.asExtensionApi(), DEFAULT_CONFIG);
@@ -89,7 +89,7 @@ describe("SoL-Pi entrypoint", () => {
 	it("waits for a trusted session context and initializes once", async () => {
 		const pi = new FakePi();
 		const loader = vi.fn(() => ({ ...DEFAULT_CONFIG, observationPack: true }));
-		createSolPiExtension(loader)(pi.asExtensionApi());
+		createEfficiencyRuntime(loader)(pi.asExtensionApi());
 		expect([...pi.handlers.keys()]).toEqual(["session_start"]);
 
 		const ctx = fakeContext(pi.sessionManager);
@@ -102,7 +102,7 @@ describe("SoL-Pi entrypoint", () => {
 	});
 
 	it("passes the configured reducer provider/model route into EPR", async () => {
-		const root = mkdtempSync(join(tmpdir(), "sol-pi-configured-epr-"));
+		const root = mkdtempSync(join(tmpdir(), "efficiency-configured-epr-"));
 		try {
 			const pi = new FakePi();
 			registerConfiguredFeatures(pi.asExtensionApi(), {

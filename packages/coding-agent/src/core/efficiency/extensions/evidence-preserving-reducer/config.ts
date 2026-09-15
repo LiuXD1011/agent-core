@@ -6,10 +6,10 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 
-export const REDUCER_EVENT_TYPE = "sol-pi-evidence-preserving-reducer-v1" as const;
-export const REDUCER_EVENT_SCHEMA = "sol-pi-evidence-preserving-reducer/1" as const;
-export const REDUCER_RECEIPT_SCHEMA = "sol-pi-evidence-receipt/1" as const;
-export const REDUCER_RECEIPT_PREFIX = "sol_pi_evidence_receipt_v1" as const;
+export const REDUCER_EVENT_TYPE = "efficiency-evidence-preserving-reducer-v1" as const;
+export const REDUCER_EVENT_SCHEMA = "efficiency-evidence-preserving-reducer/1" as const;
+export const REDUCER_RECEIPT_SCHEMA = "efficiency-evidence-receipt/1" as const;
+export const REDUCER_RECEIPT_PREFIX = "efficiency_evidence_receipt_v1" as const;
 
 export const MAX_EVIDENCE_ITEMS = 12;
 export const MAX_QUOTE_CHARS = 600;

@@ -28,7 +28,7 @@ import {
 	type ExtensionFactory,
 	type WriteToolOptions,
 } from "../../host.ts";
-import { renderSolPiTool, showSolPiSavings } from "../../tui.ts";
+import { renderEfficiencyTool, showEfficiencySavings } from "../../tui.ts";
 import { resolveToolPath } from "./file-queue.ts";
 import { createThenRunSchema, executeMutationThenRun, THEN_RUN_SUCCEEDED, type ThenRunInput } from "./then-run.ts";
 
@@ -110,20 +110,20 @@ export function createActionFusionExtension(options: ActionFusionOptions = {}): 
 						then_run &&
 						result.content.some((block) => block.type === "text" && block.text.includes(THEN_RUN_SUCCEEDED))
 					) {
-						showSolPiSavings(ctx, "Action Fusion", "1 model round-trip avoided");
+						showEfficiencySavings(ctx, "Action Fusion", "1 model round-trip avoided");
 					}
 					return result;
 				},
 				renderCall: (args, theme, context) => {
 					const base = baseEdit(context.cwd).renderCall!(args, theme, context);
 					return args.then_run
-						? renderSolPiTool(theme, "Action Fusion", "1 model round-trip avoided", base)
+						? renderEfficiencyTool(theme, "Action Fusion", "1 model round-trip avoided", base)
 						: base;
 				},
 				renderResult: (result, resultOptions, theme, context) => {
 					const base = baseEdit(context.cwd).renderResult!(result, resultOptions, theme, context);
 					return context.args.then_run
-						? renderSolPiTool(theme, "Action Fusion", "1 model round-trip avoided", base)
+						? renderEfficiencyTool(theme, "Action Fusion", "1 model round-trip avoided", base)
 						: base;
 				},
 			});
@@ -157,20 +157,20 @@ export function createActionFusionExtension(options: ActionFusionOptions = {}): 
 						then_run &&
 						result.content.some((block) => block.type === "text" && block.text.includes(THEN_RUN_SUCCEEDED))
 					) {
-						showSolPiSavings(ctx, "Action Fusion", "1 model round-trip avoided");
+						showEfficiencySavings(ctx, "Action Fusion", "1 model round-trip avoided");
 					}
 					return result;
 				},
 				renderCall: (args, theme, context) => {
 					const base = baseWrite(context.cwd).renderCall!(args, theme, context);
 					return args.then_run
-						? renderSolPiTool(theme, "Action Fusion", "1 model round-trip avoided", base)
+						? renderEfficiencyTool(theme, "Action Fusion", "1 model round-trip avoided", base)
 						: base;
 				},
 				renderResult: (result, resultOptions, theme, context) => {
 					const base = baseWrite(context.cwd).renderResult!(result, resultOptions, theme, context);
 					return context.args.then_run
-						? renderSolPiTool(theme, "Action Fusion", "1 model round-trip avoided", base)
+						? renderEfficiencyTool(theme, "Action Fusion", "1 model round-trip avoided", base)
 						: base;
 				},
 			});

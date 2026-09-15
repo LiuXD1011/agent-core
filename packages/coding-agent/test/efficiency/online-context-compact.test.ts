@@ -198,7 +198,7 @@ describe("Online Context Compact extension", () => {
 		expect(pi.sentMessages).toEqual([
 			{
 				message: {
-					customType: "sol-pi-online-context-compact",
+					customType: "efficiency-online-context-compact",
 					content: POST_COMPACTION_PLAN_REMINDER,
 					display: false,
 				},

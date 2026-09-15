@@ -22,7 +22,7 @@ import { Text } from "@liuxuedeng/agent-core-tui";
 import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext, ExtensionFactory } from "../../host.ts";
 import { runtimeRoot } from "../../runtime-paths.ts";
-import { formatSavingsCount, renderSolPiTool, showSolPiSavings } from "../../tui.ts";
+import { formatSavingsCount, renderEfficiencyTool, showEfficiencySavings } from "../../tui.ts";
 import { createLedger, type Ledger } from "./ledger.ts";
 import {
 	countLines,
@@ -116,7 +116,7 @@ export function createObservationPackExtension(): ExtensionFactory {
 			renderCall(params, theme) {
 				const offset = params.offset ?? 0;
 				const base = new Text(theme.fg("dim", `Recall ${params.id} from byte ${offset}`), 0, 0);
-				return renderSolPiTool(theme, "Observation Pack", "full observation replay avoided", base);
+				return renderEfficiencyTool(theme, "Observation Pack", "full observation replay avoided", base);
 			},
 			renderResult(result, { isPartial }, theme) {
 				const details = result.details as { bytes?: number; lines?: number } | undefined;
@@ -130,7 +130,7 @@ export function createObservationPackExtension(): ExtensionFactory {
 					0,
 					0,
 				);
-				return renderSolPiTool(theme, "Observation Pack", "full observation replay avoided", base);
+				return renderEfficiencyTool(theme, "Observation Pack", "full observation replay avoided", base);
 			},
 		});
 
@@ -192,7 +192,7 @@ export function createObservationPackExtension(): ExtensionFactory {
 						removedTokens,
 					});
 					if (previousSends === FULL_SENDS) {
-						showSolPiSavings(
+						showEfficiencySavings(
 							ctx,
 							"Observation Pack",
 							formatSavingsCount(removedTokens, "context tokens avoided"),

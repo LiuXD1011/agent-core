@@ -8,10 +8,10 @@ import type { ExtensionContext } from "./host.ts";
 
 export function runtimeRoot(ctx: ExtensionContext): string {
 	const sessionDir = ctx.sessionManager.getSessionDir();
-	if (!sessionDir) throw new Error("SoL-Pi requires a persistent Pi session directory");
+	if (!sessionDir) throw new Error("Efficiency requires a persistent session directory");
 	const sessionId = ctx.sessionManager.getSessionId();
 	if (!/^[a-z0-9][a-z0-9._-]*$/iu.test(sessionId)) {
-		throw new Error("SoL-Pi requires a safe Pi session id");
+		throw new Error("Efficiency requires a valid session id");
 	}
-	return join(sessionDir, "sol-pi", sessionId);
+	return join(sessionDir, "efficiency", sessionId);
 }

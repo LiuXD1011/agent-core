@@ -8,20 +8,20 @@
  *
  * In build and test trajectories only a few lines of a long log change the next
  * decision. This extension archives the raw log, sends it through the reducer
- * provider/model selected by the top-level SoL-Pi config, and accepts the
+ * provider/model selected by the top-level Efficiency config, and accepts the
  * resulting receipt only when every quoted line is found byte for byte in the
  * archive. A receipt that cannot be checked is discarded and the original
  * output reaches the frontier agent untouched.
  *
  * Delegation therefore never requires trusting a fluent summary.
  *
- * The top-level SoL-Pi config enables this mechanism. Provider selection and
+ * The top-level Efficiency config enables this mechanism. Provider selection and
  * authentication remain with Pi; storage and run identity come from the session.
  */
 
 import type { ExtensionAPI, ExtensionContext, ExtensionFactory, ToolResultEvent } from "../../host.ts";
 import { runtimeRoot } from "../../runtime-paths.ts";
-import { formatSavingsBytes, showSolPiSavings } from "../../tui.ts";
+import { formatSavingsBytes, showEfficiencySavings } from "../../tui.ts";
 import { archiveBody, archiveRoot } from "./archive.ts";
 import { reducibleToolResult } from "./candidate.ts";
 import {
@@ -152,7 +152,7 @@ export async function reduceToolResult(
 		uncertain: checked.value.uncertain,
 		usage: provider.usage,
 	});
-	showSolPiSavings(context, "Evidence Reducer", formatSavingsBytes(archive.bytes - receiptBytes));
+	showEfficiencySavings(context, "Evidence Reducer", formatSavingsBytes(archive.bytes - receiptBytes));
 	return {
 		content: reducible.projectReceipt(receipt),
 		isError: event.isError,

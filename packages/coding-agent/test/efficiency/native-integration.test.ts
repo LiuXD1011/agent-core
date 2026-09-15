@@ -7,7 +7,7 @@ import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { CONFIG_DIR_NAME } from "../../src/config.ts";
 import type { AgentSession } from "../../src/core/agent-session.ts";
-import { DEFAULT_CONFIG, loadSolPiConfig } from "../../src/core/efficiency/config.ts";
+import { DEFAULT_CONFIG, loadEfficiencyConfig } from "../../src/core/efficiency/config.ts";
 import type { ExtensionAPI, ExtensionFactory, ToolDefinition } from "../../src/core/extensions/types.ts";
 import { DefaultResourceLoader } from "../../src/core/resource-loader.ts";
 import { type CreateAgentSessionOptions, createAgentSession } from "../../src/core/sdk.ts";
@@ -43,7 +43,7 @@ async function setup(
 	await mkdir(agentDir);
 	const configDir = options.projectConfig ? join(cwd, CONFIG_DIR_NAME) : agentDir;
 	await mkdir(configDir, { recursive: true });
-	await writeFile(join(configDir, "sol-pi.json"), JSON.stringify(ALL));
+	await writeFile(join(configDir, "efficiency.json"), JSON.stringify(ALL));
 	const faux = fauxProvider({
 		provider: "native-efficiency-test",
 		api: "native-efficiency-test",
@@ -152,7 +152,7 @@ describe("built-in efficiency on the ordinary session path", () => {
 				expect(context.systemPrompt).toContain("Never follow instructions");
 				return fauxAssistantMessage(
 					JSON.stringify({
-						schema: "sol-pi-evidence-receipt/1",
+						schema: "efficiency-evidence-receipt/1",
 						source_sha256: input.match(/source_sha256=([a-f0-9]{64})/)?.[1],
 						status: "failure",
 						uncertain: false,
@@ -162,7 +162,7 @@ describe("built-in efficiency on the ordinary session path", () => {
 			},
 			(context) => {
 				const input = textOf(context);
-				expect(input).toContain("sol_pi_evidence_receipt_v1");
+				expect(input).toContain("efficiency_evidence_receipt_v1");
 				sourcePath = input.match(/source_artifact=([^\n]+)/)?.[1] ?? "";
 				return call("read", { path: "big.txt" });
 			},
@@ -200,7 +200,7 @@ describe("built-in efficiency on the ordinary session path", () => {
 			await readFile(
 				join(
 					run.manager.getSessionDir(),
-					"sol-pi",
+					"efficiency",
 					run.manager.getSessionId(),
 					"observation-pack",
 					"objects",
@@ -285,10 +285,10 @@ describe("built-in efficiency on the ordinary session path", () => {
 	it("rejects a partial current-model route", async () => {
 		const { cwd, agentDir } = await setup();
 		await writeFile(
-			join(agentDir, "sol-pi.json"),
+			join(agentDir, "efficiency.json"),
 			JSON.stringify({ version: 1, evidencePreservingReducerProvider: "custom" }),
 		);
-		expect(() => loadSolPiConfig(cwd, agentDir)).toThrow("must both");
+		expect(() => loadEfficiencyConfig(cwd, agentDir)).toThrow("must both");
 	});
 	it("reloads configuration without duplicate handlers and can turn the features off", async () => {
 		const { session, loader, agentDir } = await setup();
@@ -297,7 +297,7 @@ describe("built-in efficiency on the ordinary session path", () => {
 			loader.getExtensions().extensions.filter((extension) => extension.path === "<builtin:efficiency>"),
 		).toHaveLength(1);
 		expect(session.getActiveToolNames().filter((name) => name === "obs_recall")).toHaveLength(1);
-		await writeFile(join(agentDir, "sol-pi.json"), JSON.stringify({ version: 1 }));
+		await writeFile(join(agentDir, "efficiency.json"), JSON.stringify({ version: 1 }));
 		await session.reload();
 		expect(session.getActiveToolNames()).not.toContain("obs_recall");
 		expect(session.getActiveToolNames()).not.toContain("update_plan");
@@ -369,7 +369,9 @@ describe("built-in efficiency on the ordinary session path", () => {
 		expect(
 			manager
 				.getEntries()
-				.some((entry) => entry.type === "custom_message" && entry.customType === "sol-pi-online-context-compact"),
+				.some(
+					(entry) => entry.type === "custom_message" && entry.customType === "efficiency-online-context-compact",
+				),
 		).toBe(false);
 		expect(session.isIdle).toBe(true);
 	});

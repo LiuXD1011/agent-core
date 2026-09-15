@@ -6,9 +6,13 @@
 import { type Component, Container, Text } from "@liuxuedeng/agent-core-tui";
 import type { ExtensionContext, Theme } from "./host.ts";
 
-export type SolPiTuiMechanism = "Action Fusion" | "Observation Pack" | "Evidence Reducer" | "Online Context Compact";
+export type EfficiencyTuiMechanism =
+	| "Action Fusion"
+	| "Observation Pack"
+	| "Evidence Reducer"
+	| "Online Context Compact";
 
-const STATUS_KEY = "sol-pi-savings";
+const STATUS_KEY = "efficiency-savings";
 const STATUS_DURATION_MS = 4_000;
 const INTEGER_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const statusTimers = new WeakMap<ExtensionContext["ui"], ReturnType<typeof setTimeout>>();
@@ -31,23 +35,27 @@ export function formatSavingsBytes(value: number): string {
 	return `${INTEGER_FORMAT.format(bytes)} B removed from future prompts`;
 }
 
-export function renderSolPiTool(
+export function renderEfficiencyTool(
 	theme: Theme,
-	mechanism: SolPiTuiMechanism,
+	mechanism: EfficiencyTuiMechanism,
 	saving: string,
 	base?: Component,
 ): Component {
 	const container = new Container();
-	const title = theme.fg("accent", theme.bold(`SoL-Pi · ${mechanism}`));
+	const title = theme.fg("accent", theme.bold(mechanism));
 	container.addChild(new Text(title, 0, 0));
 	container.addChild(new Text(theme.fg("success", `Efficiency · ${saving}`), 0, 0));
 	if (base) container.addChild(base);
 	return container;
 }
 
-export function showSolPiSavings(context: ExtensionContext, mechanism: SolPiTuiMechanism, saving: string): void {
+export function showEfficiencySavings(
+	context: ExtensionContext,
+	mechanism: EfficiencyTuiMechanism,
+	saving: string,
+): void {
 	if (context.mode !== "tui") return;
-	const message = `SoL-Pi · ${mechanism}\nEfficiency · ${saving}`;
+	const message = `${mechanism}\nEfficiency · ${saving}`;
 	context.ui.notify(message, "info");
 	context.ui.setStatus(STATUS_KEY, `${mechanism} · ${saving}`);
 

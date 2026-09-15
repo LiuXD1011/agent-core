@@ -38,7 +38,7 @@ const PROGRESS = {
 type CompactionRequest = { customInstructions?: string; reason: string };
 
 async function runCompactionScenario(requestedCompactions: 1 | 2): Promise<void> {
-	const cwd = await mkdtemp(join(tmpdir(), "sol-pi-occ-session-"));
+	const cwd = await mkdtemp(join(tmpdir(), "efficiency-occ-session-"));
 	const agentDir = join(cwd, "agent");
 	await mkdir(agentDir);
 
@@ -46,9 +46,11 @@ async function runCompactionScenario(requestedCompactions: 1 | 2): Promise<void>
 	try {
 		const finalReply = `final reply after ${requestedCompactions} online compaction${requestedCompactions === 1 ? "" : "s"}`;
 		const faux = fauxProvider({
-			provider: `sol-pi-occ-session-${requestedCompactions}`,
-			api: `sol-pi-occ-session-api-${requestedCompactions}`,
-			models: [{ id: `sol-pi-occ-session-model-${requestedCompactions}`, contextWindow: 4_096, maxTokens: 1_024 }],
+			provider: `efficiency-occ-session-${requestedCompactions}`,
+			api: `efficiency-occ-session-api-${requestedCompactions}`,
+			models: [
+				{ id: `efficiency-occ-session-model-${requestedCompactions}`, contextWindow: 4_096, maxTokens: 1_024 },
+			],
 		});
 		const responses: FauxResponseStep[] = [];
 		for (let ordinal = 1; ordinal <= requestedCompactions; ordinal++) {
@@ -147,7 +149,7 @@ async function runCompactionScenario(requestedCompactions: 1 | 2): Promise<void>
 			branch.filter(
 				(entry) =>
 					entry.type === "custom_message" &&
-					entry.customType === "sol-pi-online-context-compact" &&
+					entry.customType === "efficiency-online-context-compact" &&
 					entry.content === POST_COMPACTION_PLAN_REMINDER &&
 					entry.display === false,
 			),

@@ -115,9 +115,9 @@ function bashEvent(body: string, toolCallId: string): ToolResultEvent {
 	} as ToolResultEvent;
 }
 
-describe("SoL-Pi regression stress", () => {
+describe("Efficiency regression stress", () => {
 	it("keeps EPR reducer routing on the configured Luna model under repeated calls", async () => {
-		const root = await mkdtemp(join(tmpdir(), "sol-pi-epr-stress-"));
+		const root = await mkdtemp(join(tmpdir(), "efficiency-epr-stress-"));
 		try {
 			for (let i = 0; i < 200; i++) {
 				const config = loadReducerConfig(join(root, `runtime-${i}`), {
@@ -154,7 +154,7 @@ describe("SoL-Pi regression stress", () => {
 	});
 
 	it("fails open without calling a model when the configured reducer model is unavailable", async () => {
-		const root = await mkdtemp(join(tmpdir(), "sol-pi-epr-missing-stress-"));
+		const root = await mkdtemp(join(tmpdir(), "efficiency-epr-missing-stress-"));
 		try {
 			for (let i = 0; i < 100; i++) {
 				const manager = new FakeSessionManager([], `epr-missing-${i}`, root);

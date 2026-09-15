@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { loadSolPiConfig, type SolPiConfig } from "./config.ts";
+import { type EfficiencyConfig, loadEfficiencyConfig } from "./config.ts";
 import { type ActionFusionOptions, createActionFusionExtension } from "./extensions/action-fusion/index.ts";
 import { registerEvidencePreservingReducer } from "./extensions/evidence-preserving-reducer/index.ts";
 import { registerObservationPack } from "./extensions/observation-pack/index.ts";
@@ -18,7 +18,7 @@ export interface EfficiencyHostOptions {
 
 export function registerConfiguredFeatures(
 	pi: ExtensionAPI,
-	config: SolPiConfig,
+	config: EfficiencyConfig,
 	options: EfficiencyHostOptions = {},
 ): void {
 	if (config.actionFusion) {
@@ -46,10 +46,10 @@ export function registerConfiguredFeatures(
 		})(pi);
 }
 
-export type SolPiConfigLoader = (ctx: ExtensionContext) => SolPiConfig;
+export type EfficiencyConfigLoader = (ctx: ExtensionContext) => EfficiencyConfig;
 
-export function createSolPiExtension(
-	loadConfig: SolPiConfigLoader = (ctx) => loadSolPiConfig(ctx.cwd, getAgentDir(), ctx.isProjectTrusted()),
+export function createEfficiencyRuntime(
+	loadConfig: EfficiencyConfigLoader = (ctx) => loadEfficiencyConfig(ctx.cwd, getAgentDir(), ctx.isProjectTrusted()),
 ): ExtensionFactory {
 	return (pi) => {
 		let initialized = false;
@@ -61,6 +61,6 @@ export function createSolPiExtension(
 	};
 }
 
-export default function solPiExtension(pi: ExtensionAPI): void {
-	createSolPiExtension()(pi);
+export default function efficiencyRuntime(pi: ExtensionAPI): void {
+	createEfficiencyRuntime()(pi);
 }

@@ -6,7 +6,7 @@ import type { AgentToolResult } from "@liuxuedeng/agent-core-agent";
 import { Text } from "@liuxuedeng/agent-core-tui";
 import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext } from "../../host.ts";
-import { renderSolPiTool } from "../../tui.ts";
+import { renderEfficiencyTool } from "../../tui.ts";
 import { PLAN_STATUSES, type PlanStep } from "./plan.ts";
 
 export type PlanProgress = {
@@ -50,7 +50,7 @@ export function registerOnlineTools(pi: ExtensionAPI, handlers: OnlineToolHandle
 		name: "update_plan",
 		label: "Update plan",
 		description:
-			"Replace the complete working plan. A newly completed step becomes a safe point where SoL-Pi may compact context if doing so is economical.",
+			"Replace the complete working plan. A newly completed step becomes a safe point where Efficiency may compact context if doing so is economical.",
 		promptSnippet: "Keep the working plan current",
 		promptGuidelines: [
 			"For multi-step tasks, create a plan before starting and update it as steps finish. Skip planning for trivial single-step requests.",
@@ -77,7 +77,7 @@ export function registerOnlineTools(pi: ExtensionAPI, handlers: OnlineToolHandle
 			}),
 		renderCall(params, theme) {
 			const completed = params.steps.filter((step) => step.status === "completed").length;
-			return renderSolPiTool(
+			return renderEfficiencyTool(
 				theme,
 				"Online Context Compact",
 				"compacts only when projected savings are positive",
@@ -86,7 +86,7 @@ export function registerOnlineTools(pi: ExtensionAPI, handlers: OnlineToolHandle
 		},
 		renderResult(result, { isPartial }, theme) {
 			const boundary = (result.details as { boundary?: boolean } | undefined)?.boundary === true;
-			return renderSolPiTool(
+			return renderEfficiencyTool(
 				theme,
 				"Online Context Compact",
 				"compacts only when projected savings are positive",

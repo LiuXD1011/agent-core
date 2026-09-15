@@ -10,7 +10,7 @@ import { CONFIG_DIR_NAME, getAgentDir } from "./host.ts";
 
 export const DEFAULT_CACHE_WRITE_READ_RATIO = 12.5;
 
-export interface SolPiConfig {
+export interface EfficiencyConfig {
 	readonly version: 1;
 	readonly actionFusion: boolean;
 	readonly observationPack: boolean;
@@ -21,7 +21,7 @@ export interface SolPiConfig {
 	readonly cacheWriteReadRatio: number;
 }
 
-export const DEFAULT_CONFIG: SolPiConfig = Object.freeze({
+export const DEFAULT_CONFIG: EfficiencyConfig = Object.freeze({
 	version: 1,
 	actionFusion: false,
 	observationPack: false,
@@ -42,19 +42,19 @@ export function findConfigPath(
 	allowProjectConfig = false,
 ): string | undefined {
 	if (allowProjectConfig) {
-		const projectPath = join(cwd, CONFIG_DIR_NAME, "sol-pi.json");
+		const projectPath = join(cwd, CONFIG_DIR_NAME, "efficiency.json");
 		if (existsSync(projectPath)) return projectPath;
 	}
 
-	const globalPath = join(agentDir, "sol-pi.json");
+	const globalPath = join(agentDir, "efficiency.json");
 	return existsSync(globalPath) ? globalPath : undefined;
 }
 
-export function loadSolPiConfig(
+export function loadEfficiencyConfig(
 	cwd = process.cwd(),
 	agentDir = getAgentDir(),
 	allowProjectConfig = false,
-): SolPiConfig {
+): EfficiencyConfig {
 	const path = findConfigPath(cwd, agentDir, allowProjectConfig);
 	if (!path) return DEFAULT_CONFIG;
 
@@ -63,29 +63,29 @@ export function loadSolPiConfig(
 		parsed = JSON.parse(readFileSync(path, "utf8"));
 	} catch (error) {
 		const reason = error instanceof Error ? error.message : String(error);
-		throw new Error(`Unable to read SoL-Pi config ${path}: ${reason}`);
+		throw new Error(`Unable to read Efficiency config ${path}: ${reason}`);
 	}
 
 	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-		throw new Error(`SoL-Pi config must be a JSON object: ${path}`);
+		throw new Error(`Efficiency config must be a JSON object: ${path}`);
 	}
 
 	const record = parsed as Record<string, unknown>;
 	for (const key of Object.keys(record)) {
-		if (!CONFIG_KEYS.has(key)) throw new Error(`Unknown SoL-Pi config key: ${key}`);
+		if (!CONFIG_KEYS.has(key)) throw new Error(`Unknown Efficiency config key: ${key}`);
 	}
-	if (record.version !== 1) throw new Error(`SoL-Pi config version must be 1: ${path}`);
+	if (record.version !== 1) throw new Error(`Efficiency config version must be 1: ${path}`);
 
 	for (const key of FEATURE_KEYS) {
 		if (record[key] !== undefined && typeof record[key] !== "boolean") {
-			throw new Error(`SoL-Pi config ${key} must be boolean: ${path}`);
+			throw new Error(`Efficiency config ${key} must be boolean: ${path}`);
 		}
 	}
 	const cacheWriteReadRatio = Object.hasOwn(record, "cacheWriteReadRatio")
 		? record.cacheWriteReadRatio
 		: DEFAULT_CACHE_WRITE_READ_RATIO;
 	if (typeof cacheWriteReadRatio !== "number" || !Number.isFinite(cacheWriteReadRatio) || cacheWriteReadRatio < 0) {
-		throw new Error(`SoL-Pi config cacheWriteReadRatio must be a finite non-negative number: ${path}`);
+		throw new Error(`Efficiency config cacheWriteReadRatio must be a finite non-negative number: ${path}`);
 	}
 	const evidencePreservingReducerModel = stringConfigValue(
 		record,
@@ -101,7 +101,7 @@ export function loadSolPiConfig(
 	);
 
 	if ((evidencePreservingReducerModel === "$current") !== (evidencePreservingReducerProvider === "$current")) {
-		throw new Error("SoL-Pi reducer provider and model must both use $current or both name an explicit route");
+		throw new Error("Efficiency reducer provider and model must both use $current or both name an explicit route");
 	}
 	return Object.freeze({
 		...DEFAULT_CONFIG,
@@ -109,7 +109,7 @@ export function loadSolPiConfig(
 		cacheWriteReadRatio,
 		evidencePreservingReducerModel,
 		evidencePreservingReducerProvider,
-	}) as SolPiConfig;
+	}) as EfficiencyConfig;
 }
 
 function stringConfigValue(
@@ -120,7 +120,7 @@ function stringConfigValue(
 ): string {
 	const value = Object.hasOwn(record, key) ? record[key] : defaultValue;
 	if (typeof value !== "string" || value.trim().length === 0) {
-		throw new Error(`SoL-Pi config ${key} must be a non-empty string: ${path}`);
+		throw new Error(`Efficiency config ${key} must be a non-empty string: ${path}`);
 	}
 	return value;
 }

@@ -42,7 +42,7 @@ async function canonicalQueueKey(filePath: string): Promise<string> {
 
 /**
  * Serialize fused operations for one canonical file path. This queue belongs
- * to SoL-Pi; the underlying tool separately locks the mutation itself.
+ * to Efficiency; the underlying tool separately locks the mutation itself.
  */
 export async function withFusedFileQueue<T>(filePath: string, work: () => Promise<T>): Promise<T> {
 	const key = await canonicalQueueKey(filePath);

@@ -190,7 +190,7 @@ describe("evidence-preserving reducer", () => {
 		expect(pi.handlers.get("tool_result")).toHaveLength(1);
 	});
 
-	it("keeps the SoL-Pi identifiers that are written to disk", async () => {
+	it("keeps the Efficiency identifiers that are written to disk", async () => {
 		const root = await storeRoot();
 		const signal = "ERROR test target failed";
 		const body = `${signal}\n${"diagnostic output\n".repeat(400)}`;
@@ -210,15 +210,15 @@ describe("evidence-preserving reducer", () => {
 			details: Record<string, unknown>;
 		};
 
-		expect(result.content[0]?.text ?? "").toMatch(/^sol_pi_evidence_receipt_v1\n/u);
-		expect(REDUCER_RECEIPT_SCHEMA).toBe("sol-pi-evidence-receipt/1");
+		expect(result.content[0]?.text ?? "").toMatch(/^efficiency_evidence_receipt_v1\n/u);
+		expect(REDUCER_RECEIPT_SCHEMA).toBe("efficiency-evidence-receipt/1");
 		expect(Object.keys(result.details)).toContain("evidencePreservingReducer");
 		expect(manager.entries.map((entry) => entry.type === "custom" && entry.customType)).toContain(
-			"sol-pi-evidence-preserving-reducer-v1",
+			"efficiency-evidence-preserving-reducer-v1",
 		);
-		expect(manager.customEntryData().every((entry) => entry.schema === "sol-pi-evidence-preserving-reducer/1")).toBe(
-			true,
-		);
+		expect(
+			manager.customEntryData().every((entry) => entry.schema === "efficiency-evidence-preserving-reducer/1"),
+		).toBe(true);
 	});
 
 	it("keeps the diagnostic command trigger generic", () => {
@@ -301,9 +301,7 @@ describe("evidence-preserving reducer", () => {
 		expect((await stat(sourcePath)).mode & 0o777).toBe(0o600);
 		expect(events.filter((entry) => entry.kind === "applied")).toHaveLength(1);
 		expect(notify).toHaveBeenCalledTimes(1);
-		expect(notify.mock.calls[0]?.[0]).toMatch(
-			/^SoL-Pi · Evidence Reducer\nEfficiency · .+ removed from future prompts$/u,
-		);
+		expect(notify.mock.calls[0]?.[0]).toMatch(/^Evidence Reducer\nEfficiency · .+ removed from future prompts$/u);
 	});
 
 	it.each([false, true])(
@@ -332,7 +330,7 @@ describe("evidence-preserving reducer", () => {
 			const projected = result.content.map((content) => content.text ?? "").join("\n");
 			expect(projected).toMatch(/Successfully wrote 12 bytes to target\.ts/u);
 			expect(projected).toMatch(failed ? /\[then_run:failed\]/u : /\[then_run:succeeded\]/u);
-			expect(projected).toMatch(/sol_pi_evidence_receipt_v1/u);
+			expect(projected).toMatch(/efficiency_evidence_receipt_v1/u);
 			expect(projected).not.toContain("diagnostic output");
 			expect(result.isError).toBe(failed);
 			expect(result.details.patch).toBe("test patch");

@@ -46,7 +46,7 @@ describe("Online Context Compact plans", () => {
 
 	it("formats a compact progress-only snapshot", () => {
 		const snapshot = formatPlanSnapshot(OPEN);
-		expect(snapshot).toContain('<sol-pi-plan task_status="active">');
+		expect(snapshot).toContain('<efficiency-plan task_status="active">');
 		expect(snapshot).toContain(JSON.stringify({ steps: OPEN }));
 	});
 });

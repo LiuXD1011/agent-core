@@ -75,5 +75,5 @@ export function analyzePlanTransition(previous: readonly PlanStep[], next: reado
 }
 
 export function formatPlanSnapshot(steps: readonly PlanStep[]): string {
-	return `<sol-pi-plan task_status="active">${JSON.stringify({ steps })}</sol-pi-plan>`;
+	return `<efficiency-plan task_status="active">${JSON.stringify({ steps })}</efficiency-plan>`;
 }

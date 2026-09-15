@@ -73,7 +73,7 @@ export async function assertUnchangedBeforeCommand(
  * Apply a file mutation and, when the model asked for one, run its follow-up
  * command before returning a single observation.
  *
- * Both steps run inside one SoL-Pi queue slot for `absolutePath`, so another
+ * Both steps run inside one Efficiency queue slot for `absolutePath`, so another
  * fused mutation of the same file cannot interleave. Pi's built-in mutation
  * tool takes its separate mutation lock during mutate(); the fused lock remains
  * held through validation. Neither path reacquires the same lock.

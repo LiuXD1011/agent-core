@@ -15,7 +15,7 @@ export interface ArchiveObject {
 }
 
 /**
- * Archived logs live under SoL-Pi's session-derived runtime directory.
+ * Archived logs live under Efficiency's session-derived runtime directory.
  */
 export function archiveRoot(config: ReducerConfig): string {
 	return config.storeRoot;

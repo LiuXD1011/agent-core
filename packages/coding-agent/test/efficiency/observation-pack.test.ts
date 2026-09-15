@@ -65,11 +65,11 @@ function observationId(message: ToolResultMessage): string {
 }
 
 function observationPath(sessionDir: string, id: string): string {
-	return join(sessionDir, "sol-pi", SESSION_ID, "observation-pack", "objects", `${id}.txt`);
+	return join(sessionDir, "efficiency", SESSION_ID, "observation-pack", "objects", `${id}.txt`);
 }
 
 function observationObjectsDirectory(sessionDir: string): string {
-	return join(sessionDir, "sol-pi", SESSION_ID, "observation-pack", "objects");
+	return join(sessionDir, "efficiency", SESSION_ID, "observation-pack", "objects");
 }
 
 async function project(pi: FakePi, message: ToolResultMessage, sessionDir: string, count: number): Promise<string[]> {
@@ -103,7 +103,7 @@ describe("observation pack", () => {
 		const args = { id: "obs_0123456789abcdef01234567", offset: 0 };
 		const rendered = recall.renderCall!(args, plainTheme, { args, cwd: process.cwd() } as never);
 
-		expect(componentText(rendered)).toContain("SoL-Pi · Observation Pack");
+		expect(componentText(rendered)).toContain("Observation Pack");
 		expect(componentText(rendered)).toContain("Efficiency");
 	});
 
@@ -148,9 +148,7 @@ describe("observation pack", () => {
 		await pi.emitContext([message], context);
 
 		expect(notify).toHaveBeenCalledTimes(1);
-		expect(notify.mock.calls[0]?.[0]).toMatch(
-			/^SoL-Pi · Observation Pack\nEfficiency · [\d,]+ context tokens avoided$/u,
-		);
+		expect(notify.mock.calls[0]?.[0]).toMatch(/^Observation Pack\nEfficiency · [\d,]+ context tokens avoided$/u);
 	});
 
 	it("isolates objects and send counters by Pi session", async () => {
@@ -169,10 +167,16 @@ describe("observation pack", () => {
 		}
 
 		expect(
-			await readFile(join(sessionDir, "sol-pi", "session-a", "observation-pack", "objects", `${id}.txt`), "utf8"),
+			await readFile(
+				join(sessionDir, "efficiency", "session-a", "observation-pack", "objects", `${id}.txt`),
+				"utf8",
+			),
 		).toBe(body);
 		expect(
-			await readFile(join(sessionDir, "sol-pi", "session-b", "observation-pack", "objects", `${id}.txt`), "utf8"),
+			await readFile(
+				join(sessionDir, "efficiency", "session-b", "observation-pack", "objects", `${id}.txt`),
+				"utf8",
+			),
 		).toBe(body);
 	});
 
@@ -292,7 +296,7 @@ describe("observation pack", () => {
 	it("fails storage closed when the observation directory is a symlink", async () => {
 		const sessionDir = await sessionRoot();
 		const targetDir = await sessionRoot();
-		await mkdir(join(sessionDir, "sol-pi", SESSION_ID, "observation-pack"), { recursive: true });
+		await mkdir(join(sessionDir, "efficiency", SESSION_ID, "observation-pack"), { recursive: true });
 		await symlink(targetDir, observationObjectsDirectory(sessionDir), "dir");
 		const body = `directory guard\n${repeatPastThreshold("must not escape\n")}`;
 		const message = toolResult(body);
@@ -339,12 +343,12 @@ describe("observation pack", () => {
 				{ type: "image", data: "AA==", mimeType: "image/png" },
 			],
 		});
-		const receipt = toolResult(`sol_pi_evidence_receipt_v1\n${large}`);
+		const receipt = toolResult(`efficiency_evidence_receipt_v1\n${large}`);
 		const compoundReceipt = toolResult("", {
 			toolName: "write",
 			content: [
 				{ type: "text", text: "Successfully wrote 12 bytes to target.ts" },
-				{ type: "text", text: `[then_run:succeeded]\nsol_pi_evidence_receipt_v1\n${large}` },
+				{ type: "text", text: `[then_run:succeeded]\nefficiency_evidence_receipt_v1\n${large}` },
 			],
 		});
 

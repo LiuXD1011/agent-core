@@ -25,7 +25,7 @@ const CREATE_OBJECT_FLAGS = constants.O_WRONLY | constants.O_CREAT | constants.O
  * Receipts from the evidence-preserving reducer are already a reduction of a
  * long log. Packing them again would replace verified evidence with an excerpt.
  */
-const EVIDENCE_REDUCER_RECEIPT_PREFIX = "sol_pi_evidence_receipt_v1";
+const EVIDENCE_REDUCER_RECEIPT_PREFIX = "efficiency_evidence_receipt_v1";
 
 export interface Observation {
 	readonly id: string;
@@ -82,7 +82,7 @@ function containsReducerReceipt(text: string): boolean {
 }
 
 /**
- * Archived payloads live under SoL-Pi's session-derived runtime root.
+ * Archived payloads live under Efficiency's session-derived runtime root.
  *
  * They are content addressed inside one session. A resume reuses the same
  * directory; a fork rebuilds its own object from the unmodified session history.
@@ -100,7 +100,7 @@ export function createObservation(message: ToolResultMessage, runtimeRoot: strin
 	if (containsReducerReceipt(text)) return undefined;
 	const bytes = Buffer.byteLength(text, "utf8");
 	if (bytes <= THRESHOLD_BYTES) return undefined;
-	if (!runtimeRoot) throw new Error("Persistent SoL-Pi runtime directory is unavailable");
+	if (!runtimeRoot) throw new Error("Persistent Efficiency runtime directory is unavailable");
 
 	const contentHash = hash(text);
 	const id = `obs_${hash(`${message.toolName}\0${message.toolCallId}\0${contentHash}`).slice(0, 24)}`;

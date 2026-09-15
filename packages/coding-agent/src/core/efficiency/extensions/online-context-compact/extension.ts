@@ -12,7 +12,7 @@ import {
 	type SessionEntry,
 	sessionEntryToContextMessages,
 } from "../../host.ts";
-import { formatSavingsCount, showSolPiSavings } from "../../tui.ts";
+import { formatSavingsCount, showEfficiencySavings } from "../../tui.ts";
 import { type CompactionDecision, DEFAULT_COMPACTION_ECONOMICS, decideCompaction } from "./economics.ts";
 import { analyzePlanTransition, formatPlanSnapshot, parsePlanSteps } from "./plan.ts";
 import {
@@ -102,7 +102,7 @@ function branchAfterAbort(entries: readonly SessionEntry[]): SessionEntry[] {
 		...entries,
 		{
 			type: "message",
-			id: "sol-pi-online-context-compact-abort-marker",
+			id: "efficiency-online-context-compact-abort-marker",
 			parentId: last?.id ?? null,
 			timestamp: new Date(0).toISOString(),
 			message: {
@@ -346,7 +346,7 @@ export function createOnlineContextCompactExtension(options: OnlineContextCompac
 								compacted = true;
 								const removed = Math.max(0, pending.decision.archiveTokens - tokenEstimate(compaction.summary));
 								if (removed > 0) {
-									showSolPiSavings(
+									showEfficiencySavings(
 										context,
 										"Online Context Compact",
 										formatSavingsCount(removed, "context tokens removed"),
@@ -383,7 +383,7 @@ export function createOnlineContextCompactExtension(options: OnlineContextCompac
 					try {
 						pi.sendMessage(
 							{
-								customType: "sol-pi-online-context-compact",
+								customType: "efficiency-online-context-compact",
 								content: POST_COMPACTION_PLAN_REMINDER,
 								display: false,
 							},
