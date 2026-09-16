@@ -6,7 +6,7 @@
  * directory, environment variable prefix, repository, runtime markers, update
  * defaults, and artifact names) stays on Agent Core, while narrowly allowlisting
  * upstream provenance (copyright, history links, retained external services,
- * and task-planning documents).
+ * and released history).
  *
  * Usage:
  *   node scripts/check-branding.mjs [root]   (default: process.cwd())
@@ -111,72 +111,57 @@ const markdownAllowlist = {
 	"NOTICE.md": [
 		{ lineIncludes: "earendil-works", pattern: upstreamLinkPattern, reason: "provenance notice" },
 	],
-	"packages/coding-agent/README.md": [
+	"packages/agent-app/README.md": [
 		{
 			lineIncludes: "secondary development of",
 			pattern: upstreamLinkPattern,
 			reason: "attribution link to upstream Pi",
 		},
 	],
-	"packages/coding-agent/docs/index.md": [
+	"packages/agent-app/docs/index.md": [
 		{
 			lineIncludes: "secondary development of",
 			pattern: upstreamLinkPattern,
 			reason: "attribution link to upstream Pi",
 		},
 	],
-	"packages/coding-agent/docs/development.md": [
+	"packages/agent-app/docs/development.md": [
 		{
 			lineIncludes: "pi.dev gallery",
 			pattern: upstreamLinkPattern,
 			reason: "branding-exception documentation naming the retained third-party service",
 		},
 	],
-	"packages/coding-agent/docs/packages.md": [
+	"packages/agent-app/docs/packages.md": [
 		{
 			lineIncludes: "pi.dev/packages",
 			pattern: upstreamLinkPattern,
 			reason: "retained upstream gallery, documented as an external service",
 		},
 	],
-	"packages/coding-agent/docs/usage.md": [
+	"packages/agent-app/docs/usage.md": [
 		{
 			lineIncludes: "pi-share-hf",
 			pattern: upstreamLinkPattern,
 			reason: "third-party session publishing tool, attributed",
 		},
 	],
-	"packages/coding-agent/docs/skills.md": [
+	"packages/agent-app/docs/skills.md": [
 		{
 			lineIncludes: "pi-skills",
 			pattern: upstreamLinkPattern,
 			reason: "third-party skills collection, attributed",
 		},
 	],
-	"packages/coding-agent/docs/containerization.md": [
+	"packages/agent-app/docs/containerization.md": [
 		{
 			lineIncludes: "Gondolin",
 			pattern: upstreamLinkPattern,
 			reason: "third-party sandbox product (earendil-works/gondolin), a real dependency",
 		},
 	],
-	"packages/coding-agent/examples/extensions/doom-overlay/README.md": [
-		{
-			lineIncludes: "pi-doom",
-			pattern: upstreamLinkPattern,
-			reason: "third-party original integration credit in an example",
-		},
-	],
+
 };
-
-/** Files whose entire markdown content is exempt (history or planning docs). */
-const exemptMarkdownFiles = new Set([
-	"docs/修改方案.md", // local audit handoff quoting old names as findings, not instructions
-]);
-
-function isExemptMarkdown(rel) {
-	return exemptMarkdownFiles.has(rel);
-}
 
 /**
  * Released changelog sections are immutable history; only the Unreleased
@@ -205,7 +190,6 @@ function checkMarkdown(files, root) {
 	// Schema URLs also live in JSON resource fixtures; scan those narrowly.
 	for (const fullPath of files.filter((file) => file.endsWith(".json") && !file.endsWith("package.json") && !file.endsWith("package-lock.json"))) {
 		const rel = relPath(fullPath, root);
-		if (isExemptMarkdown(rel)) continue;
 		const lines = readFileSync(fullPath, "utf8").split("\n");
 		lines.forEach((line, index) => {
 			if (upstreamSchemaUrlPattern.test(line)) {
@@ -216,7 +200,6 @@ function checkMarkdown(files, root) {
 
 	for (const fullPath of files.filter((file) => file.endsWith(".md"))) {
 		const rel = relPath(fullPath, root);
-		if (isExemptMarkdown(rel)) continue;
 
 		const isChangelog = rel === "CHANGELOG.md" || rel.endsWith("/CHANGELOG.md");
 		let lines = readFileSync(fullPath, "utf8").split("\n");
@@ -292,27 +275,27 @@ function checkWorkspaceMetadata(files, root) {
 function checkSource(files, root) {
 	const sourceChecks = [
 		{
-			file: "packages/coding-agent/src/cli/setup.ts",
+			file: "packages/agent-app/src/cli/setup.ts",
 			pattern: /AI_AGENT = "pi"/,
 			message: 'CLI must set AI_AGENT=agent-core (via APP_NAME), not "pi"',
 		},
 		{
-			file: "packages/coding-agent/src/rpc-entry.ts",
+			file: "packages/agent-app/src/rpc-entry.ts",
 			pattern: /AI_AGENT = "pi"/,
 			message: 'RPC entry must set AI_AGENT=agent-core (via APP_NAME), not "pi"',
 		},
 		{
-			file: "packages/coding-agent/src/package-manager-cli.ts",
+			file: "packages/agent-app/src/package-manager-cli.ts",
 			pattern: upstreamLinkPattern,
 			message: "managed installs must not implicitly use an upstream installer endpoint",
 		},
 		{
-			file: "packages/coding-agent/src/modes/interactive/theme/dark.json",
+			file: "packages/agent-app/src/ui/terminal/theme/dark.json",
 			pattern: upstreamLinkPattern,
 			message: "theme schema should reference the Agent Core repository",
 		},
 		{
-			file: "packages/coding-agent/src/modes/interactive/theme/light.json",
+			file: "packages/agent-app/src/ui/terminal/theme/light.json",
 			pattern: upstreamLinkPattern,
 			message: "theme schema should reference the Agent Core repository",
 		},
@@ -327,12 +310,12 @@ function checkSource(files, root) {
 			message: "AI package User-Agent must use the agent-core brand on Node and browser paths",
 		},
 		{
-			file: "packages/coding-agent/src/cli/auth-command.ts",
+			file: "packages/agent-app/src/cli/auth-command.ts",
 			pattern: /\bpi auth\b/,
 			message: "auth command help must use APP_NAME, not a hardcoded pi command",
 		},
 		{
-			file: "packages/coding-agent/package.json",
+			file: "packages/agent-app/package.json",
 			pattern: /--outfile dist\/pi\b/,
 			message: "build:binary must output dist/agent-core, not dist/pi",
 		},
@@ -357,17 +340,12 @@ function checkSource(files, root) {
 	// Retained upstream services: allowed only on their documented definition lines.
 	const retainedServiceLines = [
 		{
-			file: "packages/coding-agent/src/utils/version-check.ts",
+			file: "packages/agent-app/src/utils/version-check.ts",
 			lineIncludes: "upstream pi.dev release feed",
 			message: "unexpected upstream feed reference outside the decoupling-boundary comment",
 		},
 		{
-			file: "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
-			lineIncludes: "upstream pi.dev telemetry endpoint",
-			message: "unexpected upstream service reference outside the telemetry-boundary comment",
-		},
-		{
-			file: "packages/coding-agent/src/utils/changelog.ts",
+			file: "packages/agent-app/src/utils/changelog.ts",
 			lineIncludes: "UPSTREAM_REPO_RE",
 			message: "unexpected upstream repository reference outside the link-protection regex",
 		},

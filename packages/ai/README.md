@@ -1677,7 +1677,7 @@ For `cross-provider-handoff.test.ts`, add at least one provider/model pair. If t
 
 For providers with non-standard auth (AWS, Google Vertex), create a utility like `bedrock-utils.ts` with credential detection helpers.
 
-#### 6. Coding Agent Integration (`../coding-agent/`)
+#### 6. Coding Agent Integration (`../agent-app/`)
 
 Update `src/core/model-resolver.ts`:
 

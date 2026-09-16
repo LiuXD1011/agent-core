@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 const codingAgentName = "@liuxuedeng/agent-core";
-const developmentPackages = new Set(["client", "protocol", "server"].map((name) => `@liuxuedeng/agent-core-${name}`));
+const developmentPackages = new Set(["client", "protocol", "server", "chord", "sqlite-node", "telemetry"].map((name) => `@liuxuedeng/agent-core-${name}`));
 
 function run(command, args, options = {}) {
 	console.log(`$ ${[command, ...args].join(" ")}`);
@@ -94,7 +94,6 @@ export function smokeTestCodingAgentConsumer(directory, runtime = process.execPa
 		XDG_CACHE_HOME: home,
 		AGENT_CORE_CODING_AGENT_DIR: join(home, ".agent-core", "agent"),
 		AGENT_CORE_OFFLINE: "1",
-		AGENT_CORE_TELEMETRY: "0",
 	};
 	for (const name of ["SystemRoot", "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT"]) {
 		if (process.env[name]) env[name] = process.env[name];
@@ -102,6 +101,11 @@ export function smokeTestCodingAgentConsumer(directory, runtime = process.execPa
 	try {
 		writeFileSync(entry, `import assert from "node:assert/strict";
 import { createAgentSession, SessionManager, ModelRuntime } from "${codingAgentName}";
+import { createAgentSession as createHeadlessSession } from "${codingAgentName}/sdk";
+import { exportSessionJsonlFromManager, exportSessionHtmlFromFile } from "${codingAgentName}/session/export";
+assert.equal(createHeadlessSession, createAgentSession);
+assert.equal(typeof exportSessionJsonlFromManager, "function");
+assert.equal(typeof exportSessionHtmlFromFile, "function");
 assert.equal(typeof createAgentSession, "function");
 assert.equal(typeof SessionManager.inMemory, "function");
 assert.equal(typeof ModelRuntime.create, "function");
@@ -113,7 +117,7 @@ for (const subpath of ["/client", "/experimental/plugin"]) {
 }
 `);
 		run(runtime, [entry], { cwd: directory, env, timeout: 30_000 });
-		for (const cli of new Set([manifest.bin["agent-core"], "dist/cli.js"])) {
+		for (const cli of new Set([manifest.bin["agent-core"], "dist/cli.js", "dist/bundle/rpc-entry.js", "dist/rpc-entry.js"])) {
 			const output = run(runtime, [join(packageDir, cli), "--version"], { cwd: directory, env, timeout: 30_000 });
 			if (output.trim() !== manifest.version) throw new Error(`Unexpected version from ${cli}: ${output}`);
 		}

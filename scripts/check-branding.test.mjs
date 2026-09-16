@@ -23,7 +23,7 @@ const CORRECT_PACKAGE_JSON = JSON.stringify({
 	name: "@liuxuedeng/agent-core",
 	version: "0.1.0-alpha.1",
 	author: "LiuXD1011",
-	repository: { type: "git", url: "git+https://github.com/LiuXD1011/agent-core.git", directory: "packages/coding-agent" },
+	repository: { type: "git", url: "git+https://github.com/LiuXD1011/agent-core.git", directory: "packages/agent-app" },
 });
 
 const CORRECT_SETUP_TS = `import { APP_NAME } from "../config.ts";
@@ -60,9 +60,9 @@ const CORRECT_FILES = {
 		"",
 		"- Upstream fix ([#9166](https://github.com/earendil-works/pi/pull/9166)).",
 	].join("\n"),
-	"packages/coding-agent/package.json": CORRECT_PACKAGE_JSON,
-	"packages/coding-agent/src/cli/setup.ts": CORRECT_SETUP_TS,
-	"packages/coding-agent/src/utils/version-check.ts": CORRECT_VERSION_CHECK_TS,
+	"packages/agent-app/package.json": CORRECT_PACKAGE_JSON,
+	"packages/agent-app/src/cli/setup.ts": CORRECT_SETUP_TS,
+	"packages/agent-app/src/utils/version-check.ts": CORRECT_VERSION_CHECK_TS,
 	"scripts/build-binaries.sh": 'bun build --compile --outfile "$OUTPUT_DIR/$platform/agent-core"\n',
 };
 
@@ -95,12 +95,12 @@ test("upstream install commands, wrong repositories, legacy env vars, and bare p
 		},
 		{
 			name: "wrong repository metadata",
-			file: "packages/coding-agent/package.json",
+			file: "packages/agent-app/package.json",
 			content: CORRECT_PACKAGE_JSON.replace("LiuXD1011/agent-core.git", "earendil-works/pi.git"),
 		},
 		{
 			name: "upstream author metadata",
-			file: "packages/coding-agent/package.json",
+			file: "packages/agent-app/package.json",
 			content: CORRECT_PACKAGE_JSON.replace('"author":"LiuXD1011"', '"author":"Mario Zechner"'),
 		},
 		{
@@ -120,7 +120,7 @@ test("upstream install commands, wrong repositories, legacy env vars, and bare p
 		},
 		{
 			name: "AI_AGENT hardcoded to pi",
-			file: "packages/coding-agent/src/cli/setup.ts",
+			file: "packages/agent-app/src/cli/setup.ts",
 			content: 'process.env.AI_AGENT = "pi";\n',
 		},
 	];
@@ -152,7 +152,7 @@ test("expanded coverage: self-reference, old commands, schema URLs, UA, auth hel
 		{
 			name: "upstream raw schema URL in a JSON fixture",
 			file: "docs/theme-schema.json",
-			content: '{\n  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json"\n}\n',
+			content: '{\n  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/agent-app/src/ui/terminal/theme/theme-schema.json"\n}\n',
 		},
 		{
 			name: "AI user-agent brand regression",
@@ -161,12 +161,12 @@ test("expanded coverage: self-reference, old commands, schema URLs, UA, auth hel
 		},
 		{
 			name: "auth command help hardcoded to pi",
-			file: "packages/coding-agent/src/cli/auth-command.ts",
+			file: "packages/agent-app/src/cli/auth-command.ts",
 			content: 'console.log("Usage:\\n  pi auth print-api-key");\n',
 		},
 		{
 			name: "build:binary outputs dist/pi",
-			file: "packages/coding-agent/package.json",
+			file: "packages/agent-app/package.json",
 			content: CORRECT_PACKAGE_JSON.replace("{", '{"scripts":{"build:binary":"bun build --compile --outfile dist/pi"},'),
 		},
 		{
@@ -176,7 +176,7 @@ test("expanded coverage: self-reference, old commands, schema URLs, UA, auth hel
 		},
 		{
 			name: "legacy pi binary name reintroduced",
-			file: "packages/coding-agent/package.json",
+			file: "packages/agent-app/package.json",
 			content: CORRECT_PACKAGE_JSON.replace("{", '{"bin":{"pi":"dist/bundle/cli.js"},'),
 		},
 	];

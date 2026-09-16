@@ -19,7 +19,7 @@ async function readManifest(root, relativeDirectory) {
 }
 
 function runSyncVersions(root) {
-	return spawnSync(process.execPath, [syncVersionsScript, join(root, "packages")], {
+	return spawnSync(process.execPath, [syncVersionsScript], {
 		cwd: root,
 		encoding: "utf8",
 	});
@@ -32,12 +32,12 @@ test("synchronizes private dependencies without touching registry aliases, gener
 			name: "@liuxuedeng/agent-core-ai",
 			version: "2.0.0",
 		});
-		await writeManifest(root, "packages/coding-agent", {
+		await writeManifest(root, "packages/agent-app", {
 			name: "@liuxuedeng/agent-core",
 			version: "2.0.0",
 		});
-		await writeManifest(root, "packages/evals", {
-			name: "@liuxuedeng/agent-core-evals",
+		await writeManifest(root, "packages/private-fixture", {
+			name: "@liuxuedeng/agent-core-private-fixture",
 			version: "9.9.9",
 			private: true,
 			dependencies: {
@@ -45,7 +45,7 @@ test("synchronizes private dependencies without touching registry aliases, gener
 				"@mariozechner/pi-ai": "npm:@liuxuedeng/agent-core-ai@1.0.0",
 			},
 		});
-		await writeManifest(root, "packages/coding-agent/install-lock", {
+		await writeManifest(root, "packages/agent-app/install-lock", {
 			name: "generated-install-lock",
 			version: "0.0.0",
 			private: true,
@@ -57,10 +57,10 @@ test("synchronizes private dependencies without touching registry aliases, gener
 		const result = runSyncVersions(root);
 		assert.equal(result.status, 0, result.stderr);
 
-		const evalsManifest = await readManifest(root, "packages/evals");
-		assert.equal(evalsManifest.dependencies["@liuxuedeng/agent-core"], "^2.0.0");
-		assert.equal(evalsManifest.dependencies["@mariozechner/pi-ai"], "npm:@liuxuedeng/agent-core-ai@1.0.0");
-		const generatedManifest = await readManifest(root, "packages/coding-agent/install-lock");
+		const privateManifest = await readManifest(root, "packages/private-fixture");
+		assert.equal(privateManifest.dependencies["@liuxuedeng/agent-core"], "^2.0.0");
+		assert.equal(privateManifest.dependencies["@mariozechner/pi-ai"], "npm:@liuxuedeng/agent-core-ai@1.0.0");
+		const generatedManifest = await readManifest(root, "packages/agent-app/install-lock");
 		assert.equal(generatedManifest.dependencies["@liuxuedeng/agent-core"], "^1.0.0");
 
 		await writeManifest(root, "packages/ai", {

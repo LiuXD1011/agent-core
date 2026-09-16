@@ -7,7 +7,7 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 
 const DEFAULT_SESSIONS_DIR = path.join(homedir(), ".agent-core/agent/sessions");
-const DEFAULT_ACTIVE_READ_TOOL_PATH = path.join(process.cwd(), "packages/coding-agent/src/core/tools/read.ts");
+const DEFAULT_ACTIVE_READ_TOOL_PATH = path.join(process.cwd(), "packages/agent-app/src/tools/read.ts");
 const DEFAULT_TOP = 20;
 const CHART_WIDTH = 40;
 const REPORT_TIME_ZONE = "Europe/Berlin";

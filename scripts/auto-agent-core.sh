@@ -65,7 +65,7 @@ if [[ "$use_stable" == true ]]; then
 	exec "$stable_agent_core" ${args[@]+"${args[@]}"}
 fi
 
-dev_agent_core="$repo_dir/packages/coding-agent/dist/bundle/cli.js"
+dev_agent_core="$repo_dir/packages/agent-app/dist/bundle/cli.js"
 if [[ ! -x "$dev_agent_core" ]]; then
 	echo "error: development agent-core build not found; run \`npm run build\` in $repo_dir" >&2
 	exit 1

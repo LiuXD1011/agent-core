@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
-const packageDir = join(repoRoot, "packages", "coding-agent");
+const packageDir = join(repoRoot, "packages", "agent-app");
 const distCliPath = join(packageDir, "dist", "cli.js");
 const bundledDistCliPath = join(packageDir, "dist", "bundle", "cli.js");
 const srcCliPath = join(packageDir, "src", "cli.ts");
@@ -21,8 +21,8 @@ function printHelp() {
   node scripts/profile-coding-agent-node.mjs [options]
 
 Profiles coding-agent startup with the runtime selected below:
-- npm run profile:tui     -> builds packages/coding-agent and profiles TUI startup with Node
-- npm run profile:rpc     -> builds packages/coding-agent and profiles RPC startup with Node
+- npm run profile:tui     -> builds packages/agent-app and profiles TUI startup with Node
+- npm run profile:rpc     -> builds packages/agent-app and profiles RPC startup with Node
 - bun run profile:tui     -> profiles TUI startup from src/cli.ts directly with Bun
 - bun run profile:rpc     -> profiles RPC startup from src/cli.ts directly with Bun
 
@@ -300,7 +300,6 @@ async function runBuild(bundle) {
 				"--workspace",
 				"packages/tui",
 				"--workspace",
-				"packages/telemetry",
 				"--workspace",
 				"packages/ai",
 				"--workspace",
@@ -309,7 +308,7 @@ async function runBuild(bundle) {
 		},
 		{
 			label: "Coding-agent build",
-			args: ["run", bundle ? "build" : "build:unbundled", "--workspace", "packages/coding-agent"],
+			args: ["run", bundle ? "build" : "build:unbundled", "--workspace", "packages/agent-app"],
 		},
 	];
 
@@ -577,7 +576,7 @@ async function main() {
 	}
 	if (runtime === "bun") {
 		process.stdout.write(
-			`Using Bun runtime with ${options.mode === "rpc" ? "packages/coding-agent/src/cli.ts --mode rpc" : "packages/coding-agent/src/cli.ts"}\n`,
+			`Using Bun runtime with ${options.mode === "rpc" ? "packages/agent-app/src/cli.ts --mode rpc" : "packages/agent-app/src/cli.ts"}\n`,
 		);
 	}
 

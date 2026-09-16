@@ -11,10 +11,10 @@
 #   --skip-build         Skip the package build
 #   --offline-model-data Build with bundled model data instead of refreshing it
 #   --platform <name>    Build only for specified platform (darwin-arm64, darwin-x64, linux-x64, linux-arm64, windows-x64, windows-arm64)
-#   --out <dir>          Output directory (default: packages/coding-agent/binaries)
+#   --out <dir>          Output directory (default: packages/agent-app/binaries)
 #
 # Output:
-#   packages/coding-agent/binaries/
+#   packages/agent-app/binaries/
 #     agent-core-darwin-arm64.tar.gz
 #     agent-core-darwin-x64.tar.gz
 #     agent-core-linux-x64.tar.gz
@@ -80,7 +80,7 @@ if [[ -n "$PLATFORM" ]]; then
 fi
 
 if [[ -z "$OUTPUT_DIR" ]]; then
-    OUTPUT_DIR="packages/coding-agent/binaries"
+    OUTPUT_DIR="packages/agent-app/binaries"
 fi
 if [[ "$OUTPUT_DIR" != /* ]]; then
     OUTPUT_DIR="$(pwd)/$OUTPUT_DIR"
@@ -95,7 +95,7 @@ fi
 
 if [[ "$SKIP_DEPS" == "false" ]]; then
     echo "==> Installing cross-platform native bindings..."
-    CLIPBOARD_VERSION=$(node -p "require('./packages/coding-agent/package.json').optionalDependencies['@mariozechner/clipboard']")
+    CLIPBOARD_VERSION=$(node -p "require('./packages/agent-app/package.json').optionalDependencies['@mariozechner/clipboard']")
     # npm ci only installs optional deps for the current platform. Install the
     # cross-platform packages in isolation so npm does not re-resolve and mutate
     # the workspace dependency graph, which can trigger npm/arborist failures.
@@ -145,7 +145,7 @@ else
 fi
 
 echo "==> Building binaries..."
-cd packages/coding-agent
+cd packages/agent-app
 
 # Clean previous builds
 rm -rf "$OUTPUT_DIR"
@@ -216,10 +216,8 @@ for platform in "${PLATFORMS[@]}"; do
     cp CHANGELOG.md "$OUTPUT_DIR/$platform/"
     cp ../../node_modules/@silvia-odwyer/photon-node/photon_rs_bg.wasm "$OUTPUT_DIR/$platform/"
     mkdir -p "$OUTPUT_DIR/$platform/theme"
-    cp dist/modes/interactive/theme/*.json "$OUTPUT_DIR/$platform/theme/"
-    mkdir -p "$OUTPUT_DIR/$platform/assets"
-    cp dist/modes/interactive/assets/* "$OUTPUT_DIR/$platform/assets/"
-    cp -r dist/core/export-html "$OUTPUT_DIR/$platform/"
+    cp dist/ui/terminal/theme/*.json "$OUTPUT_DIR/$platform/theme/"
+    cp -r dist/session/export/html "$OUTPUT_DIR/$platform/export-html"
     cp -r docs "$OUTPUT_DIR/$platform/"
     cp -r examples "$OUTPUT_DIR/$platform/"
 

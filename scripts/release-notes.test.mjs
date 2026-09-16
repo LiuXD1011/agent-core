@@ -108,7 +108,7 @@ test("upstream-only release bodies are left completely untouched", () => {
 		const upstreamBody = [
 			"- Upstream fix ([earendil-works/pi#123](https://github.com/earendil-works/pi/issues/123))",
 			"- Legacy link ([badlogic#456](https://github.com/badlogic/pi-mono/issues/456))",
-			"- Upstream blob ([file](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/README.md))",
+			"- Upstream blob ([file](https://github.com/earendil-works/pi/blob/main/packages/agent-app/README.md))",
 		].join("\n");
 		writeReleases(workspace.releasesPath, [{ id: 1, tag_name: "v0.1.0-alpha.1", body: upstreamBody }]);
 

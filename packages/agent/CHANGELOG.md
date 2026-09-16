@@ -4,9 +4,14 @@
 
 ### Breaking Changes
 
+- Removed platform Harness, Node execution environment, and harness subpath exports from the core package; their sources are archived outside the product workspace. The core package now focuses on the agent loop, context construction, and tool execution.
+
+- Removed the telemetry package dependency, span/schema exports, and telemetry context helpers. Tool hooks now execute directly; cancellation, ordering, errors, session storage, events, and usage remain unchanged.
 - Renamed the npm package from `@liuxuedeng/pi-core-agent` to `@liuxuedeng/agent-core-agent`; update dependency specifiers and import paths.
 
 ### Added
+
+- Added automatic tool scheduling, bounded parallel execution, and pure context-budget decision helpers.
 
 - Initial Agent Core release, based on Pi v0.85.1.
 

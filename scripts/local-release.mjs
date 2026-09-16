@@ -7,13 +7,10 @@ import { spawnSync } from "node:child_process";
 import { installCodingAgentConsumer, packReleasePackages, smokeTestCodingAgentConsumer } from "./coding-agent-consumer.mjs";
 
 const packages = [
-	{ directory: "packages/chord", name: "@liuxuedeng/agent-core-chord" },
-	{ directory: "packages/telemetry", name: "@liuxuedeng/agent-core-telemetry" },
 	{ directory: "packages/ai", name: "@liuxuedeng/agent-core-ai" },
 	{ directory: "packages/tui", name: "@liuxuedeng/agent-core-tui" },
 	{ directory: "packages/agent", name: "@liuxuedeng/agent-core-agent" },
-	{ directory: "packages/session-backends/sqlite-node", name: "@liuxuedeng/agent-core-sqlite-node" },
-	{ directory: "packages/coding-agent", name: "@liuxuedeng/agent-core" },
+	{ directory: "packages/agent-app", name: "@liuxuedeng/agent-core" },
 ];
 
 function printUsage() {

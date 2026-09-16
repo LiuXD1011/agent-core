@@ -1,45 +1,47 @@
+# Dependencies, builds, and generated model data
 node_modules/
 dist/
+.npm/
 .artifacts/
-*.log
-.DS_Store
-*.tsbuildinfo
-*.tgz
-# packages/*/node_modules/
-packages/*/dist/
 packages/ai/src/providers/data/
 packages/ai/src/providers/.model-generation-*/
-*.cpuprofile
+packages/agent-app/binaries/
+*.tsbuildinfo
+*.tgz
 
-# Environment
+# Local credentials; keep shareable environment templates
 .env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+/.agent-core/auth.json
+/.agent-core/agent/
+/.agent-core/sessions/
+/.agent-core/context/
+/.agent-core/bin/
+/.agent-core/trust.json
 
-# Editor files
+# Test, profiling, and session output (not source fixtures)
+coverage/
+.nyc_output/
+*.log
+*.cpuprofile
+agent-core-session-*.html
+/session-*.jsonl
+/packages/agent-app/session-*.jsonl
+session-transcripts/
+.eval/
+/docs/**/*.visual-check.*
+
+# Local editor and assistant state
 .vscode/
 .zed/
 .idea/
 .claude/
+.opencode/
 *.swp
 *.swo
 *~
-
-# Package specific
-.npm/
-coverage/
-.nyc_output/
-.opencode/
-syntax.jsonl
-out.jsonl
-agent-core-*.html
-out.html
-packages/coding-agent/binaries/
-todo.md
-plans/
-.pi/hf-sessions/
-.pi/hf-sessions-backup/
-collect.sh
-session-transcripts/
-
-# Local design docs (not published)
-/docs/
-graphify-out
+.DS_Store
+Thumbs.db

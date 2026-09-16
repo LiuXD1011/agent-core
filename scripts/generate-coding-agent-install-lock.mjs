@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
-const codingAgentDir = join(repoRoot, "packages/coding-agent");
+const codingAgentDir = join(repoRoot, "packages/agent-app");
 const outputDir = join(codingAgentDir, "install-lock");
 const rootLockfilePath = join(repoRoot, "package-lock.json");
 const outputPackageJsonPath = join(outputDir, "package.json");
@@ -49,7 +49,6 @@ function isInternalPackageName(name) {
 const installPackageName = "@liuxuedeng/agent-core-install";
 const allowedInstallScriptPackages = new Map([
 	["@google/genai@1.52.0", "preinstall is a no-op in the published package"],
-	["esbuild@0.28.1", "postinstall selects and verifies the platform-specific esbuild binary"],
 	["protobufjs@7.6.5", "postinstall only warns about protobufjs version scheme mismatches"],
 ]);
 
@@ -445,18 +444,18 @@ try {
 
 	if (checkOnly) {
 		if (!existsSync(outputPackageJsonPath) || !existsSync(outputLockfilePath)) {
-			console.error("packages/coding-agent/install-lock is missing generated files.");
+			console.error("packages/agent-app/install-lock is missing generated files.");
 			console.error("Run: npm run install-lock:coding-agent");
 			process.exit(1);
 		}
 		const currentPackageJson = readFileSync(outputPackageJsonPath, "utf8");
 		const currentLockfile = readFileSync(outputLockfilePath, "utf8");
 		if (currentPackageJson !== packageJsonContent || currentLockfile !== lockfileContent) {
-			console.error("packages/coding-agent/install-lock is out of date.");
+			console.error("packages/agent-app/install-lock is out of date.");
 			console.error("Run: npm run install-lock:coding-agent");
 			process.exit(1);
 		}
-		console.log("packages/coding-agent/install-lock is up to date.");
+		console.log("packages/agent-app/install-lock is up to date.");
 	} else {
 		mkdirSync(outputDir, { recursive: true });
 		writeFileSync(outputPackageJsonPath, packageJsonContent);
@@ -465,7 +464,7 @@ try {
 		const platformPackageCount = Object.values(installLock.packages).filter((entry) => entry.os || entry.cpu || entry.libc)
 			.length;
 		console.log(
-			`Wrote packages/coding-agent/install-lock/package.json and package-lock.json (${packageCount} packages, ${platformPackageCount} platform-specific).`,
+			`Wrote packages/agent-app/install-lock/package.json and package-lock.json (${packageCount} packages, ${platformPackageCount} platform-specific).`,
 		);
 	}
 } catch (error) {

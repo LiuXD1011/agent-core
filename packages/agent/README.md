@@ -8,10 +8,6 @@ Stateful agent with tool execution and event streaming. Built on `@liuxuedeng/ag
 npm install @liuxuedeng/agent-core-agent
 ```
 
-### SQLite session backends
-
-The SQLite session backend and the `node:sqlite` adapter live in a separate package, `@liuxuedeng/agent-core-sqlite-node`, so the core package does not pull in runtime builtins or native SQLite dependencies by default. The backend accepts a runtime-specific SQLite factory, allowing other session backends to ship as their own packages in the future.
-
 ## Quick Start
 
 ```typescript
@@ -41,10 +37,6 @@ agent.subscribe((event) => {
 
 await agent.prompt("Hello!");
 ```
-
-## Experimental facet services
-
-Transport-neutral facet-service primitives live in `@liuxuedeng/agent-core-chord`. The agent core does not export the service runtime.
 
 ## Core Concepts
 
@@ -116,7 +108,8 @@ prompt("Read config.json")
 
 Tool execution mode is configurable:
 
-- `parallel` (default): preflight tool calls sequentially, execute allowed tools concurrently, emit `tool_execution_end` as soon as each tool is finalized, then emit toolResult messages and `turn_end.toolResults` in assistant source order
+- `auto` (application default): parallelize only batches whose tools explicitly declare `executionMode: "parallel"`; other batches run sequentially.
+- `parallel` (low-level default, at most four concurrent tools): preflight tool calls sequentially, execute allowed tools concurrently, emit `tool_execution_end` as soon as each tool is finalized, then emit toolResult messages and `turn_end.toolResults` in assistant source order
 - `sequential`: execute tool calls one by one, matching the historical behavior
 
 In parallel mode, tool completion events follow tool completion order, but persisted toolResult messages still follow assistant source order.
@@ -512,6 +505,16 @@ for await (const event of agentLoopContinue(context, config, undefined, streamFn
 
 These low-level streams are observational. They preserve event order, but they do not wait for your async event handling to settle before later producer phases continue. If you need message processing to act as a barrier before tool preflight, use the `Agent` class instead of raw `agentLoop()` or `agentLoopContinue()`.
 
+## Source map
+
+- `src/agent-loop.ts`: model/tool feedback loop.
+- `src/context/build.ts`: assemble model requests.
+- `src/context/budget.ts`: pure compaction decisions.
+- `src/tools/execute.ts`: validation, bounded scheduling, cancellation and ordered results.
+- `src/agent.ts`: lifecycle and message queues.
+
+No terminal, filesystem session backend or platform-service runtime is imported by this package. Application policies and persistence belong to `agent-app`.
+
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE) for the incorporated context-budget implementation.

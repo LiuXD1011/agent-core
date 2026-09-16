@@ -1,145 +1,44 @@
 # Development Rules
 
-## Conversational Style
+## Scope and communication
 
-- Keep answers short and concise
-- No emojis in commits, issues, PR comments, or code
-- No fluff or cheerful filler text (e.g., "Thanks @user" not "Thanks so much @user!")
-- Technical prose only, be direct
-- Use concise, clear, simple language. Define unavoidable jargon before using it.
-- Explain non-trivial designs and problems as: problem, concrete example or short trace, then solution. State why the solution is necessary and distinguish it from optional complexity.
-- Prefer concrete behavior and small illustrations over abstract summaries, dense terminology, or unexplained lists of changes.
-- When the user asks a question, answer it first before making edits or running implementation commands.
-- When responding to user feedback or an analysis, explicitly say whether you agree or disagree before saying what you changed.
+- Keep the Agent core simple. Make only requested changes; ask before removing intentional functionality or adding compatibility layers.
+- Read affected files in full and inspect existing behavior before editing. Check installed dependency types rather than guessing APIs.
+- Answer questions first. Keep explanations concise: problem, concrete example, solution. State agreement or disagreement when responding to feedback. No emojis or filler in project contributions.
+- Preserve unrelated working-tree changes. Ask for confirmation when a request conflicts with these rules unless the user has explicitly authorized the override.
 
-## Code Quality
+## Code
 
-- Read files in full before wide-ranging changes, before editing files you have not fully inspected, and when asked to investigate or audit. Do not rely on search snippets for broad changes.
-- No `any` unless absolutely necessary.
-- Inline single-line helpers that have only one call site.
-- Check node_modules for external API types; don't guess.
-- **No inline imports** (`await import()`, `import("pkg").Type`, dynamic type imports). Top-level imports only.
-- Never remove or downgrade code to fix type errors from outdated deps; upgrade the dep instead.
-- Use only erasable TypeScript syntax (Node strip-only mode) in code checked by the root config (`packages/*/src`, `packages/*/test`, `packages/coding-agent/examples`): no parameter properties, `enum`, `namespace`/`module`, `import =`, `export =`, or other constructs needing JS emit. Use explicit fields with constructor assignments.
-- Always ask before removing functionality or code that appears intentional.
-- Do not preserve backward compatibility unless the user asks for it.
-- Never hardcode key checks (e.g. `matchesKey(keyData, "ctrl+x")`). Add defaults to `DEFAULT_EDITOR_KEYBINDINGS` or `DEFAULT_APP_KEYBINDINGS` so they stay configurable.
-- Never modify `packages/ai/src/models.generated.ts` directly; update `packages/ai/scripts/generate-models.ts` instead, then regenerate. Including the resulting `models.generated.ts` diff is always OK, even if regeneration includes unrelated upstream model metadata changes.
+- Use strict, erasable TypeScript: no `enum`, parameter properties, namespaces, or other emit-only syntax. Avoid `any`.
+- Use top-level imports only; no dynamic or inline type imports. Inline trivial helpers used once.
+- Fix outdated dependency types by updating the dependency, not by removing working behavior.
+- Keep shortcuts configurable through `DEFAULT_EDITOR_KEYBINDINGS` or `DEFAULT_APP_KEYBINDINGS`.
+- Do not hand-edit `packages/ai/src/models.generated.ts`; change its generator and regenerate.
 
-## Commands
+## Validation
 
-- After code changes (not docs): `npm run check` (full output, no tail). Fix all errors, warnings, and infos before committing. Does not run tests.
-- Never run `npm run build` or `npm test` unless requested by the user.
-- Never run the full vitest suite directly: it includes e2e tests that activate when endpoint/auth env vars are present. For all non-e2e tests, run `./test.sh` from the repo root. Otherwise run specific tests from the package root:
-  - Vitest: `node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run test/specific.test.ts`
-  - `packages/tui` (`node:test`): `node --test test/specific.test.ts`
-- If you create or modify a test file, run it and iterate on test or implementation until it passes.
-- For `packages/coding-agent/test/suite/`, use `test/suite/harness.ts` + the faux provider. No real provider APIs, keys, or paid tokens.
-- When regressions tests for fixing a github issue, add a comment with the github issue number next to the test.
-- For ad-hoc scripts, `write` them to a temp file (e.g. `/tmp`), run, edit if needed, remove when done. Don't embed multi-line scripts in `bash` commands.
-- Never commit unless the user asks.
+- After code changes, run `npm run check`, show its full output, and fix all diagnostics. It does not run tests; documentation-only edits need link and diff checks instead.
+- Run every test file you add or change. Use offline fixtures and the faux provider in `packages/agent-app/test/suite/harness.ts`; do not use real credentials or paid model calls in these tests.
+- Run specific Vitest tests from their package directory:
+  `node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run test/specific.test.ts`
+- For TUI tests, use `node --test test/specific.test.ts` from `packages/tui`.
+- Use `./test.sh` for the full non-e2e suite. Do not run the full Vitest suite directly or invoke `npm test` / `npm run build` without a user request.
+- Reference the issue number beside issue-regression tests. Write ad-hoc scripts to temporary files and remove them when done.
 
-## Dependency and Install Security
+## Dependencies
 
-- Treat npm dep and lockfile changes as reviewed code. Direct external deps stay pinned to exact versions.
-- When updating `undici`, you MUST read its changelog/release notes for the target version and evaluate whether any changes may affect functionality before applying the update.
-- Hydrate/update locally with `npm install --ignore-scripts`; clean/CI-style with `npm ci --ignore-scripts`. Don't run lifecycle scripts unless the user asks.
-- If dep metadata changes, refresh `package-lock.json` with `npm install --package-lock-only --ignore-scripts`.
-- If `packages/coding-agent/npm-shrinkwrap.json` needs regen, run `node scripts/generate-coding-agent-shrinkwrap.mjs` (verify with `--check` or `npm run check`). New deps with lifecycle scripts require review and an explicit allowlist entry in that script; never add one silently.
-- Pre-commit blocks lockfile commits unless `AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1`. Don't bypass unless the user wants the lockfile change committed.
+- Pin direct external dependencies to exact versions. Review dependency and lockfile diffs; read release notes before updating `undici`.
+- Install with `npm install --ignore-scripts` or `npm ci --ignore-scripts`. Run lifecycle scripts only when requested.
+- After dependency metadata changes, refresh the root lockfile with `npm install --package-lock-only --ignore-scripts`.
+- Regenerate coding-agent shrinkwrap with `node scripts/generate-coding-agent-shrinkwrap.mjs`; review and explicitly approve new lifecycle-script allowlist entries.
+- Do not bypass the lockfile commit gate (`AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1`) unless the user intends to commit those changes.
 
-## Git
+## Git and history
 
-Multiple agent-core sessions may be running in this cwd at the same time, each modifying different files. Git operations that touch unstaged, staged, or untracked files outside your own changes will stomp on other sessions' work. Follow these rules:
+- Commit only when requested. Check `git status`, stage explicit paths, and include only your changes. Use informative `feat`, `fix`, or `docs` commit messages, optionally scoped to the affected package.
+- Do not use `git add .`, `git add -A`, `git reset --hard`, `git checkout .`, `git clean -fd`, `git stash`, `git commit --no-verify`, or force push.
+- Review PRs without switching the working tree unless requested. Resolve rebase conflicts only in your files; abort and ask if unrelated files conflict.
+- Change only `Unreleased` changelog sections on `main` or PR branches. Read the section first; preserve released history and upstream attribution.
+- Release, tag, and publish only when explicitly requested. Keep package versions synchronized and preserve license notices.
 
-Committing:
-
-- Only commit files YOU changed in THIS session.
-- Stage explicit paths (`git add <path1> <path2>`); never `git add -A` / `git add .`.
-- Before committing, run `git status` and verify you are only staging your files.
-- `packages/ai/src/models.generated.ts` may always be included alongside your files.
-- Message format: `{feat,fix,docs}[(ai,tui,agent,coding-agent)]: <commit message> (optionally multiple lines)`. Message is informative and concise.
-
-Never run (destroys other agents' work or bypasses checks):
-
-- `git reset --hard`, `git checkout .`, `git clean -fd`, `git stash`, `git add -A`, `git add .`, `git commit --no-verify`.
-
-If rebase conflicts occur:
-
-- Resolve conflicts only in files you modified.
-- If a conflict is in a file you did not modify, abort and ask the user.
-- Never force push.
-
-## Issues and PRs
-
-See `CONTRIBUTING.md` for contribution guidelines.
-
-When reviewing PRs:
-
-- Do not run `gh pr checkout`, `git switch`, or otherwise move the worktree to the PR branch unless the user explicitly asks.
-- Use `gh pr view`, `gh pr diff`, `gh api`, and local `git show`/`git diff` against fetched refs to inspect PR metadata, commits, and patches without changing branches.
-- If you need PR file contents, fetch/read them into temporary files or use `git show <ref>:<path>` without switching branches.
-
-When creating issues:
-
-- Add `pkg:*` labels for affected packages (`pkg:agent`, `pkg:ai`, `pkg:coding-agent`, `pkg:tui`); use all that apply.
-
-When posting issue/PR comments:
-
-- Write the comment to a temp file and post with `gh issue/pr comment --body-file` (never multi-line markdown via `--body`).
-- Keep comments concise, technical, in the user's tone.
-- End every AI-posted comment with the AI-generated disclaimer line specified by the originating prompt.
-
-When closing issues via commit:
-
-- Include `fixes #<number>` or `closes #<number>` in the message so merging auto-closes the issue. For multiple issues, repeat the keyword per issue (`closes #1, closes #2`); a shared keyword (`closes #1, #2`) only closes the first.
-
-## Testing agent-core Interactive Mode with tmux
-
-Run the TUI in a controlled terminal (from the repo root):
-
-```bash
-tmux new-session -d -s agent-core-test -x 80 -y 24
-tmux send-keys -t agent-core-test "./agent-core-test.sh" Enter
-sleep 3 && tmux capture-pane -t agent-core-test -p     # capture after startup
-tmux send-keys -t agent-core-test "your prompt here" Enter
-tmux send-keys -t agent-core-test Escape               # special keys (also C-o for ctrl+o, etc.)
-tmux kill-session -t agent-core-test
-```
-
-## Changelog
-
-Location: `packages/*/CHANGELOG.md` (one per package).
-
-Sections under `## [Unreleased]`: `### Breaking Changes` (API changes requiring migration), `### Added`, `### Changed`, `### Fixed`, `### Removed`.
-
-Rules:
-
-- All new entries go under `## [Unreleased]`. Read the full section first and append to existing subsections; never duplicate them.
-- Released version sections (e.g. `## [0.12.2]`) are immutable; never modify them.
-- Do not create changelog entries when working on a branch other than `main` or pull request
-
-Attribution:
-
-- Internal (from issues): `Fixed foo bar ([#123](https://github.com/LiuXD1011/agent-core/issues/123))`
-- External contributions: `Added feature X ([#456](https://github.com/LiuXD1011/agent-core/pull/456) by [@username](https://github.com/username))`
-
-## Releasing
-
-**Lockstep versioning**: all packages share one version; every release updates all together. `patch` = fixes + additions, `minor` = breaking changes.
-
-Agent Core releases are manual for now:
-
-1. Update the per-package `CHANGELOG.md` files.
-2. Bump versions (`scripts/sync-versions.js` keeps them aligned), regenerate
-   `npm-shrinkwrap.json` and `install-lock/`, and run `npm run check`.
-3. Preview the package contents with `npm pack --dry-run`, then publish the
-   scoped public package with `npm publish --access public`.
-4. Tag `vX.Y.Z` and push `main` and the tag.
-
-Historical changelog entries inherited from upstream Pi reference the upstream
-issue tracker; do not rewrite them.
-
-## User Override
-
-If the user's instructions conflict with any rule in this document, ask for explicit confirmation before overriding. Only then execute their instructions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and contribution guidance, and [SECURITY.md](SECURITY.md) for execution boundaries.

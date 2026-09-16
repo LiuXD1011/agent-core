@@ -19,10 +19,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Workspace package name -> its source root, so cross-package imports are followed. */
 const WORKSPACE = {
-	"@liuxuedeng/agent-core-chord": "packages/chord/src",
 	"@liuxuedeng/agent-core-ai": "packages/ai/src",
 	"@liuxuedeng/agent-core-agent": "packages/agent/src",
-	"@liuxuedeng/agent-core-telemetry": "packages/telemetry/src",
 	"@liuxuedeng/agent-core-tui": "packages/tui/src",
 };
 
@@ -35,10 +33,7 @@ const BUDGETS = {
 		"./utils/*": { maxFiles: 3, forbid: ["providers/", "api/", "index.ts"] },
 	},
 	"packages/agent": {
-		"./harness/runtime/reducer": { maxFiles: 1 },
-		"./harness/context": { maxFiles: 6, forbid: ["harness/runtime/", "harness/execution/", "packages/ai/"] },
-		"./harness/env/nodejs": { maxFiles: 5, forbid: ["packages/ai/", "harness/runtime/"] },
-		"./harness/session": { maxFiles: 25, forbid: ["harness/runtime/", "harness/execution/", "packages/ai/src/index.ts"] },
+        ".": { maxFiles: 200, forbid: ["/harness/", "packages/agent-app/", "packages/tui/", "packages/chord/"] },
 	},
 };
 
@@ -129,6 +124,21 @@ for (const [pkgDir, budgets] of Object.entries(BUDGETS)) {
 					failures += 1;
 				}
 			}
+		}
+	}
+}
+
+// Business modules must not pull terminal components into SDK or offline export.
+const appRoot = resolve(ROOT, "packages/agent-app/src");
+for (const area of ["app", "session", "tools", "context"]) {
+	const directory = resolve(appRoot, area);
+	for (const name of readdirSync(directory, { recursive: true })) {
+		if (!name.endsWith(".ts")) continue;
+		const entry = resolve(directory, name);
+		const hits = [...walk(entry)].filter((file) => file.startsWith(resolve(appRoot, "ui") + "/") || file.includes("/packages/tui/src/"));
+		if (hits.length) {
+			console.error(`${relative(ROOT, entry)} reaches presentation: ${hits.map((file) => relative(ROOT, file)).join(", ")}`);
+			failures++;
 		}
 	}
 }

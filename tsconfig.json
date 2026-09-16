@@ -1,41 +1,57 @@
 {
-	"extends": "./tsconfig.base.json",
-	"compilerOptions": {
-		"noEmit": true,
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
-		"paths": {
-			"*": ["./*"],
-			"@liuxuedeng/agent-core-chord": ["./packages/chord/src/index.ts"],
-			"@liuxuedeng/agent-core-chord/bundler": ["./packages/chord/src/bundler.ts"],
-			"@liuxuedeng/agent-core-chord/context": ["./packages/chord/src/context/index.ts"],
-			"@liuxuedeng/agent-core-chord/delta": ["./packages/chord/src/delta/index.ts"],
-			"@liuxuedeng/agent-core-chord/node": ["./packages/chord/src/node.ts"],
-			"@liuxuedeng/agent-core-telemetry": ["./packages/telemetry/src/index.ts"],
-			"@liuxuedeng/agent-core-telemetry/testing": ["./packages/telemetry/src/testing/index.ts"],
-			"@liuxuedeng/agent-core-ai": ["./packages/ai/src/index.ts"],
-			"@liuxuedeng/agent-core-ai/oauth": ["./packages/ai/src/oauth.ts"],
-			"@liuxuedeng/agent-core-ai/*": ["./packages/ai/src/*.ts", "./packages/ai/src/providers/*.ts"],
-			"@liuxuedeng/agent-core-ai/dist/*": ["./packages/ai/src/*"],
-			"@liuxuedeng/agent-core-agent": ["./packages/agent/src/index.ts"],
-			"@liuxuedeng/agent-core-agent/harness/session/testing": [
-				"./packages/agent/src/harness/session/testing/index.ts"
-			],
-			"@liuxuedeng/agent-core-agent/node": ["./packages/agent/src/node.ts"],
-			"@liuxuedeng/agent-core-agent/*": [
-				"./packages/agent/src/*.ts",
-				"./packages/agent/src/*/index.ts",
-				"./packages/agent/src/*"
-			],
-			"@liuxuedeng/agent-core-sqlite-node": ["./packages/session-backends/sqlite-node/src/index.ts"],
-			"@liuxuedeng/agent-core": ["./packages/coding-agent/src/index.ts"],
-			"@liuxuedeng/agent-core/hooks": ["./packages/coding-agent/src/core/hooks/index.ts"],
-			"@liuxuedeng/agent-core/*": ["./packages/coding-agent/src/*"],
-			"typebox": ["./node_modules/typebox"],
-			"@liuxuedeng/agent-core-tui": ["./packages/tui/src/index.ts"],
-			"@liuxuedeng/agent-core-tui/*": ["./packages/tui/src/*"]
-		}
-	},
-	"include": ["packages/*/src/**/*", "packages/*/test/**/*", "packages/session-backends/*/src/**/*", "packages/session-backends/*/test/**/*", "packages/coding-agent/examples/**/*"],
-	"exclude": ["**/dist/**", "packages/coding-agent/examples/extensions/gondolin/**"]
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "paths": {
+      "*": [
+        "./*"
+      ],
+      "@liuxuedeng/agent-core-ai": [
+        "./packages/ai/src/index.ts"
+      ],
+      "@liuxuedeng/agent-core-ai/oauth": [
+        "./packages/ai/src/oauth.ts"
+      ],
+      "@liuxuedeng/agent-core-ai/*": [
+        "./packages/ai/src/*.ts",
+        "./packages/ai/src/providers/*.ts"
+      ],
+      "@liuxuedeng/agent-core-ai/dist/*": [
+        "./packages/ai/src/*"
+      ],
+      "@liuxuedeng/agent-core-agent": [
+        "./packages/agent/src/index.ts"
+      ],
+      "@liuxuedeng/agent-core-agent/*": [
+        "./packages/agent/src/*.ts",
+        "./packages/agent/src/*/index.ts",
+        "./packages/agent/src/*"
+      ],
+      "@liuxuedeng/agent-core": [
+        "./packages/agent-app/src/index.ts"
+      ],
+      "@liuxuedeng/agent-core/*": [
+        "./packages/agent-app/src/*"
+      ],
+      "typebox": [
+        "./node_modules/typebox"
+      ],
+      "@liuxuedeng/agent-core-tui": [
+        "./packages/tui/src/index.ts"
+      ],
+      "@liuxuedeng/agent-core-tui/*": [
+        "./packages/tui/src/*"
+      ]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*",
+    "packages/*/test/**/*",
+    "packages/agent-app/examples/**/*"
+  ],
+  "exclude": [
+    "**/dist/**"
+  ]
 }

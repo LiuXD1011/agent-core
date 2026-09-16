@@ -11,7 +11,7 @@ const devPackages = ["client", "protocol", "server"].map((name) => `@liuxuedeng/
 function createFixture(t, { importServer = false, declareServer = false } = {}) {
 	const root = mkdtempSync(join(tmpdir(), "pi-consumer-test-"));
 	t.after(() => rmSync(root, { recursive: true, force: true }));
-	const packages = [codingAgentName, "@liuxuedeng/agent-core-chord", ...devPackages].map((name) => ({
+	const packages = [codingAgentName, "@liuxuedeng/agent-core-agent", ...devPackages].map((name) => ({
 		name,
 		directory: join(root, "packages", name.split("/")[1]),
 	}));
@@ -23,13 +23,15 @@ function createFixture(t, { importServer = false, declareServer = false } = {}) 
 			type: "module",
 			exports: isAgent ? {
 				".": "./dist/index.js",
+				"./sdk": "./dist/index.js",
+				"./session/export": "./dist/export.js",
 				"./client": { source: "./src/client/index.ts" },
 				"./experimental/plugin": { source: "./src/experimental/plugin.ts" },
 			} : "./dist/index.js",
 			...(isAgent ? {
 				bin: { "agent-core": "dist/bundle/cli.js" },
 				dependencies: {
-					"@liuxuedeng/agent-core-chord": "1.0.0",
+					"@liuxuedeng/agent-core-agent": "1.0.0",
 					...(declareServer ? { "@liuxuedeng/agent-core-server": "1.0.0" } : {}),
 				},
 				devDependencies: Object.fromEntries(devPackages.map((name) => [name, "1.0.0"])),
@@ -39,13 +41,16 @@ function createFixture(t, { importServer = false, declareServer = false } = {}) 
 			"package.json": JSON.stringify(manifest),
 			"dist/index.js": isAgent ? `
 ${importServer ? 'import "@liuxuedeng/agent-core-server";' : ""}
-import { marker } from "@liuxuedeng/agent-core-chord";
-if (marker !== "local tarball") throw new Error("Wrong Chord artifact");
+import { marker } from "@liuxuedeng/agent-core-agent";
+if (marker !== "local tarball") throw new Error("Wrong Agent artifact");
 export function createAgentSession() {}
 export class SessionManager { static inMemory() {} }
 export class ModelRuntime { static create() {} }
 ` : 'export const marker = "local tarball";',
 			...(isAgent ? {
+				"dist/export.js": 'export function exportSessionJsonlFromManager() {} export function exportSessionHtmlFromFile() {}',
+				"dist/rpc-entry.js": 'console.log("1.0.0");',
+				"dist/bundle/rpc-entry.js": 'console.log("1.0.0");',
 				"dist/cli.js": 'console.log("1.0.0");',
 				"dist/bundle/cli.js": 'console.log("1.0.0");',
 			} : {}),

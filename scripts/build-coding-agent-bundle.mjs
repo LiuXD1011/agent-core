@@ -8,7 +8,7 @@ import { build } from "esbuild";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
-const codingAgentDir = join(repoRoot, "packages", "coding-agent");
+const codingAgentDir = join(repoRoot, "packages", "agent-app");
 const aiDistDir = join(repoRoot, "packages", "ai", "dist");
 const codingAgentDistDir = join(codingAgentDir, "dist");
 const bundleDir = join(codingAgentDistDir, "bundle");
@@ -16,11 +16,6 @@ const banner = {
 	js: 'import { createRequire as __piCreateRequire } from "node:module"; const require = __piCreateRequire(import.meta.url);',
 };
 const allowedExternalPackages = new Set([
-	"@liuxuedeng/agent-core-chord",
-	"@liuxuedeng/agent-core-chord/bundler",
-	"@liuxuedeng/agent-core-chord/context",
-	"@liuxuedeng/agent-core-chord/delta",
-	"@liuxuedeng/agent-core-chord/node",
 	"@silvia-odwyer/photon-node",
 	"jiti",
 	// Optional native accelerators. Their callers fall back to JavaScript when absent.
@@ -84,7 +79,7 @@ function commonBuildOptions() {
 		banner,
 		bundle: true,
 		define: { AGENT_CORE_BUNDLED_NODE: "true" },
-		external: ["@liuxuedeng/agent-core-chord", "@silvia-odwyer/photon-node"],
+		external: ["@silvia-odwyer/photon-node"],
 		format: "esm",
 		legalComments: "none",
 		logLevel: "warning",
@@ -171,7 +166,7 @@ const mainResult = await build({
 
 const bedrockLoaderOutput = findContainingOutput(mainResult.metafile, "packages/ai/dist/api/bedrock-converse-stream.lazy.js");
 const oauthLoaderOutput = findContainingOutput(mainResult.metafile, "packages/ai/dist/auth/oauth/load.js");
-const imageResizeOutput = findContainingOutput(mainResult.metafile, "packages/coding-agent/dist/utils/image-resize.js");
+const imageResizeOutput = findContainingOutput(mainResult.metafile, "packages/agent-app/dist/utils/image-resize.js");
 if (dirname(bedrockLoaderOutput) !== dirname(oauthLoaderOutput)) {
 	throw new Error("Bedrock and OAuth lazy loaders were emitted into different directories");
 }

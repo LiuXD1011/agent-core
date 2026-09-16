@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { openBrowser } from "../packages/coding-agent/src/utils/open-browser.ts";
+import { openBrowser } from "../packages/agent-app/src/utils/open-browser.ts";
 
 interface TextContent { type: "text"; text: string }
 interface ImageContent { type: "image"; data: string; mimeType?: string }

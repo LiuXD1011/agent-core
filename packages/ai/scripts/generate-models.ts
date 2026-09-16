@@ -287,6 +287,14 @@ const DEEPSEEK_V4_FLASH_THINKING_LEVEL_MAP = {
 	...DEEPSEEK_V4_THINKING_LEVEL_MAP,
 	low: "low",
 } as const;
+// `deepseek-flash` is the current DeepSeek Flash id (served by DeepSeek V4.1 Flash).
+// Other providers still publish the retired `deepseek-v4-flash` id in their own catalogs.
+function isDeepSeekFlashId(modelId: string): boolean {
+	return modelId === "deepseek-flash" || modelId.includes("deepseek-v4-flash");
+}
+function isDeepSeekV4Id(modelId: string): boolean {
+	return modelId.includes("deepseek-v4") || modelId === "deepseek-flash";
+}
 const QWEN_TOKEN_PLAN_FALLBACK_THINKING_LEVEL_MAP = {
 	minimal: null,
 	low: null,
@@ -951,13 +959,13 @@ function applyThinkingLevelMetadata(model: Model<any>): void {
 	if (model.api === "anthropic-messages" && isAnthropicTemperatureUnsupportedModel(model.id)) {
 		mergeAnthropicMessagesCompat(model, { supportsTemperature: false });
 	}
-	if (model.api === "openai-completions" && model.id.includes("deepseek-v4")) {
+	if (model.api === "openai-completions" && isDeepSeekV4Id(model.id)) {
 		mergeThinkingLevelMap(
 			model,
 			model.provider === "openrouter"
 				? { ...DEEPSEEK_V4_THINKING_LEVEL_MAP, xhigh: "xhigh", max: null }
 				: (model.provider === "deepseek" || model.provider === "opencode" || model.provider === "opencode-go") &&
-					model.id.includes("deepseek-v4-flash")
+					isDeepSeekFlashId(model.id)
 					? DEEPSEEK_V4_FLASH_THINKING_LEVEL_MAP
 					: DEEPSEEK_V4_THINKING_LEVEL_MAP,
 		);
@@ -2589,28 +2597,10 @@ async function generateModels() {
 		requiresReasoningContentOnAssistantMessages: true,
 		thinkingFormat: "deepseek",
 	};
-	const deepseekV4Models: Model<"openai-completions">[] = [
+	const deepseekModels: Model<"openai-completions">[] = [
 		{
-			id: "deepseek-v4-flash",
-			name: "DeepSeek V4 Flash",
-			api: "openai-completions",
-			baseUrl: "https://api.deepseek.com",
-			provider: "deepseek",
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 0.14,
-				output: 0.28,
-				cacheRead: 0.0028,
-				cacheWrite: 0,
-			},
-			contextWindow: 1000000,
-			maxTokens: 384000,
-			compat: deepseekCompat,
-		},
-		{
-			id: "deepseek-v4-flash-vision-exp",
-			name: "DeepSeek V4 Flash Vision Exp",
+			id: "deepseek-flash",
+			name: "DeepSeek Flash",
 			api: "openai-completions",
 			baseUrl: "https://api.deepseek.com",
 			provider: "deepseek",
@@ -2645,7 +2635,7 @@ async function generateModels() {
 			compat: deepseekCompat,
 		},
 	];
-	allModels.push(...deepseekV4Models);
+	allModels.push(...deepseekModels);
 
 	const antLingCompat: OpenAICompletionsCompat = {
 		supportsStore: false,
@@ -2700,7 +2690,7 @@ async function generateModels() {
 	for (const candidate of allModels) {
 		if (
 			candidate.api === "openai-completions" &&
-			candidate.id.includes("deepseek-v4") &&
+			isDeepSeekV4Id(candidate.id) &&
 			!QWEN_TOKEN_PLAN_PROVIDER_IDS.has(candidate.provider)
 		) {
 			const preservesNativeReasoningEffort = candidate.provider === "openrouter" || candidate.provider === "opencode";

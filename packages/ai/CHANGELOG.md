@@ -4,11 +4,14 @@
 
 ### Breaking Changes
 
+- Removed the telemetry package dependency and the telemetryContext request option. Cancellation signals and normal request options remain supported.
 - Renamed the npm package from `@liuxuedeng/pi-core-ai` to `@liuxuedeng/agent-core-ai`; update dependency specifiers and import paths.
 - Removed the Radius gateway provider, the `radius` known provider ID, the `RADIUS_API_KEY` environment mapping, the Radius OAuth flow, and the `loadRadiusOAuth` loader/bundled registration. The generic `pi-messages` API remains available for custom providers.
+- Removed the retired `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp` model ids from the DeepSeek catalog. The provider serves both through `deepseek-flash`.
 
 ### Added
 
+- Added the `deepseek-flash` model to the DeepSeek catalog with image input support.
 - Initial Agent Core release, based on Pi v0.85.1.
 
 <!-- agent-core:upstream-boundary -->

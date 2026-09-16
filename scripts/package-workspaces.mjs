@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 const SKIPPED_DIRECTORIES = new Set(["dist", "node_modules"]);
 
-export function findPackageDirectories(root = "packages") {
+export function findPackageDirectories(root) {
 	const packageDirectories = [];
 
 	function visit(directory) {
@@ -19,6 +19,8 @@ export function findPackageDirectories(root = "packages") {
 		}
 	}
 
-	visit(root);
+	for (const directory of [root ?? "packages"]) {
+		if (existsSync(directory)) visit(directory);
+	}
 	return packageDirectories.sort();
 }

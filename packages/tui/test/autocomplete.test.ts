@@ -398,9 +398,9 @@ describe("CombinedAutocompleteProvider", () => {
 			mkdirSync(queryInPathBaseDir, { recursive: true });
 
 			const structure = {
-				dirs: ["packages/coding-agent/examples/extensions/plan-mode"],
+				dirs: ["packages/agent-app/examples/extensions/plan-mode"],
 				files: {
-					"packages/coding-agent/examples/extensions/plan-mode/README.md": "readme",
+					"packages/agent-app/examples/extensions/plan-mode/README.md": "readme",
 					"packages/tui/docs/plan.md": "plan",
 				},
 			};
@@ -418,9 +418,7 @@ describe("CombinedAutocompleteProvider", () => {
 				(result?.items ?? []).map((item) => `${item.label} :: ${item.description ?? ""}`).sort();
 
 			assert.deepStrictEqual(normalize(queryInPathResult), normalize(normalResult));
-			assert.ok(
-				normalize(normalResult).includes("plan-mode/ :: packages/coding-agent/examples/extensions/plan-mode"),
-			);
+			assert.ok(normalize(normalResult).includes("plan-mode/ :: packages/agent-app/examples/extensions/plan-mode"));
 			assert.ok(normalize(normalResult).includes("plan.md :: packages/tui/docs/plan.md"));
 		});
 

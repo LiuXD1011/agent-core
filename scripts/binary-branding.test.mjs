@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -133,6 +133,14 @@ test("build-binaries.sh emits agent-core binaries and agent-core archives for al
 			assert.doesNotMatch(outfile, /\/pi(\.exe)?$/, `bare pi binary must not be produced: ${outfile}`);
 		}
 
+		// Binary runtime resolves HTML templates next to the executable as export-html/.
+		for (const platform of PLATFORMS) {
+			assert.ok(
+				calls.includes(`cp -r dist/session/export/html ${join(outDirectory, platform, "export-html")}`),
+				`missing binary HTML export assets for ${platform}`,
+			);
+		}
+
 		// Unix archives wrap a agent-core directory; every archive is agent-core-<platform>.
 		const tarLines = calls.filter((line) => line.startsWith("tar ") && line.includes("-czf"));
 		assert.equal(tarLines.length, 4);
@@ -178,4 +186,30 @@ test("local-release.mjs shims and messages reference only agent-core", async () 
 	const consumer = await readFile(join(repoRoot, "scripts", "coding-agent-consumer.mjs"), "utf8");
 	assert.match(consumer, /manifest\.bin\["agent-core"\]/);
 	assert.doesNotMatch(consumer, /manifest\.bin\.pi\b/);
+});
+
+
+test("copy-assets succeeds without the removed announcement image directory", () => {
+	const root = mkdtempSync(join(tmpdir(), "agent-core-copy-assets-"));
+	const packageRoot = join(repoRoot, "packages", "agent-app");
+	const manifest = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
+	try {
+		for (const directory of ["src/ui/terminal/theme", "src/session/export/html"]) {
+			cpSync(join(packageRoot, directory), join(root, directory), { recursive: true });
+		}
+		const result = spawnSync("bash", ["-c", manifest.scripts["copy-assets"]], {
+			cwd: root,
+			encoding: "utf8",
+			env: { ...process.env, PATH: `${join(repoRoot, "node_modules", ".bin")}:${process.env.PATH}` },
+			timeout: 30_000,
+		});
+		assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`);
+		assert.ok(existsSync(join(root, "dist/ui/terminal/theme/dark.json")));
+		assert.ok(existsSync(join(root, "dist/session/export/html/template.html")));
+		assert.equal(existsSync(join(root, "dist/ui/terminal/assets")), false);
+		assert.doesNotMatch(manifest.scripts["copy-binary-assets"], /src\/modes\/interactive\/assets/);
+		assert.doesNotMatch(readFileSync(buildScript, "utf8"), /dist\/modes\/interactive\/assets/);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
 });

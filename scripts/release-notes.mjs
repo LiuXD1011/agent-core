@@ -6,8 +6,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const DEFAULT_REPO = "LiuXD1011/agent-core";
-const DEFAULT_BASE_PATH = "packages/coding-agent";
-const DEFAULT_CHANGELOG = "packages/coding-agent/CHANGELOG.md";
+const DEFAULT_BASE_PATH = "packages/agent-app";
+const DEFAULT_CHANGELOG = "packages/agent-app/CHANGELOG.md";
 // Links into the upstream Pi repositories are historical references; they are
 // preserved verbatim instead of being retargeted to the Agent Core repository.
 const UPSTREAM_REPO_RE = /^https:\/\/github\.com\/(?:badlogic|earendil-works)\/pi(?:-mono)?(?=\/|$)/;

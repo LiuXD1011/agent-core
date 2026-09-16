@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "mutationCommands": true,
+  "resultReferences": true,
+  "logReduction": true,
+  "logReductionProvider": "$current",
+  "logReductionModel": "$current",
+  "boundaryCompaction": true,
+  "cacheWriteReadRatio": 12.5
+}

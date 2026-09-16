@@ -33,13 +33,14 @@ export type StreamFn = (
 
 /**
  * Configuration for how tool calls from a single assistant message are executed.
+ * "auto" serializes batches containing undeclared or effectful tools; explicitly parallel tools use at most four workers.
  *
  * - "sequential": each tool call is prepared, executed, and finalized before the next one starts.
  * - "parallel": tool calls are prepared sequentially, then allowed tools execute concurrently.
  *   `tool_execution_end` is emitted in tool completion order after each tool is finalized,
  *   while tool-result message artifacts are emitted later in assistant source order.
  */
-export type ToolExecutionMode = "sequential" | "parallel";
+export type ToolExecutionMode = "sequential" | "parallel" | "auto";
 
 /**
  * Controls how many queued user messages are injected when the agent loop reaches a queue drain point.
@@ -408,7 +409,7 @@ export interface AgentTool<TParameters extends TSchema = TSchema, TDetails = any
 	 *
 	 * If omitted, the default execution mode applies.
 	 */
-	executionMode?: ToolExecutionMode;
+	executionMode?: Exclude<ToolExecutionMode, "auto">;
 }
 
 /** Context snapshot passed into the low-level agent loop. */
@@ -428,6 +429,8 @@ export interface AgentContext {
  * listeners for that event are still part of run settlement. The agent becomes
  * idle only after those listeners finish.
  */
+export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
+
 export type AgentEvent =
 	// Agent lifecycle
 	| { type: "agent_start" }

@@ -13,7 +13,7 @@ npm run build                 # Build all packages
 npm run check                 # Lint, format, and type check (also runs in pre-commit)
 ```
 
-See [packages/coding-agent/docs/development.md](packages/coding-agent/docs/development.md) for the full development manual.
+See [packages/agent-app/docs/development.md](packages/agent-app/docs/development.md) for the full development manual.
 
 Set `AGENT_CORE_NO_LOCAL_LLM=1` to skip local-LLM integration tests on machines
 with Ollama installed:
