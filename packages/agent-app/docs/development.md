@@ -25,14 +25,14 @@ Agent Core itself is configured via `package.json`:
 
 ```json
 {
-  "piConfig": {
+  "agentCoreConfig": {
     "name": "agent-core",
     "configDir": ".agent-core"
   }
 }
 ```
 
-Change `name`, `configDir`, and `bin` field for your own fork. Affects CLI banner, config paths, and environment variable names. The `piConfig` manifest key (and the `pi` resource-manifest key in extension packages) is kept as the upstream configuration format; product branding and the configuration format are separate concerns.
+Change `name`, `configDir`, and `bin` field for your own fork. Affects CLI banner, config paths, and environment variable names. Project identity uses `agentCoreConfig`; forks must rename their former `piConfig` key. This package metadata is separate from the unchanged `pi` resource-manifest key used by extension packages.
 
 ## Branding exceptions and non-maintained integrations
 
@@ -40,7 +40,7 @@ Names that are deliberately **not** rebranded, because they are protocols, histo
 
 - **Source and license history:** upstream Pi copyright, `LICENSE`, and upstream issue links stay as-is.
 - **Persistent namespaces `pi.*`:** storage value namespaces and fork policies are interdependent with stored data; renaming would make old sessions unreadable.
-- **Resource manifest keys:** `piConfig` in `package.json` and the `pi` resource manifest (`pi.extensions`, `pi.skills`, `pi.prompts`, `pi.themes`) are the configuration format; the `pi-package` npm keyword remains the ecosystem discovery convention.
+- **Resource manifest keys:** The `pi` resource manifest (`pi.extensions`, `pi.skills`, `pi.prompts`, `pi.themes`) are the configuration format; the `pi-package` npm keyword remains the ecosystem discovery convention.
 - **`pi-messages` API** in `packages/ai`: an independent adapter protocol, kept independent of product naming.
 - **`pi-managed-install` marker and update aliases:** the install-layout recognition marker and the `update pi` alias are compatibility protocols; changing them requires a coordinated writer/reader/test change.
 - **OAuth originator/referrer fields** (OpenAI Codex, xAI): literal values that providers may contract on; verify the official contract before changing.
@@ -83,7 +83,7 @@ Never run the full vitest suite directly; it includes e2e tests that activate wh
 
 ### Published package smoke test
 
-After building, run `npm run check:package-install`. It packs the public packages and installs only coding-agent as a direct dependency in a temporary directory outside the repository. Local tarball overrides select declared transitive dependencies without installing development-only packages. The check verifies SDK imports and CLI startup without credentials or model requests.
+After building, run `npm run check:package-install`. It packs the public packages and installs only `@liuxuedeng/agent-core` as a direct dependency in a temporary directory outside the repository. Local tarball overrides select declared transitive dependencies without installing development-only packages. The check verifies SDK imports and CLI startup without credentials or model requests.
 
 `npm run check` also checks runtime dependency declarations and rejects excluded development sources pulled into a package's build through imports.
 
@@ -92,11 +92,7 @@ After building, run `npm run check:package-install`. It packs the public package
 ```
 packages/
   ai/             # LLM provider abstraction
-  agent/          # Agent loop, harness, session persistence
+  agent/          # Agent loop and tool execution
   tui/            # Terminal UI components
-  coding-agent/   # CLI and interactive mode
-  chord/          # Application-composition runtime (services, replicated state, RPC, plugins)
-  evals/          # Private model-backed behavioral evals
-  session-backends/
-    sqlite-node/  # Optional SQLite session backend
+  agent-app/      # CLI, context management, sessions, and exports
 ```

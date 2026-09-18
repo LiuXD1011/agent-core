@@ -3,7 +3,7 @@
 	"version": "0.1.0-alpha.1",
 	"description": "Agent Core - AI coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
-	"piConfig": {
+	"agentCoreConfig": {
 		"configDir": ".agent-core"
 	},
 	"bin": {
@@ -97,7 +97,7 @@
 	],
 	"author": "LiuXD1011",
 	"contributors": [
-		"Mario Zechner (original Pi)"
+		"Mario Zechner"
 	],
 	"license": "MIT",
 	"homepage": "https://github.com/LiuXD1011/agent-core#readme",

@@ -1,16 +1,7 @@
-# NOTICE
+# 来源与版权说明
 
-Agent Core is an independent secondary-development project based on the source code of
-[Pi](https://github.com/earendil-works/pi) v0.85.1, copyright (c) 2025 Mario Zechner / earendil-works,
-licensed under the [MIT License](LICENSE).
+Agent Core 由 LiuXD1011 独立维护，采用 [MIT License](LICENSE)。
 
-All credit for the original design and implementation belongs to the Pi authors and contributors.
-The upstream project continues active development at <https://github.com/earendil-works/pi>.
+部分源码源自 [Pi](https://github.com/earendil-works/pi) v0.85.1（Copyright (c) 2025 Mario Zechner，MIT 许可）。上下文管理与工具执行部分吸纳了 [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi) 的思路及 MIT 许可代码；相关 NVIDIA 版权与许可声明保留在对应源码目录中。
 
-Agent Core modifications and subsequent releases are maintained in this repository under the same
-MIT License. Upstream license, copyright notices, and source references are preserved throughout
-the source tree.
-
-Agent Core is not affiliated with, endorsed by, or sponsored by earendil-works.
-This distribution identifies itself as "Agent Core" to distinguish it from the
-upstream "Pi" distribution.
+本项目保留原始版权与许可声明；独立维护不代表原作者或相关组织的背书。

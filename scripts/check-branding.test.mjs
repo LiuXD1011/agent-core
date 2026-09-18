@@ -10,7 +10,7 @@ import test from "node:test";
 const checker = fileURLToPath(new URL("./check-branding.mjs", import.meta.url));
 
 function makeFixture(files) {
-	const root = mkdtempSync(join(tmpdir(), "pi-check-branding-"));
+	const root = mkdtempSync(join(tmpdir(), "agent-core-check-branding-"));
 	for (const [relativePath, content] of Object.entries(files)) {
 		const fullPath = join(root, relativePath);
 		mkdirSync(dirname(fullPath), { recursive: true });
@@ -38,10 +38,11 @@ export function resolveVersionCheckUrl() {
 `;
 
 const CORRECT_FILES = {
+	"NOTICE.md": "部分源码源自 [Pi](https://github.com/earendil-works/pi) v0.85.1，MIT 许可。",
 	"README.md": [
 		"# Agent Core",
 		"",
-		"An independent secondary development of [Pi](https://github.com/earendil-works/pi).",
+		"- 感谢 [Pi](https://github.com/earendil-works/pi) 的作者与贡献者提供的基础代码。",
 		"",
 		"```bash",
 		"npm install -g --ignore-scripts @liuxuedeng/agent-core",
@@ -83,6 +84,11 @@ test("correct branding, copyright attribution, and history links pass", () => {
 
 test("upstream install commands, wrong repositories, legacy env vars, and bare pi binaries each fail", () => {
 	const cases = [
+		{
+			name: "upstream branding outside the README attribution",
+			file: "README.md",
+			content: "Agent Core is a secondary development of [Pi](https://github.com/earendil-works/pi).",
+		},
 		{
 			name: "upstream npm install command",
 			file: "docs/install.md",

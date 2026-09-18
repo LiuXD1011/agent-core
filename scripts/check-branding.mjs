@@ -77,28 +77,11 @@ const upstreamSchemaUrlPattern = /raw\.githubusercontent\.com\/earendil-works\/p
 
 /** Markdown allowlist: file -> { lineIncludes, pattern, reason }[] */
 const markdownAllowlist = {
-	"CONTRIBUTING.md": [
-		{
-			lineIncludes: "v0.85.1",
-			pattern: upstreamLinkPattern,
-			reason: "provenance statement linking upstream Pi",
-		},
-	],
 	"README.md": [
 		{
-			lineIncludes: "secondary development",
+			lineIncludes: "- 感谢 [Pi]",
 			pattern: upstreamLinkPattern,
-			reason: "attribution link to upstream Pi",
-		},
-		{
-			lineIncludes: "credit for the original design",
-			pattern: upstreamLinkPattern,
-			reason: "attribution to the Pi authors",
-		},
-		{
-			lineIncludes: "coexist with an existing `pi` installation",
-			pattern: upstreamLinkPattern,
-			reason: "provenance link to upstream Pi in the package README",
+			reason: "concise attribution to original contributors",
 		},
 	],
 	"SECURITY.md": [
@@ -110,20 +93,6 @@ const markdownAllowlist = {
 	],
 	"NOTICE.md": [
 		{ lineIncludes: "earendil-works", pattern: upstreamLinkPattern, reason: "provenance notice" },
-	],
-	"packages/agent-app/README.md": [
-		{
-			lineIncludes: "secondary development of",
-			pattern: upstreamLinkPattern,
-			reason: "attribution link to upstream Pi",
-		},
-	],
-	"packages/agent-app/docs/index.md": [
-		{
-			lineIncludes: "secondary development of",
-			pattern: upstreamLinkPattern,
-			reason: "attribution link to upstream Pi",
-		},
 	],
 	"packages/agent-app/docs/development.md": [
 		{

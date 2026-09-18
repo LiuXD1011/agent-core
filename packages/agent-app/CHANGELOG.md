@@ -4,6 +4,8 @@
 
 ### Breaking Changes
 
+- Renamed the application identity manifest key from `piConfig` to `agentCoreConfig`. Forks with custom package metadata must update that key; user settings, extension resource manifests, and session formats are unchanged.
+
 - Removed install telemetry settings, the AGENT_CORE_TELEMETRY switch, and automatic OpenRouter/Cloudflare attribution headers. Explicit headers, OpenCode session headers, session history, HTML/JSONL export, and token/cost statistics remain supported.
 - Moved the source package to `packages/agent-app` while retaining its npm name and CLI. Context configuration is now `context.json`, with `mutationCommands`, `resultReferences`, `logReduction`, and `boundaryCompaction` settings; session artifacts use `context/`. The project configuration has been migrated; other legacy configurations require manual migration. Existing archive files remain untouched.
 - Renamed the package to `@liuxuedeng/agent-core` and the CLI binary to `agent-core`; update install commands and any scripts or wrappers that invoke the old binary name.

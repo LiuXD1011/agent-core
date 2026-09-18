@@ -1,10 +1,8 @@
 # Agent Core
 
-Agent Core is an AI coding agent CLI, independently maintained as a secondary development of [Pi](https://github.com/earendil-works/pi) by earendil-works, based on the Pi v0.85.1 source code.
+Agent Core 是一个简洁、可扩展的终端编程 Agent 项目，由 LiuXD1011 独立维护。围绕 Agent Loop、上下文管理和工具调用组织核心能力，同时保留会话管理、导出与调试功能，便于使用、学习和二次开发。
 
-All credit for the original design and implementation goes to the [Pi authors](https://github.com/earendil-works/pi). Agent Core continues as an independent project with its own release identity:
-
-* **CLI 命令**：`agent-core`（可与已有的 `pi` 安装共存）
+* **CLI 命令**：`agent-core`
 * **主 npm 包**：`@liuxuedeng/agent-core`
 
 ## 安装
@@ -32,7 +30,7 @@ npm run build
 npm install -g @liuxuedeng/agent-core@latest
 ```
 
-每个 Agent Core 版本都会记录其基于的上游 Pi 版本：Agent Core 0.1.x 基于 Pi v0.85.1。项目关系参见 [NOTICE.md](NOTICE.md)。
+版本变更参见 [CHANGELOG](packages/agent-app/CHANGELOG.md)。
 
 ## 包结构
 
@@ -47,13 +45,11 @@ npm install -g @liuxuedeng/agent-core@latest
 
 参见[架构与源码地图](docs/architecture/README.md)。核心教学路径是 Agent Loop（智能体循环）→ 模型上下文 → 工具执行；会话持久化与导出位于应用层。
 
-## 与基线 Pi 的差异
+## 项目特点
 
-Agent Core v0.1.x 基于 Pi v0.85.1。已核实的差异：
-
-- **共存**：CLI 命令为 `agent-core`（上游安装的 `pi` 命令不受影响），配置位于 `~/.agent-core`，项目目录为 `.agent-core`，环境变量前缀为 `AGENT_CORE_*`，因此上游 `pi` 安装可与本机共存。
-- **独立发布**：所有包共享同一版本号（`0.1.0-alpha.1`）；发布历史从 Agent Core 变更边界开始，继承的上游变更历史仅作来源留档。
-- **默认不联系上游**：不上报安装/更新统计，除非配置了 `AGENT_CORE_VERSION_CHECK_URL`，否则不发起版本检查请求。自更新通过 npm 进行（`npm install -g @liuxuedeng/agent-core@latest`）。托管安装要求显式配置 Agent Core 发行源（`AGENT_CORE_INSTALLER_API_BASE`）。
+- **独立配置**：CLI 命令为 `agent-core`，配置位于 `~/.agent-core`，项目目录为 `.agent-core`，环境变量前缀为 `AGENT_CORE_*`。
+- **独立发布**：所有包共享同一版本号（`0.1.0-alpha.1`）；通过变更日志记录功能与行为调整。
+- **显式更新**：不上报安装/更新统计，除非配置了 `AGENT_CORE_VERSION_CHECK_URL`，否则不发起版本检查请求。自更新通过 npm 进行（`npm install -g @liuxuedeng/agent-core@latest`）。托管安装要求显式配置 Agent Core 发行源（`AGENT_CORE_INSTALLER_API_BASE`）。
 - **请求归属**：CLI 与 RPC 入口设置 `AI_AGENT=agent-core`，HTTP User-Agent 为 `agent-core/<version>`，OpenCode 会话协议头标识会话与客户端。不自动注入 OpenRouter、Cloudflare、NVIDIA NIM 归属头；显式自定义头会被保留。
 
 ## 开发
@@ -77,7 +73,7 @@ Agent Core 不内置限制文件系统、进程、网络或凭据访问的权限
 
 ## 供应链加固
 
-npm 依赖变更按经过评审的代码变更处理（机制继承自上游 Pi）：
+npm 依赖变更按经过评审的代码变更处理：
 
 - 直接外部依赖锁定到精确版本。内部 workspace 包保持版本区间。
 - `.npmrc` 设置 `save-exact=true` 与 `min-release-age=2`，避免 npm 解析当天发布的依赖。
@@ -87,8 +83,11 @@ npm 依赖变更按经过评审的代码变更处理（机制继承自上游 Pi�
 
 ## 致谢
 
-上下文管理与工具执行的工作吸纳了 [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi) 的思路与 MIT 许可代码。原始版权与许可声明均已保留。
+- 感谢 [Pi](https://github.com/earendil-works/pi) 的作者与贡献者提供的基础代码。
+- 感谢 [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi) 提供的上下文管理与工具执行思路及代码。
+
+来源与版权说明参见 [NOTICE.md](NOTICE.md)。
 
 ## 许可证
 
-MIT。基于 earendil-works 的 Pi——参见 [LICENSE](LICENSE)。
+[MIT License](LICENSE)。原始代码及贡献者的版权声明予以保留。

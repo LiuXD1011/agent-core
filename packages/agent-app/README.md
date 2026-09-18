@@ -1,6 +1,6 @@
 # Agent Core
 
-Agent Core is an AI coding agent CLI — a minimal terminal coding harness independently maintained as a secondary development of [Pi](https://github.com/earendil-works/pi), based on Pi v0.85.1. It ships under its own name, package, and configuration namespace, so it can coexist with an existing `pi` installation.
+Agent Core 是简洁、可扩展的终端编程 Agent，提供模型对话、上下文管理、工具调用和会话导出，以清晰的核心流程支持日常开发与教学。
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@liuxuedeng/agent-core"><img alt="npm" src="https://img.shields.io/npm/v/@liuxuedeng/agent-core?style=flat-square" /></a>
@@ -57,7 +57,7 @@ Agent Core 保持核心精简：不内置 MCP、子 Agent、权限弹窗、独�
 
 ## 许可证
 
-MIT. Agent Core is an independent secondary development of [Pi](https://github.com/earendil-works/pi), based on Pi v0.85.1. All credit for the original design and implementation goes to the Pi authors; see [NOTICE.md](../../NOTICE.md).
+[MIT License](../../LICENSE)。来源与版权说明参见 [NOTICE.md](../../NOTICE.md)。
 
 ## 另见
 

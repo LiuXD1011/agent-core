@@ -1,8 +1,7 @@
 # Contributing to Agent Core
 
-Agent Core is an independent secondary-development project based on
-[Pi](https://github.com/earendil-works/pi) v0.85.1 (see [NOTICE.md](NOTICE.md)).
-Contributions are welcome.
+Contributions to Agent Core are welcome. Keep the core simple and changes focused.
+Source and copyright information is recorded in [NOTICE.md](NOTICE.md).
 
 ## Development setup
 

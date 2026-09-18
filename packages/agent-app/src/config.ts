@@ -477,13 +477,13 @@ export function getBundledInteractiveAssetPath(name: string): string {
 }
 
 // =============================================================================
-// App Config (from package.json piConfig)
+// App Config (from package.json agentCoreConfig)
 // =============================================================================
 
 interface PackageJson {
 	name?: string;
 	version?: string;
-	piConfig?: {
+	agentCoreConfig?: {
 		name?: string;
 		configDir?: string;
 	};
@@ -497,11 +497,11 @@ try {
 	if (err.code !== "ENOENT") throw e;
 }
 
-const piConfigName: string | undefined = pkg.piConfig?.name;
+const configuredName: string | undefined = pkg.agentCoreConfig?.name;
 export const PACKAGE_NAME: string = pkg.name || "@liuxuedeng/agent-core";
-export const APP_NAME: string = piConfigName || "agent-core";
-export const APP_TITLE: string = piConfigName ? APP_NAME : "Agent Core";
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".agent-core";
+export const APP_NAME: string = configuredName || "agent-core";
+export const APP_TITLE: string = configuredName ? APP_NAME : "Agent Core";
+export const CONFIG_DIR_NAME: string = pkg.agentCoreConfig?.configDir || ".agent-core";
 export const VERSION: string = pkg.version || "0.0.0";
 
 // e.g., AGENT_CORE_CODING_AGENT_DIR (hyphens are not usable in environment variable names)

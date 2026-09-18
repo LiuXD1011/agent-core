@@ -30,7 +30,7 @@ test("workspace metadata is unified on the Agent Core repository", () => {
 
 		assert.equal(pkg.author, "LiuXD1011", `${directory}: author`);
 		assert.ok(
-			(pkg.contributors ?? []).some((contributor) => /original Pi/.test(contributor)),
+			(pkg.contributors ?? []).includes("Mario Zechner"),
 			`${directory}: original author credit missing`,
 		);
 		assert.equal(pkg.homepage, "https://github.com/LiuXD1011/agent-core#readme", `${directory}: homepage`);

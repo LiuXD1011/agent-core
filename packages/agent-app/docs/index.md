@@ -1,6 +1,6 @@
 # Agent Core 文档
 
-Agent Core is a minimal terminal coding harness, independently maintained as a secondary development of [Pi](https://github.com/earendil-works/pi) (based on Pi v0.85.1). 它的核心保持精简，通过 TypeScript 扩展、技能、提示模板、主题和 Agent Core 包进行扩展。
+Agent Core 是简洁的终端编程 Agent，通过 TypeScript 扩展、技能、提示模板、主题和 Agent Core 包适配不同工作流。
 
 ## 快速开始
 
