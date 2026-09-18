@@ -80,7 +80,7 @@ describe("managed self-update boundaries", () => {
 		}));
 		process.env.AGENT_CORE_INSTALLER_API_BASE = serverUrl;
 
-		await expect(runManagedSelfUpdate(root, "9.9.9")).rejects.toThrow(/Refusing to install a different product/);
+		await expect(runManagedSelfUpdate(root, "9.9.9")).rejects.toThrow(/拒绝安装其他产品/);
 
 		expect(existsSync(join(root, "releases", "9.9.9"))).toBe(false);
 		expect(existsSync(join(root, "current-version"))).toBe(false);

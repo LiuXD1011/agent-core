@@ -338,23 +338,23 @@ export function getSelfUpdateUnavailableInstruction(
 	const method = detectInstallMethod();
 	const target = normalizeSelfUpdatePackageTarget(updatePackageTarget);
 	if (method === "bun-binary") {
-		return `Download from: https://github.com/LiuXD1011/agent-core/releases/latest`;
+		return `请从以下地址下载：https://github.com/LiuXD1011/agent-core/releases/latest`;
 	}
 	const command = getSelfUpdateCommandForMethod(method, packageName, target, npmCommand);
 	if (command) {
 		if (isManagedByGlobalPackageManager(method, packageName, npmCommand) && !isSelfUpdatePathWritable()) {
-			return `This installation is managed by a global ${method} install, but the install path is not writable. Update it yourself with: ${command.display}`;
+			return `此安装由全局 ${method} 安装托管，但安装路径不可写。请自行使用以下命令更新：${command.display}`;
 		}
-		return `This installation is not managed by a global ${method} install. Update it with the package manager, wrapper, or source checkout that provides it.`;
+		return `此安装不受全局 ${method} 安装托管。请使用提供它的包管理器、包装脚本或源码检出进行更新。`;
 	}
-	return `Update ${target.installSpec} using the package manager, wrapper, or source checkout that provides this installation.`;
+	return `请使用提供此安装的包管理器、包装脚本或源码检出更新 ${target.installSpec}。`;
 }
 
 export function getUpdateInstruction(packageName: string): string {
 	const method = detectInstallMethod();
 	const command = getSelfUpdateCommandForMethod(method, packageName);
 	if (command) {
-		return `Run: ${command.display}`;
+		return `请执行：${command.display}`;
 	}
 	return getSelfUpdateUnavailableInstruction(packageName);
 }

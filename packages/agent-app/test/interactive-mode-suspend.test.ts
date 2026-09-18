@@ -54,7 +54,7 @@ describe("InteractiveMode.handleCtrlZ", () => {
 			}
 		}
 
-		expect(showStatus).toHaveBeenCalledWith("Suspend to background is not supported on Windows");
+		expect(showStatus).toHaveBeenCalledWith("Windows 不支持挂起到后台");
 		expect(ui.stop).not.toHaveBeenCalled();
 		expect(setIntervalSpy).not.toHaveBeenCalled();
 		expect(processOnSpy).not.toHaveBeenCalledWith("SIGINT", expect.any(Function));

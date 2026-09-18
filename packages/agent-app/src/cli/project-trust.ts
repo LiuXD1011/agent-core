@@ -37,8 +37,8 @@ export function createProjectTrustContext(options: {
 				}
 				return (
 					(await showStartupSelector(options.settingsManager, `${title}\n${message}`, [
-						{ label: "Yes", value: true },
-						{ label: "No", value: false },
+						{ label: "是", value: true },
+						{ label: "否", value: false },
 					])) ?? false
 				);
 			},

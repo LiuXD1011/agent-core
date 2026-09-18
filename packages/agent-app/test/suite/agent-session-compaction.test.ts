@@ -224,14 +224,14 @@ describe("AgentSession compaction characterization", () => {
 		harnesses.push(harness);
 		harness.session.agent.state.model = undefined as unknown as Model<any>;
 
-		await expect(harness.session.compact()).rejects.toThrow("No model selected");
+		await expect(harness.session.compact()).rejects.toThrow("尚未选择模型");
 	});
 
 	it("throws when compacting without configured auth", async () => {
 		const harness = await createHarness({ withConfiguredAuth: false });
 		harnesses.push(harness);
 
-		await expect(harness.session.compact()).rejects.toThrow(`No API key found for ${harness.getModel().provider}.`);
+		await expect(harness.session.compact()).rejects.toThrow(`未找到 ${harness.getModel().provider} 的 API 密钥。`);
 	});
 
 	it("manually compacts with a custom streamFn when registry auth is absent", async () => {

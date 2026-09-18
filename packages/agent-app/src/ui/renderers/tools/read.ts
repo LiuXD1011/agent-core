@@ -90,7 +90,7 @@ function formatCompactReadCall(
 	args: ReadRenderArgs | undefined,
 	theme: Theme,
 ): string {
-	const expandHint = theme.fg("dim", ` (${keyText("app.tools.expand")} to expand)`);
+	const expandHint = theme.fg("dim", `（按 ${keyText("app.tools.expand")} 展开）`);
 	if (classification.kind === "skill") {
 		return (
 			theme.fg("customMessageLabel", `\x1b[1m[skill]\x1b[22m `) +
@@ -131,17 +131,17 @@ function formatReadResult(
 	const remaining = lines.length - maxLines;
 	let text = `\n${displayLines.map((line) => (lang ? replaceTabs(line) : theme.fg("toolOutput", replaceTabs(line)))).join("\n")}`;
 	if (remaining > 0) {
-		text += `${theme.fg("muted", `\n... (${remaining} more lines,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+		text += `${theme.fg("muted", `\n…（还有 ${remaining} 行，`)} ${keyHint("app.tools.expand", "展开")}${theme.fg("muted", "）")}`;
 	}
 
 	const truncation = result.details?.truncation;
 	if (truncation?.truncated) {
 		if (truncation.firstLineExceedsLimit) {
-			text += `\n${theme.fg("warning", `[First line exceeds ${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} limit]`)}`;
+			text += `\n${theme.fg("warning", `[首行超过 ${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} 限制]`)}`;
 		} else if (truncation.truncatedBy === "lines") {
-			text += `\n${theme.fg("warning", `[Truncated: showing ${truncation.outputLines} of ${truncation.totalLines} lines (${truncation.maxLines ?? DEFAULT_MAX_LINES} line limit)]`)}`;
+			text += `\n${theme.fg("warning", `[已截断：显示 ${truncation.outputLines}/${truncation.totalLines} 行（上限 ${truncation.maxLines ?? DEFAULT_MAX_LINES} 行）]`)}`;
 		} else {
-			text += `\n${theme.fg("warning", `[Truncated: ${truncation.outputLines} lines shown (${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)} limit)]`)}`;
+			text += `\n${theme.fg("warning", `[已截断：显示 ${truncation.outputLines} 行（上限 ${formatSize(truncation.maxBytes ?? DEFAULT_MAX_BYTES)}）]`)}`;
 		}
 	}
 	return text;

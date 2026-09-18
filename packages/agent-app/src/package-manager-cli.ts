@@ -71,7 +71,7 @@ function getActiveManagedInstallRoot(): string | undefined {
 			throw new Error();
 		}
 	} catch {
-		throw new Error(`Managed install marker is missing or invalid: ${markerPath}`);
+		throw new Error(`托管安装标记缺失或无效：${markerPath}`);
 	}
 
 	return managedRoot;
@@ -80,7 +80,7 @@ function getActiveManagedInstallRoot(): string | undefined {
 async function fetchInstallerArtifact(url: string, label: string): Promise<string> {
 	const response = await fetch(url, { headers: { "User-Agent": getPiUserAgent(VERSION) } });
 	if (!response.ok) {
-		throw new Error(`Could not download managed installer ${label} from ${url}: HTTP ${response.status}`);
+		throw new Error(`无法从 ${url} 下载托管安装器 ${label}：HTTP ${response.status}`);
 	}
 	return await response.text();
 }
@@ -98,7 +98,7 @@ async function runManagedNpmCi(stageDir: string): Promise<void> {
 		"--progress=false",
 	];
 	const code = await waitForChildProcess(spawnProcess("npm", args, { cwd: stageDir, stdio: "inherit" }));
-	if (code !== 0) throw new Error(`npm ${args.join(" ")} exited with code ${code ?? "unknown"}`);
+	if (code !== 0) throw new Error(`npm ${args.join(" ")} 以退出码 ${code ?? "未知"} 退出`);
 }
 
 function verifyManagedRelease(releaseDir: string, expectedVersion: string): void {
@@ -113,14 +113,12 @@ function verifyManagedRelease(releaseDir: string, expectedVersion: string): void
 		stdio: ["ignore", "pipe", "pipe"],
 	});
 	if (result.error || result.status !== 0) {
-		const reason = result.error?.message || result.stderr.trim() || `exit code ${result.status ?? "unknown"}`;
-		throw new Error(`Could not verify managed ${APP_NAME} ${expectedVersion}: ${reason}`);
+		const reason = result.error?.message || result.stderr.trim() || `退出码 ${result.status ?? "未知"}`;
+		throw new Error(`无法验证托管安装的 ${APP_NAME} ${expectedVersion}：${reason}`);
 	}
 	const installedVersion = result.stdout.trim();
 	if (installedVersion !== expectedVersion) {
-		throw new Error(
-			`Managed ${APP_NAME} smoke test returned version ${installedVersion}; expected ${expectedVersion}.`,
-		);
+		throw new Error(`托管安装的 ${APP_NAME} 冒烟测试返回版本 ${installedVersion}；期望 ${expectedVersion}。`);
 	}
 }
 
@@ -171,7 +169,7 @@ export function cleanupManagedInstall(): void {
 
 export async function runManagedSelfUpdate(managedRoot: string, version: string): Promise<void> {
 	if (!MANAGED_RELEASE_VERSION_RE.test(version)) {
-		throw new Error(`Invalid managed release version: ${version}`);
+		throw new Error(`托管发行版本无效：${version}`);
 	}
 
 	let releaseLock: () => Promise<void>;
@@ -179,7 +177,7 @@ export async function runManagedSelfUpdate(managedRoot: string, version: string)
 		releaseLock = await lockfile.lock(join(managedRoot, "update"), { realpath: false });
 	} catch (error: unknown) {
 		if (error instanceof Error && "code" in error && error.code === "ELOCKED") {
-			throw new Error(`Another managed ${APP_NAME} update is already running.`);
+			throw new Error(`另一个 ${APP_NAME} 托管更新正在进行中。`);
 		}
 		throw error;
 	}
@@ -192,7 +190,7 @@ export async function runManagedSelfUpdate(managedRoot: string, version: string)
 		const configuredInstallerApiBase = process.env.AGENT_CORE_INSTALLER_API_BASE?.trim();
 		if (!configuredInstallerApiBase) {
 			throw new Error(
-				`No managed update source is configured for ${APP_NAME}. Set AGENT_CORE_INSTALLER_API_BASE to a Agent Core release feed, or upgrade with: npm install -g ${PACKAGE_NAME}@latest`,
+				`未为 ${APP_NAME} 配置托管更新源。请设置 AGENT_CORE_INSTALLER_API_BASE 指向 Agent Core 发行源，或使用以下命令升级：npm install -g ${PACKAGE_NAME}@latest`,
 			);
 		}
 		const installerApiBase = configuredInstallerApiBase.replace(/\/+$/, "");
@@ -218,7 +216,7 @@ export async function runManagedSelfUpdate(managedRoot: string, version: string)
 		const stagedPackage = JSON.parse(packageJsonContent) as { name?: unknown };
 		if (stagedPackage.name !== PACKAGE_NAME) {
 			throw new Error(
-				`The managed update source serves ${typeof stagedPackage.name === "string" ? stagedPackage.name : "an unknown package"}, not ${PACKAGE_NAME}. Refusing to install a different product.`,
+				`托管更新源提供的是 ${typeof stagedPackage.name === "string" ? stagedPackage.name : "未知包"}，而非 ${PACKAGE_NAME}。拒绝安装其他产品。`,
 			);
 		}
 		writeFileSync(join(stageDir, "package.json"), packageJsonContent);
@@ -269,7 +267,7 @@ interface PackageCommandOptions {
 function reportSettingsErrors(settingsManager: SettingsManager, context: string): void {
 	const errors = settingsManager.drainErrors();
 	for (const { scope, error } of errors) {
-		console.error(chalk.yellow(`Warning (${context}, ${scope} settings): ${error.message}`));
+		console.error(chalk.yellow(`警告（${context}，${scope} 设置）：${error.message}`));
 		if (error.stack) {
 			console.error(chalk.dim(error.stack));
 		}
@@ -292,34 +290,34 @@ function getPackageCommandUsage(command: PackageCommand): string {
 const CONFIG_COMMAND_USAGE = `${APP_NAME} config [-l] [--approve|--no-approve]`;
 
 function printConfigCommandHelp(): void {
-	console.log(`${chalk.bold("Usage:")}
+	console.log(`${chalk.bold("用法:")}
   ${CONFIG_COMMAND_USAGE}
 
-Open the resource configuration TUI to enable or disable package resources.
-Without -l, starts in global settings (~/${CONFIG_DIR_NAME}/agent/settings.json).
-Press Tab in the TUI to switch between global and project-local modes.
+打开资源配置 TUI，启用或停用包资源。
+不带 -l 时从全局设置（~/${CONFIG_DIR_NAME}/agent/settings.json）开始。
+在 TUI 中按 Tab 可在全局与项目作用域之间切换。
 
-Options:
-  -l, --local       Edit project overrides (${CONFIG_DIR_NAME}/settings.json)
-  -a, --approve     Trust project-local files for this command with -l
-  -na, --no-approve Ignore project-local files for this command with -l
+选项:
+  -l, --local       编辑项目覆盖配置（${CONFIG_DIR_NAME}/settings.json）
+  -a, --approve     本次命令信任项目本地文件
+  -na, --no-approve 本次命令忽略项目本地文件
 `);
 }
 
 function printPackageCommandHelp(command: PackageCommand): void {
 	switch (command) {
 		case "install":
-			console.log(`${chalk.bold("Usage:")}
+			console.log(`${chalk.bold("用法:")}
   ${getPackageCommandUsage("install")}
 
-Install a package and add it to settings.
+安装包并写入设置。
 
-Options:
-  -l, --local       Install project-locally (${CONFIG_DIR_NAME}/settings.json)
-  -a, --approve     Trust project-local files for this command
-  -na, --no-approve Ignore project-local files for this command
+选项:
+  -l, --local       安装到项目本地（${CONFIG_DIR_NAME}/settings.json）
+  -a, --approve     本次命令信任项目本地文件
+  -na, --no-approve 本次命令忽略项目本地文件
 
-Examples:
+示例:
   ${APP_NAME} install npm:@foo/bar
   ${APP_NAME} install git:github.com/user/repo
   ${APP_NAME} install git:git@github.com:user/repo
@@ -330,57 +328,57 @@ Examples:
 			return;
 
 		case "remove":
-			console.log(`${chalk.bold("Usage:")}
+			console.log(`${chalk.bold("用法:")}
   ${getPackageCommandUsage("remove")}
 
-Remove a package and its source from settings.
-Alias: ${APP_NAME} uninstall <source> [-l]
+移除包及其在设置中的源。
+别名：${APP_NAME} uninstall <source> [-l]
 
-Options:
-  -l, --local       Remove from project settings (${CONFIG_DIR_NAME}/settings.json)
-  -a, --approve     Trust project-local files for this command
-  -na, --no-approve Ignore project-local files for this command
+选项:
+  -l, --local       从项目设置移除（${CONFIG_DIR_NAME}/settings.json）
+  -a, --approve     本次命令信任项目本地文件
+  -na, --no-approve 本次命令忽略项目本地文件
 
-Examples:
+示例:
   ${APP_NAME} remove npm:@foo/bar
   ${APP_NAME} uninstall npm:@foo/bar
 `);
 			return;
 
 		case "update":
-			console.log(`${chalk.bold("Usage:")}
+			console.log(`${chalk.bold("用法:")}
   ${getPackageCommandUsage("update")}
 
-Update agent-core, installed packages, or model catalogs.
+更新 agent-core、已安装的包或模型目录。
 
-Options:
-  --self                  Update agent-core only (default when no target is given)
-  --extensions            Update installed packages only
-  --models                Refresh model catalogs only
-  --all                   Update agent-core and installed packages
-  --extension <source>    Update one package only
-  -a, --approve           Trust project-local files for this command
-  -na, --no-approve       Ignore project-local files for this command
-  --force                 Reinstall agent-core even if the current version is latest
+选项:
+  --self                  只更新 agent-core（未指定目标时默认）
+  --extensions            只更新已安装的包
+  --models                只刷新模型目录
+  --all                   更新 agent-core 和已安装的包
+  --extension <source>    只更新一个包
+  -a, --approve           本次命令信任项目本地文件
+  -na, --no-approve       本次命令忽略项目本地文件
+  --force                 即使已是最新版本也重新安装 agent-core
 
-Short forms:
-  ${APP_NAME} update                Update agent-core only
-  ${APP_NAME} update --all          Update agent-core and all extensions
-  ${APP_NAME} update --models       Refresh model catalogs only
-  ${APP_NAME} update <source>       Update one package
-  ${APP_NAME} update agent-core     Update agent-core only (self and pi work as aliases)
+简写形式:
+  ${APP_NAME} update                只更新 agent-core
+  ${APP_NAME} update --all          更新 agent-core 和全部扩展
+  ${APP_NAME} update --models       只刷新模型目录
+  ${APP_NAME} update <source>       更新一个包
+  ${APP_NAME} update agent-core     只更新 agent-core（self 和 pi 是别名）
 `);
 			return;
 
 		case "list":
-			console.log(`${chalk.bold("Usage:")}
+			console.log(`${chalk.bold("用法:")}
   ${getPackageCommandUsage("list")}
 
-List installed packages from user and project settings.
+列出用户与项目设置中已安装的包。
 
-Options:
-  -a, --approve      Trust project-local files for this command
-  -na, --no-approve  Ignore project-local files for this command
+选项:
+  -a, --approve      本次命令信任项目本地文件
+  -na, --no-approve  本次命令忽略项目本地文件
 `);
 			return;
 	}
@@ -494,7 +492,7 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 			if (!value || value.startsWith("-")) {
 				missingOptionValue = missingOptionValue ?? arg;
 			} else if (extensionFlagSource) {
-				conflictingOptions = conflictingOptions ?? "--extension can only be provided once";
+				conflictingOptions = conflictingOptions ?? "--extension 只能提供一次";
 				index++;
 			} else {
 				extensionFlagSource = value;
@@ -520,28 +518,27 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 	if (command === "update") {
 		if (allFlag && (selfFlag || extensionsFlag || modelsFlag || extensionFlagSource)) {
 			conflictingOptions =
-				conflictingOptions ?? "--all cannot be combined with --self, --extensions, --models, or --extension";
+				conflictingOptions ?? "--all 不能与 --self、--extensions、--models 或 --extension 同时使用";
 		}
 		if (allFlag && source) {
-			conflictingOptions = conflictingOptions ?? "--all cannot be combined with a positional source";
+			conflictingOptions = conflictingOptions ?? "--all 不能与位置参数 source 同时使用";
 		}
 
 		if (modelsFlag) {
 			if (selfFlag || extensionsFlag || allFlag || extensionFlagSource) {
 				conflictingOptions =
-					conflictingOptions ?? "--models cannot be combined with --self, --extensions, --all, or --extension";
+					conflictingOptions ?? "--models 不能与 --self、--extensions、--all 或 --extension 同时使用";
 			}
 			if (source) {
-				conflictingOptions = conflictingOptions ?? "--models cannot be combined with a positional source";
+				conflictingOptions = conflictingOptions ?? "--models 不能与位置参数 source 同时使用";
 			}
 			updateTarget = { type: "models" };
 		} else if (extensionFlagSource) {
 			if (selfFlag || extensionsFlag || allFlag) {
-				conflictingOptions =
-					conflictingOptions ?? "--extension cannot be combined with --self, --extensions, or --all";
+				conflictingOptions = conflictingOptions ?? "--extension 不能与 --self、--extensions 或 --all 同时使用";
 			}
 			if (source) {
-				conflictingOptions = conflictingOptions ?? "--extension cannot be combined with a positional source";
+				conflictingOptions = conflictingOptions ?? "--extension 不能与位置参数 source 同时使用";
 			}
 			updateTarget = { type: "extensions", source: extensionFlagSource };
 		} else if (source) {
@@ -551,8 +548,7 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 			} else {
 				if (extensionsFlag || selfFlag || allFlag) {
 					conflictingOptions =
-						conflictingOptions ??
-						"positional update targets cannot be combined with --self, --extensions, or --all";
+						conflictingOptions ?? "位置参数 update 目标不能与 --self、--extensions 或 --all 同时使用";
 				}
 				updateTarget = { type: "extensions", source };
 			}
@@ -610,39 +606,39 @@ async function refreshModelCatalogs(agentDir: string): Promise<void> {
 			signal: controller.signal,
 		});
 		if (result.aborted) {
-			throw new Error("Model catalog refresh timed out.");
+			throw new Error("模型目录刷新超时。");
 		}
 		if (result.errors.size > 0) {
 			const details = Array.from(result.errors, ([provider, error]) => `${provider}: ${error.message}`).join("; ");
-			throw new Error(`Could not refresh model catalogs: ${details}`);
+			throw new Error(`无法刷新模型目录：${details}`);
 		}
 	} finally {
 		clearTimeout(timeout);
 	}
-	console.log(chalk.green("Model catalogs refreshed"));
+	console.log(chalk.green("模型目录已刷新"));
 }
 
 function printSelfUpdateUnavailable(
 	npmCommand?: string[],
 	updatePackageTarget: SelfUpdatePackageTarget = PACKAGE_NAME,
 ): void {
-	console.error(`error: ${APP_NAME} cannot self-update this installation.`);
+	console.error(`错误：当前安装方式不支持 ${APP_NAME} 自更新。`);
 	console.error(getSelfUpdateUnavailableInstruction(PACKAGE_NAME, npmCommand, updatePackageTarget));
 
 	const entrypoint = process.argv[1];
 	if (entrypoint) {
 		console.error("");
-		console.error(`Location of ${APP_NAME} executable: ${entrypoint}`);
+		console.error(`${APP_NAME} 可执行文件位置：${entrypoint}`);
 	}
 }
 
 function printSelfUpdateFallback(command: SelfUpdateCommand): void {
-	console.error(chalk.dim(`If this keeps failing, run this command yourself: ${command.display}`));
+	console.error(chalk.dim(`如果持续失败，请自行执行：${command.display}`));
 }
 
 function printPnpmSelfUpdateMetadataHint(): void {
-	console.error(chalk.yellow("If pnpm reports missing package versions, its cached registry metadata may be stale."));
-	console.error(chalk.yellow(`Run \`pnpm store prune\` and retry \`${APP_NAME} update --self\`.`));
+	console.error(chalk.yellow("如果 pnpm 报告缺少包版本，可能是其缓存的注册表元数据过期。"));
+	console.error(chalk.yellow(`执行 \`pnpm store prune\` 后重试 \`${APP_NAME} update --self\`。`));
 }
 
 function printSelfUpdateNote(note: string): void {
@@ -652,7 +648,7 @@ function printSelfUpdateNote(note: string): void {
 	}
 
 	console.log();
-	console.log(chalk.bold(chalk.yellow("Update note")));
+	console.log(chalk.bold(chalk.yellow("更新说明")));
 	try {
 		const width = Math.max(20, process.stdout.columns ?? 80);
 		const renderedLines = new Markdown(trimmedNote, 0, 0, SELF_UPDATE_NOTE_MARKDOWN_THEME)
@@ -678,21 +674,19 @@ export async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan>
 	try {
 		latestRelease = await getLatestPiRelease(VERSION, { retry: true });
 	} catch (error: unknown) {
-		throw new Error(`Could not determine latest ${APP_NAME} version: ${formatVersionCheckError(error)}`, {
+		throw new Error(`无法确定 ${APP_NAME} 最新版本：${formatVersionCheckError(error)}`, {
 			cause: error,
 		});
 	}
 	if (!latestRelease) {
-		throw new Error(
-			`Self-update version check is not configured in ${APP_NAME}. Upgrade with: npm install -g ${PACKAGE_NAME}@latest`,
-		);
+		throw new Error(`${APP_NAME} 未配置自更新版本源。请使用以下命令升级：npm install -g ${PACKAGE_NAME}@latest`);
 	}
 
 	// A version feed must never silently switch the installed product.
 	const feedPackageName = latestRelease.packageName;
 	if (feedPackageName && feedPackageName !== PACKAGE_NAME) {
 		throw new Error(
-			`The configured version feed serves ${feedPackageName}, not ${PACKAGE_NAME}. Refusing to install a different product. Upgrade with: npm install -g ${PACKAGE_NAME}@latest`,
+			`配置的版本源提供的是 ${feedPackageName}，而非 ${PACKAGE_NAME}。拒绝安装其他产品。请使用以下命令升级：npm install -g ${PACKAGE_NAME}@latest`,
 		);
 	}
 
@@ -707,12 +701,12 @@ export async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan>
 		};
 	}
 
-	console.log(chalk.green(`${APP_NAME} is already up to date (v${VERSION})`));
+	console.log(chalk.green(`${APP_NAME} 已是最新版本（v${VERSION}）`));
 	return { packageName: PACKAGE_NAME, installSpec, version: latestRelease.version, shouldRun: false };
 }
 
 async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
-	console.log(chalk.dim(`Updating ${APP_NAME} with ${command.display}...`));
+	console.log(chalk.dim(`正在使用 ${command.display} 更新 ${APP_NAME}...`));
 	for (const step of command.steps ?? [command]) {
 		await new Promise<void>((resolve, reject) => {
 			const child = spawnProcess(step.command, step.args, {
@@ -725,9 +719,9 @@ async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
 				if (code === 0) {
 					resolve();
 				} else if (signal) {
-					reject(new Error(`${step.display} terminated by signal ${signal}`));
+					reject(new Error(`${step.display} 被信号 ${signal} 终止`));
 				} else {
-					reject(new Error(`${step.display} exited with code ${code ?? "unknown"}`));
+					reject(new Error(`${step.display} 以退出码 ${code ?? "未知"} 退出`));
 				}
 			});
 		});
@@ -759,7 +753,7 @@ function getCommandAppMode(): AppMode {
 
 function reportProjectTrustWarnings(warnings: readonly string[]): void {
 	for (const warning of warnings) {
-		console.error(chalk.yellow(`Warning: ${warning}`));
+		console.error(chalk.yellow(`警告：${warning}`));
 	}
 }
 
@@ -790,7 +784,7 @@ async function createCommandSettingsManager(options: {
 				}).loadProjectTrustExtensions()
 			: undefined;
 	for (const error of extensionsResult?.errors ?? []) {
-		projectTrustWarnings.push(`Failed to load extension "${error.path}": ${error.error}`);
+		projectTrustWarnings.push(`加载扩展 "${error.path}" 失败：${error.error}`);
 	}
 
 	const projectTrusted = await resolveProjectTrusted({
@@ -835,13 +829,13 @@ export async function handleConfigCommand(
 		} else if (arg === "-na" || arg === "--no-approve") {
 			projectTrustOverride = false;
 		} else if (arg.startsWith("-")) {
-			console.error(chalk.red(`Unknown option ${arg} for "config".`));
-			console.error(chalk.dim(`Use "${APP_NAME} --help" or "${CONFIG_COMMAND_USAGE}".`));
+			console.error(chalk.red(`"config" 存在未知选项 ${arg}。`));
+			console.error(chalk.dim(`使用 "${APP_NAME} --help" 或 "${CONFIG_COMMAND_USAGE}"。`));
 			process.exitCode = 1;
 			return true;
 		} else {
-			console.error(chalk.red(`Unexpected argument ${arg}.`));
-			console.error(chalk.dim(`Usage: ${CONFIG_COMMAND_USAGE}`));
+			console.error(chalk.red(`意外的参数 ${arg}。`));
+			console.error(chalk.dim(`用法：${CONFIG_COMMAND_USAGE}`));
 			process.exitCode = 1;
 			return true;
 		}
@@ -857,11 +851,11 @@ export async function handleConfigCommand(
 	});
 	reportProjectTrustWarnings(projectTrustWarnings);
 	if (local && !settingsManager.isProjectTrusted()) {
-		console.error(chalk.red("Project is not trusted. Use --approve to modify local resource config."));
+		console.error(chalk.red("项目未被信任。请使用 --approve 修改本地资源配置。"));
 		process.exitCode = 1;
 		return true;
 	}
-	reportSettingsErrors(settingsManager, "config command");
+	reportSettingsErrors(settingsManager, "config 命令");
 	const globalSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted: false });
 	const globalResolvedPaths = await new DefaultPackageManager({
 		cwd,
@@ -899,37 +893,37 @@ export async function handlePackageCommand(
 	}
 
 	if (options.invalidOption) {
-		console.error(chalk.red(`Unknown option ${options.invalidOption} for "${options.command}".`));
-		console.error(chalk.dim(`Use "${APP_NAME} --help" or "${getPackageCommandUsage(options.command)}".`));
+		console.error(chalk.red(`"${options.command}" 存在未知选项 ${options.invalidOption}。`));
+		console.error(chalk.dim(`使用 "${APP_NAME} --help" 或 "${getPackageCommandUsage(options.command)}"。`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	if (options.missingOptionValue) {
-		console.error(chalk.red(`Missing value for ${options.missingOptionValue}.`));
-		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.red(`${options.missingOptionValue} 缺少取值。`));
+		console.error(chalk.dim(`用法：${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	if (options.invalidArgument) {
-		console.error(chalk.red(`Unexpected argument ${options.invalidArgument}.`));
-		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.red(`意外的参数 ${options.invalidArgument}。`));
+		console.error(chalk.dim(`用法：${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	if (options.conflictingOptions) {
 		console.error(chalk.red(options.conflictingOptions));
-		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.dim(`用法：${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	const source = options.source;
 	if ((options.command === "install" || options.command === "remove") && !source) {
-		console.error(chalk.red(`Missing ${options.command} source.`));
-		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.red(options.command === "install" ? "缺少安装源。" : "缺少要移除的包源。"));
+		console.error(chalk.dim(`用法：${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
@@ -938,8 +932,8 @@ export async function handlePackageCommand(
 		try {
 			await refreshModelCatalogs(getAgentDir());
 		} catch (error: unknown) {
-			const message = error instanceof Error ? error.message : "Unknown model catalog refresh error";
-			console.error(chalk.red(`Error: ${message}`));
+			const message = error instanceof Error ? error.message : "模型目录刷新出现未知错误";
+			console.error(chalk.red(`错误：${message}`));
 			process.exitCode = 1;
 		}
 		return true;
@@ -957,11 +951,11 @@ export async function handlePackageCommand(
 	});
 	reportProjectTrustWarnings(projectTrustWarnings);
 	if (!settingsManager.isProjectTrusted() && writesProjectPackageConfig) {
-		console.error(chalk.red("Project is not trusted. Use --approve to modify local package config."));
+		console.error(chalk.red("项目未被信任。请使用 --approve 修改本地包配置。"));
 		process.exitCode = 1;
 		return true;
 	}
-	reportSettingsErrors(settingsManager, "package command");
+	reportSettingsErrors(settingsManager, "package 命令");
 	const selfUpdateNpmCommand = settingsManager.getGlobalSettings().npmCommand;
 
 	const packageManager = new DefaultPackageManager({ cwd, agentDir, settingsManager });
@@ -976,17 +970,17 @@ export async function handlePackageCommand(
 		switch (options.command) {
 			case "install":
 				await packageManager.installAndPersist(source!, { local: options.local });
-				console.log(chalk.green(`Installed ${source}`));
+				console.log(chalk.green(`已安装 ${source}`));
 				return true;
 
 			case "remove": {
 				const removed = await packageManager.removeAndPersist(source!, { local: options.local });
 				if (!removed) {
-					console.error(chalk.red(`No matching package found for ${source}`));
+					console.error(chalk.red(`没有找到匹配 ${source} 的包`));
 					process.exitCode = 1;
 					return true;
 				}
-				console.log(chalk.green(`Removed ${source}`));
+				console.log(chalk.green(`已移除 ${source}`));
 				return true;
 			}
 
@@ -996,12 +990,12 @@ export async function handlePackageCommand(
 				const projectPackages = configuredPackages.filter((pkg) => pkg.scope === "project");
 
 				if (configuredPackages.length === 0) {
-					console.log(chalk.dim("No packages installed."));
+					console.log(chalk.dim("尚未安装任何包。"));
 					return true;
 				}
 
 				const formatPackage = (pkg: (typeof configuredPackages)[number]) => {
-					const display = pkg.filtered ? `${pkg.source} (filtered)` : pkg.source;
+					const display = pkg.filtered ? `${pkg.source}（已过滤）` : pkg.source;
 					console.log(`  ${display}`);
 					if (pkg.installedPath) {
 						console.log(chalk.dim(`    ${pkg.installedPath}`));
@@ -1009,7 +1003,7 @@ export async function handlePackageCommand(
 				};
 
 				if (userPackages.length > 0) {
-					console.log(chalk.bold("User packages:"));
+					console.log(chalk.bold("用户级包："));
 					for (const pkg of userPackages) {
 						formatPackage(pkg);
 					}
@@ -1017,7 +1011,7 @@ export async function handlePackageCommand(
 
 				if (projectPackages.length > 0) {
 					if (userPackages.length > 0) console.log();
-					console.log(chalk.bold("Project packages:"));
+					console.log(chalk.bold("项目级包："));
 					for (const pkg of projectPackages) {
 						formatPackage(pkg);
 					}
@@ -1029,27 +1023,21 @@ export async function handlePackageCommand(
 			case "update": {
 				const target = options.updateTarget ?? { type: "self" };
 				if (options.showExtensionsSkippedNote) {
-					console.log(
-						chalk.dim(`Extensions are skipped. Run ${APP_NAME} update --extensions to update extensions.`),
-					);
+					console.log(chalk.dim(`已跳过扩展。执行 ${APP_NAME} update --extensions 可更新扩展。`));
 				}
 				if (updateTargetIncludesExtensions(target)) {
 					const updateSource = target.type === "extensions" ? target.source : undefined;
 					await packageManager.update(updateSource);
 					if (updateSource) {
-						console.log(chalk.green(`Updated ${updateSource}`));
+						console.log(chalk.green(`已更新 ${updateSource}`));
 					} else {
-						console.log(chalk.green("Updated packages"));
+						console.log(chalk.green("已更新包"));
 					}
 				}
 				if (updateTargetIncludesSelf(target)) {
 					const managedInstallRoot = getActiveManagedInstallRoot();
 					if (managedInstallRoot && options.force) {
-						console.error(
-							chalk.red(
-								`Managed ${APP_NAME} installations do not support --force; rerun the installer to repair this installation.`,
-							),
-						);
+						console.error(chalk.red(`托管安装的 ${APP_NAME} 不支持 --force；请重新运行安装程序修复此安装。`));
 						process.exitCode = 1;
 						return true;
 					}
@@ -1062,24 +1050,22 @@ export async function handlePackageCommand(
 							printSelfUpdateNote(selfUpdatePlan.note);
 						}
 						try {
-							console.log(chalk.dim(`Updating managed ${APP_NAME} installation...`));
+							console.log(chalk.dim(`正在更新托管安装的 ${APP_NAME}...`));
 							await runManagedSelfUpdate(managedInstallRoot, selfUpdatePlan.version);
 						} catch (error: unknown) {
-							const message = error instanceof Error ? error.message : "Unknown managed update error";
-							console.error(chalk.red(`Error: ${message}`));
+							const message = error instanceof Error ? error.message : "托管更新出现未知错误";
+							console.error(chalk.red(`错误：${message}`));
 							process.exitCode = 1;
 							return true;
 						}
-						console.log(chalk.green(`Updated ${APP_NAME} from ${VERSION} to ${selfUpdatePlan.version}`));
+						console.log(chalk.green(`已将 ${APP_NAME} 从 ${VERSION} 更新到 ${selfUpdatePlan.version}`));
 						return true;
 					}
 
 					const installMethod = detectInstallMethod();
 					if (process.platform === "win32" && installMethod !== "npm" && installMethod !== "pnpm") {
-						console.error(
-							chalk.red(`${APP_NAME} self-update on Windows is only supported for npm and pnpm installs.`),
-						);
-						console.error(chalk.dim(`Detected install method: ${installMethod}. Update ${APP_NAME} manually.`));
+						console.error(chalk.red(`${APP_NAME} 在 Windows 上仅支持 npm 和 pnpm 安装方式的自更新。`));
+						console.error(chalk.dim(`检测到的安装方式：${installMethod}。请手动更新 ${APP_NAME}。`));
 						process.exitCode = 1;
 						return true;
 					}
@@ -1102,8 +1088,8 @@ export async function handlePackageCommand(
 						}
 						await runSelfUpdate(selfUpdateCommand);
 					} catch (error: unknown) {
-						const message = error instanceof Error ? error.message : "Unknown package command error";
-						console.error(chalk.red(`Error: ${message}`));
+						const message = error instanceof Error ? error.message : "包命令出现未知错误";
+						console.error(chalk.red(`错误：${message}`));
 						if (installMethod === "pnpm") {
 							printPnpmSelfUpdateMetadataHint();
 						}
@@ -1111,14 +1097,14 @@ export async function handlePackageCommand(
 						process.exitCode = 1;
 						return true;
 					}
-					console.log(chalk.green(`Updated ${APP_NAME} from ${VERSION} to ${selfUpdatePlan.version}`));
+					console.log(chalk.green(`已将 ${APP_NAME} 从 ${VERSION} 更新到 ${selfUpdatePlan.version}`));
 				}
 				return true;
 			}
 		}
 	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : "Unknown package command error";
-		console.error(chalk.red(`Error: ${message}`));
+		const message = error instanceof Error ? error.message : "包命令出现未知错误";
+		console.error(chalk.red(`错误：${message}`));
 		process.exitCode = 1;
 		return true;
 	}

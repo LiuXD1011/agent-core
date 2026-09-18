@@ -81,12 +81,12 @@ export class ExtensionEditorComponent extends Container implements Focusable {
 
 		// Add hint
 		const hint =
-			keyHint("tui.select.confirm", "submit") +
+			keyHint("tui.select.confirm", "提交") +
 			"  " +
-			keyHint("tui.input.newLine", "newline") +
+			keyHint("tui.input.newLine", "换行") +
 			"  " +
-			keyHint("tui.select.cancel", "cancel") +
-			`  ${keyHint("app.editor.external", "external editor")}`;
+			keyHint("tui.select.cancel", "取消") +
+			`  ${keyHint("app.editor.external", "外部编辑器")}`;
 		this.addChild(new Text(hint, 1, 0));
 
 		this.addChild(new Spacer(1));

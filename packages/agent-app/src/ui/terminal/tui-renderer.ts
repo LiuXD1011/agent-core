@@ -26,7 +26,7 @@ export function createInteractiveTui(options: InteractiveTuiOptions): TuiMainScr
 			searchNavigationButtonStyle: (text, hovered) => (hovered ? theme.underline(text) : text),
 			scrollToEndIndicator: () => {
 				const shortcut = keyDisplayText("tui.altScreen.bottom");
-				const label = ` ↓ Jump to latest message${shortcut ? ` · ${shortcut}` : ""} `;
+				const label = ` ↓ 跳到最新消息${shortcut ? ` · ${shortcut}` : ""} `;
 				return theme.bg("selectedBg", theme.fg("text", label));
 			},
 			openUrl: openBrowser,

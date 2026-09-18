@@ -185,10 +185,10 @@ describe("ToolExecutionComponent parity", () => {
 		component.updateResult({ ...result, isError: false }, false);
 
 		const rendered = stripAnsi(component.render(200).join("\n"));
-		expect(rendered.match(/Full output:/g)?.length ?? 0).toBe(1);
-		expect(rendered).toMatch(/line-4000[^\n]*\n[^\S\n]*\n \[Full output:/);
-		expect(rendered).not.toMatch(/line-4000[^\n]*\n[^\S\n]*\n[^\S\n]*\n \[Full output:/);
-		expect(rendered).toContain("Truncated: showing 2000 of 4000 lines");
+		expect(rendered.match(/完整输出：/g)?.length ?? 0).toBe(1);
+		expect(rendered).toMatch(/line-4000[^\n]*\n[^\S\n]*\n \[完整输出：/);
+		expect(rendered).not.toMatch(/line-4000[^\n]*\n[^\S\n]*\n[^\S\n]*\n \[完整输出：/);
+		expect(rendered).toContain("已截断：显示 2000/4000 行");
 		expect(rendered).not.toContain("[Showing lines 2001-4000 of 4000. Full output:");
 	});
 
@@ -366,13 +366,13 @@ describe("ToolExecutionComponent parity", () => {
 		expect(collapsed).toContain("custom_tool");
 		expect(collapsed).toContain("line-10");
 		expect(collapsed).not.toContain("line-11");
-		expect(collapsed).toContain("5 more lines");
-		expect(collapsed).toContain("to expand");
+		expect(collapsed).toContain("还有 5 行");
+		expect(collapsed).toContain("展开");
 
 		component.setExpanded(true);
 		const expanded = stripAnsi(component.render(120).join("\n"));
 		expect(expanded).toContain("line-15");
-		expect(expanded).not.toContain("more lines");
+		expect(expanded).not.toContain("还有 ");
 	});
 
 	test("trims trailing blank display lines from write previews", () => {
@@ -578,7 +578,7 @@ describe("ToolExecutionComponent parity", () => {
 
 			const collapsed = stripAnsi(component.render(120).join("\n"));
 			expect(collapsed).toContain(scenario.compact);
-			expect(collapsed.indexOf(":120-329")).toBeLessThan(collapsed.indexOf("to expand"));
+			expect(collapsed.indexOf(":120-329")).toBeLessThan(collapsed.indexOf("展开"));
 		});
 	}
 });

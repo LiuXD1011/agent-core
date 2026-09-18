@@ -134,7 +134,7 @@ describe("--session-id", () => {
 			settingsManager,
 		);
 		persistSession(created, "persist me");
-		expect(consoleError).toHaveBeenCalledWith(expect.stringContaining("creating a new session"));
+		expect(consoleError).toHaveBeenCalledWith(expect.stringContaining("创建新会话"));
 
 		consoleError.mockClear();
 		const reopened = await createSessionManager(

@@ -9,7 +9,7 @@ import { Text } from "@liuxuedeng/agent-core-tui";
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("tui", {
-		description: "Show TUI stats",
+		description: "显示终端界面统计",
 		handler: async (_args, ctx) => {
 			if (!ctx.hasUI) return;
 			let redraws = 0;
@@ -18,7 +18,7 @@ export default function (pi: ExtensionAPI) {
 				done(undefined);
 				return new Text("", 0, 0);
 			});
-			ctx.ui.notify(`TUI full redraws: ${redraws}`, "info");
+			ctx.ui.notify(`终端界面完整重绘次数：${redraws}`, "info");
 		},
 	});
 }

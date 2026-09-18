@@ -1,10 +1,20 @@
-import { Editor, type EditorOptions, type EditorTheme, type TUI, visibleWidth } from "@liuxuedeng/agent-core-tui";
+import {
+	CURSOR_MARKER,
+	Editor,
+	type EditorOptions,
+	type EditorTheme,
+	type TUI,
+	truncateToWidth,
+	visibleWidth,
+} from "@liuxuedeng/agent-core-tui";
 import type { AppKeybinding, KeybindingsManager } from "../../keybindings.ts";
+import { theme as appTheme } from "../theme/theme.ts";
 import type { WorkingStatusIndicator } from "./status-indicator.ts";
 
 export type CustomEditorOptions = EditorOptions & {
 	/** Render the streaming working status in the editor's top border. */
 	embedWorkingStatus?: boolean;
+	showInputHints?: boolean;
 };
 
 /**
@@ -12,6 +22,7 @@ export type CustomEditorOptions = EditorOptions & {
  */
 export class CustomEditor extends Editor {
 	private keybindings: KeybindingsManager;
+	private readonly showInputHints: boolean;
 	private workingStatusIndicator: WorkingStatusIndicator | undefined;
 	public readonly embedWorkingStatus: boolean;
 	public actionHandlers: Map<AppKeybinding, () => void> = new Map();
@@ -26,7 +37,21 @@ export class CustomEditor extends Editor {
 	constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager, options?: CustomEditorOptions) {
 		super(tui, theme, options);
 		this.keybindings = keybindings;
+		this.showInputHints = options?.showInputHints ?? false;
 		this.embedWorkingStatus = options?.embedWorkingStatus ?? false;
+	}
+
+	override render(width: number): string[] {
+		if (width <= 0) return [];
+		const lines = super.render(width);
+		if (!this.showInputHints) return lines;
+		if (this.getText() === "" && !this.isShowingAutocomplete() && width >= 8) {
+			const marker = this.focused ? `${CURSOR_MARKER}\x1b[7m \x1b[0m` : " ";
+			const content = `${appTheme.fg("accent", "› ")}${marker}${appTheme.fg("muted", " 输入消息，/ 查看命令")}`;
+			const clipped = truncateToWidth(content, width, "");
+			lines[1] = appTheme.bg("userMessageBg", clipped + " ".repeat(Math.max(0, width - visibleWidth(clipped))));
+		}
+		return lines;
 	}
 
 	setWorkingStatusIndicator(indicator: WorkingStatusIndicator | undefined): void {

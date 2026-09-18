@@ -4,7 +4,9 @@ import type { AgentSession } from "../../../app/application.ts";
 import { areExperimentalFeaturesEnabled } from "../../../app/experimental.ts";
 import type { ReadonlyFooterDataProvider } from "../../../app/footer-data-provider.ts";
 import { addUsageToTotals, createUsageTotals } from "../../../app/usage-totals.ts";
+import { THINKING_LEVEL_LABELS } from "../../thinking-labels.ts";
 import { theme } from "../theme/theme.ts";
+import { keyDisplayText } from "./keybinding-hints.ts";
 
 /**
  * Sanitize text for display in a single-line status.
@@ -82,6 +84,7 @@ export class FooterComponent implements Component {
 	}
 
 	render(width: number): string[] {
+		if (width <= 0) return [];
 		const state = this.session.state;
 
 		// Calculate cumulative usage from ALL session entries (not just post-compaction messages)
@@ -126,31 +129,31 @@ export class FooterComponent implements Component {
 		}
 
 		// Build stats line
-		const statsParts = [];
-		if (usageTotals.input) statsParts.push(`↑${formatTokens(usageTotals.input)}`);
-		if (usageTotals.output) statsParts.push(`↓${formatTokens(usageTotals.output)}`);
-		if (usageTotals.cacheRead) statsParts.push(`R${formatTokens(usageTotals.cacheRead)}`);
-		if (usageTotals.cacheWrite) statsParts.push(`W${formatTokens(usageTotals.cacheWrite)}`);
+		const statsParts: string[] = [];
+		if (usageTotals.input) statsParts.push(`输入 ${formatTokens(usageTotals.input)}`);
+		if (usageTotals.output) statsParts.push(`输出 ${formatTokens(usageTotals.output)}`);
 		if ((usageTotals.cacheRead > 0 || usageTotals.cacheWrite > 0) && latestCacheHitRate !== undefined) {
-			statsParts.push(`CH${latestCacheHitRate.toFixed(1)}%`);
+			statsParts.push(`缓存命中 ${latestCacheHitRate.toFixed(1)}%`);
 		}
+		if (usageTotals.cacheRead) statsParts.push(`缓存读 ${formatTokens(usageTotals.cacheRead)}`);
+		if (usageTotals.cacheWrite) statsParts.push(`缓存写 ${formatTokens(usageTotals.cacheWrite)}`);
 
 		// Kimi Coding is subscription-backed despite using API-key authentication.
 		const usingSubscription = state.model
 			? state.model.provider === "kimi-coding" || this.session.modelRuntime.isUsingSubscription(state.model.provider)
 			: false;
 		if (usageTotals.cost || usingSubscription) {
-			const costStr = `$${usageTotals.cost.toFixed(3)}${usingSubscription ? " (sub)" : ""}`;
+			const costStr = `$${usageTotals.cost.toFixed(3)}${usingSubscription ? "（订阅）" : ""}`;
 			statsParts.push(costStr);
 		}
 
 		// Colorize context percentage based on usage
 		let contextPercentStr: string;
-		const autoIndicator = this.autoCompactEnabled ? " (auto)" : "";
+		const autoIndicator = this.autoCompactEnabled ? "（自动压缩）" : "";
 		const contextPercentDisplay =
 			contextPercent === "?"
-				? `?/${formatTokens(contextWindow)}${autoIndicator}`
-				: `${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
+				? `上下文 ?/${formatTokens(contextWindow)}${autoIndicator}`
+				: `上下文 ${contextPercent}%/${formatTokens(contextWindow)}${autoIndicator}`;
 		if (contextPercentValue > 90) {
 			contextPercentStr = theme.fg("error", contextPercentDisplay);
 		} else if (contextPercentValue > 70) {
@@ -160,74 +163,43 @@ export class FooterComponent implements Component {
 		}
 		statsParts.push(contextPercentStr);
 		if (areExperimentalFeaturesEnabled()) {
-			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "xp"))}`);
+			statsParts.push(`${theme.fg("dim", "•")} ${theme.bold(theme.fg("warning", "实验"))}`);
 		}
 
-		let statsLeft = statsParts.join(" ");
+		// Keep the built-in footer to two rows, even when the terminal is narrow.
+		const lines: string[] = [];
+		const addRow = (left: string, right: string): void => {
+			const rightBudget =
+				visibleWidth(left) + visibleWidth(right) + 2 <= width
+					? visibleWidth(right)
+					: Math.min(visibleWidth(right), Math.floor(width * 0.4));
+			const rightText = truncateToWidth(right, rightBudget, "");
+			const gap = rightText ? 2 : 0;
+			const leftText = truncateToWidth(left, Math.max(0, width - visibleWidth(rightText) - gap), "…");
+			lines.push(
+				theme.fg("muted", leftText) +
+					" ".repeat(Math.max(0, width - visibleWidth(leftText) - visibleWidth(rightText))) +
+					theme.fg("muted", rightText),
+			);
+		};
+		const hints = [
+			["tui.input.submit", "发送"],
+			["app.interrupt", "中止"],
+			["app.clear", "清空"],
+		] as const;
+		const shortcuts = hints
+			.flatMap(([action, label]) => {
+				const keys = keyDisplayText(action);
+				return keys ? [`${keys} ${label}`] : [];
+			})
+			.join(" · ");
 
-		// Add model name on the right side, plus thinking level if model supports it
-		const modelName = state.model?.id || "no-model";
-
-		let statsLeftWidth = visibleWidth(statsLeft);
-
-		// If statsLeft is too wide, truncate it
-		if (statsLeftWidth > width) {
-			statsLeft = truncateToWidth(statsLeft, width, "...");
-			statsLeftWidth = visibleWidth(statsLeft);
-		}
-
-		// Calculate available space for padding (minimum 2 spaces between stats and model)
-		const minPadding = 2;
-
-		// Add thinking level indicator if model supports reasoning
-		let rightSideWithoutProvider = modelName;
-		if (state.model?.reasoning) {
-			const thinkingLevel = state.thinkingLevel || "off";
-			rightSideWithoutProvider =
-				thinkingLevel === "off" ? `${modelName} • thinking off` : `${modelName} • ${thinkingLevel}`;
-		}
-
-		// Prepend the provider in parentheses if there are multiple providers and there's enough room
-		let rightSide = rightSideWithoutProvider;
-		if (this.footerData.getAvailableProviderCount() > 1 && state.model) {
-			rightSide = `(${state.model!.provider}) ${rightSideWithoutProvider}`;
-			if (statsLeftWidth + minPadding + visibleWidth(rightSide) > width) {
-				// Too wide, fall back
-				rightSide = rightSideWithoutProvider;
-			}
-		}
-
-		const rightSideWidth = visibleWidth(rightSide);
-		const totalNeeded = statsLeftWidth + minPadding + rightSideWidth;
-
-		let statsLine: string;
-		if (totalNeeded <= width) {
-			// Both fit - add padding to right-align model
-			const padding = " ".repeat(width - statsLeftWidth - rightSideWidth);
-			statsLine = statsLeft + padding + rightSide;
-		} else {
-			// Need to truncate right side
-			const availableForRight = width - statsLeftWidth - minPadding;
-			if (availableForRight > 0) {
-				const truncatedRight = truncateToWidth(rightSide, availableForRight, "");
-				const truncatedRightWidth = visibleWidth(truncatedRight);
-				const padding = " ".repeat(Math.max(0, width - statsLeftWidth - truncatedRightWidth));
-				statsLine = statsLeft + padding + truncatedRight;
-			} else {
-				// Not enough space for right side at all
-				statsLine = statsLeft;
-			}
-		}
-
-		// Apply dim to each part separately. statsLeft may contain color codes (for context %)
-		// that end with a reset, which would clear an outer dim wrapper. So we dim the parts
-		// before and after the colored section independently.
-		const dimStatsLeft = theme.fg("dim", statsLeft);
-		const remainder = statsLine.slice(statsLeft.length); // padding + rightSide
-		const dimRemainder = theme.fg("dim", remainder);
-
-		const pwdLine = truncateToWidth(theme.fg("dim", pwd), width, theme.fg("dim", "..."));
-		const lines = [pwdLine, dimStatsLeft + dimRemainder];
+		const model = state.model ? `${state.model.provider} / ${state.model.id}` : "未选择模型";
+		const reasoning = state.model?.reasoning
+			? `推理强度：${THINKING_LEVEL_LABELS[state.thinkingLevel || "off"]}`
+			: "";
+		addRow(shortcuts ? `${pwd}  ${shortcuts}` : pwd, model);
+		addRow(statsParts.join(" · "), reasoning);
 
 		// Add extension statuses on a single line, sorted by key alphabetically
 		const extensionStatuses = this.footerData.getExtensionStatuses();

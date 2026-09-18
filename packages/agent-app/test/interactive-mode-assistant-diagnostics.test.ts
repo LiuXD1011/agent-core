@@ -55,7 +55,7 @@ describe("InteractiveMode assistant diagnostics", () => {
 		};
 		maybeShowAssistantDiagnostics.call(enabled, message);
 		const output = stripAnsi(enabled.chatContainer.render(120).join("\n"));
-		expect(output).toContain("Anthropic dropped thinking block: prefix_binding_mismatch at messages.2.content.0");
+		expect(output).toContain("Anthropic 丢弃了思考块：prefix_binding_mismatch at messages.2.content.0");
 
 		const disabled = {
 			chatContainer: new Container(),

@@ -6,17 +6,17 @@ Agent Core is an AI coding agent CLI — a minimal terminal coding harness indep
   <a href="https://www.npmjs.com/package/@liuxuedeng/agent-core"><img alt="npm" src="https://img.shields.io/npm/v/@liuxuedeng/agent-core?style=flat-square" /></a>
 </p>
 
-Adapt Agent Core to your workflows with TypeScript [extensions](docs/extensions.md), [skills](docs/skills.md), [prompt templates](docs/prompt-templates.md), and [themes](docs/themes.md) — bundled and shared as [Agent Core packages](docs/packages.md). It runs interactively, one-shot (`-p`), as a JSON event stream or RPC subprocess, and as an embedded SDK.
+通过 TypeScript [扩展](docs/extensions.md)、[技能](docs/skills.md)、[提示模板](docs/prompt-templates.md)和[主题](docs/themes.md)适配你的工作流，并以 [Agent Core 包](docs/packages.md)的形式打包与共享。它支持交互模式、单次执行（`-p`）、JSON 事件流、RPC 子进程，以及嵌入式 SDK。
 
-## Quick start
+## 快速开始
 
 ```bash
 npm install -g --ignore-scripts @liuxuedeng/agent-core
 ```
 
-`--ignore-scripts` disables dependency lifecycle scripts during install. Agent Core does not require install scripts for normal npm installs.
+`--ignore-scripts` 会在安装期间禁用依赖的生命周期脚本。常规 npm 安装不需要安装脚本。
 
-Authenticate with an API key, or use your existing subscription:
+使用 API 密钥认证，或使用你已有的订阅：
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -25,42 +25,42 @@ agent-core
 
 ```bash
 agent-core
-/login  # Then select provider
+/login  # 然后选择服务商
 ```
 
-Agent Core provides file and shell tools (`read`, `write`, `edit`, `bash`) together with plan tracking and stored-result recall. Explicit tool selections remain authoritative. Add capabilities via skills, prompt templates, extensions, or packages.
+Agent Core 提供文件与 shell 工具（`read`、`write`、`edit`、`bash`），以及计划跟踪和存档结果召回。显式的工具选择始终优先。可通过技能、提示模板、扩展或包添加能力。
 
-## Documentation
+## 文档
 
-- [Using Agent Core](docs/usage.md) — install, authenticate, interactive mode, slash commands, sessions, context files, and CLI reference.
-- [Models and Providers](docs/models.md) — built-in providers, subscriptions, API keys, and custom models.
-- [Settings](docs/settings.md), [Security](docs/security.md), [Containerization](docs/containerization.md), [Terminal setup](docs/terminal-setup.md) (Windows, tmux, shell aliases).
-- [Extensions](docs/extensions.md), [Skills](docs/skills.md), [Prompt templates](docs/prompt-templates.md), [Themes](docs/themes.md), [Agent Core packages](docs/packages.md), [Custom providers](docs/custom-provider.md).
-- [Context and tool behavior](docs/context.md).
-- [SDK](docs/sdk.md), [RPC mode](docs/rpc.md), [TUI components](docs/tui.md).
-- [Environment variables](docs/environment-variables.md), [Session format](docs/session-format.md), [Keybindings](docs/keybindings.md), [Compaction](docs/compaction.md).
-- Full documentation index: [docs/index.md](docs/index.md).
+- [使用 Agent Core](docs/usage.md) — 安装、认证、交互模式、斜杠命令、会话、上下文文件与 CLI 参考。
+- [模型与服务商](docs/models.md) — 内置服务商、订阅、API 密钥与自定义模型。
+- [设置](docs/settings.md)、[安全](docs/security.md)、[容器化](docs/containerization.md)、[终端设置](docs/terminal-setup.md)（Windows、tmux、shell 别名）。
+- [扩展](docs/extensions.md)、[技能](docs/skills.md)、[提示模板](docs/prompt-templates.md)、[主题](docs/themes.md)、[Agent Core 包](docs/packages.md)、[自定义服务商](docs/custom-provider.md)。
+- [上下文与工具行为](docs/context.md)。
+- [SDK](docs/sdk.md)、[RPC 模式](docs/rpc.md)、[TUI 组件](docs/tui.md)。
+- [环境变量](docs/environment-variables.md)、[会话格式](docs/session-format.md)、[快捷键](docs/keybindings.md)、[上下文压缩](docs/compaction.md)。
+- 完整文档索引：[docs/index.md](docs/index.md)。
 
-Platform notes: [Windows](docs/terminal-setup.md#windows-shell-setup) | [Termux (Android)](docs/termux.md) | [tmux](docs/terminal-setup.md#tmux)
+平台说明：[Windows](docs/terminal-setup.md#windows-shell-setup) | [Termux（Android）](docs/termux.md) | [tmux](docs/terminal-setup.md#tmux)
 
-## Design principles
+## 设计原则
 
-Agent Core keeps the core small: no built-in MCP, sub-agents, permission popups, separate plan mode, or background bash. Build these workflows as extensions, skills, or packages. See [docs/usage.md](docs/usage.md#design-principles).
+Agent Core 保持核心精简：不内置 MCP、子 Agent、权限弹窗、独立计划模式或后台 bash。这些工作流可通过扩展、技能或包实现。参见 [docs/usage.md](docs/usage.md#design-principles)。
 
-## Development
+## 开发
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) and [docs/development.md](docs/development.md).
+参见 [CONTRIBUTING.md](../../CONTRIBUTING.md) 与 [docs/development.md](docs/development.md)。
 
-## Headless SDK
+## 无界面 SDK
 
-Use `@liuxuedeng/agent-core/sdk` for session creation without loading terminal components, and `@liuxuedeng/agent-core/session/export` for offline exports. The root entry also exposes UI APIs for extensions.
+使用 `@liuxuedeng/agent-core/sdk` 创建会话而不加载终端组件，使用 `@liuxuedeng/agent-core/session/export` 进行离线导出。根入口也为扩展暴露 UI API。
 
-## License
+## 许可证
 
 MIT. Agent Core is an independent secondary development of [Pi](https://github.com/earendil-works/pi), based on Pi v0.85.1. All credit for the original design and implementation goes to the Pi authors; see [NOTICE.md](../../NOTICE.md).
 
-## See Also
+## 另见
 
-- [@liuxuedeng/agent-core-ai](https://www.npmjs.com/package/@liuxuedeng/agent-core-ai): Core LLM toolkit
-- [@liuxuedeng/agent-core-agent](https://www.npmjs.com/package/@liuxuedeng/agent-core-agent): Agent framework
-- [@liuxuedeng/agent-core-tui](https://www.npmjs.com/package/@liuxuedeng/agent-core-tui): Terminal UI components
+- [@liuxuedeng/agent-core-ai](https://www.npmjs.com/package/@liuxuedeng/agent-core-ai)：核心 LLM 工具库
+- [@liuxuedeng/agent-core-agent](https://www.npmjs.com/package/@liuxuedeng/agent-core-agent)：Agent 框架
+- [@liuxuedeng/agent-core-tui](https://www.npmjs.com/package/@liuxuedeng/agent-core-tui)：终端 UI 组件

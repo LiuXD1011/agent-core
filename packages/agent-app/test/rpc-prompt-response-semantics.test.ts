@@ -218,7 +218,7 @@ describe("RPC prompt response semantics", () => {
 					command: "prompt",
 					success: false,
 					error: expect.stringContaining(
-						"No API key found for fake-provider.\n\nUse /login to log into a provider via OAuth or API key. See:",
+						"未找到 fake-provider 的 API 密钥。\n\n使用 /login 通过 OAuth 或 API 密钥登录服务商。参见:",
 					),
 				});
 			});

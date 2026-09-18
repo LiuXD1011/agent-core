@@ -1,12 +1,13 @@
 import { homedir } from "node:os";
 import * as path from "node:path";
-import { type AutocompleteProvider, CombinedAutocompleteProvider } from "@liuxuedeng/agent-core-tui";
-import { beforeAll, describe, expect, test, vi } from "vitest";
+import { type AutocompleteProvider, CombinedAutocompleteProvider, setKeybindings } from "@liuxuedeng/agent-core-tui";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { type Component, Container, type Focusable, type TUI } from "../../tui/src/tui.ts";
 import { TuiMainScreen } from "../../tui/src/tui-main-screen.ts";
 import { VirtualTerminal } from "../../tui/test/virtual-terminal.ts";
 import type { SourceInfo } from "../src/app/source-info.ts";
 import type { AutocompleteProviderFactory } from "../src/extensions/types.ts";
+import { KeybindingsManager } from "../src/ui/keybindings.ts";
 import type { AuthSelectorProvider } from "../src/ui/terminal/components/oauth-selector.ts";
 import { InteractiveMode } from "../src/ui/terminal/interactive-mode.ts";
 import { initTheme } from "../src/ui/terminal/theme/theme.ts";
@@ -136,9 +137,7 @@ describe("InteractiveMode.showManagedToolStatus", () => {
 		showManagedToolStatus.call(fakeThis, { type: "warning", message: "rg failed" });
 
 		expect(fakeThis.chatContainer.children).toHaveLength(4);
-		expect(normalizeRenderedOutput(fakeThis.chatContainer)).toBe(
-			"fd downloading\n rg downloading\n Warning: rg failed",
-		);
+		expect(normalizeRenderedOutput(fakeThis.chatContainer)).toBe("fd downloading\n rg downloading\n 警告：rg failed");
 	});
 });
 
@@ -163,7 +162,7 @@ describe("InteractiveMode.setToolsExpanded", () => {
 		expect(header.setExpanded).toHaveBeenCalledWith(true);
 		expect(loadedResourcesChild.setExpanded).toHaveBeenCalledWith(true);
 		expect(chatChild.setExpanded).toHaveBeenCalledWith(true);
-		expect(fakeThis.showStatus).toHaveBeenCalledWith("Tool output: expanded");
+		expect(fakeThis.showStatus).toHaveBeenCalledWith("工具输出：已展开");
 	});
 });
 
@@ -489,7 +488,7 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 		};
 
 		const provider = createBaseAutocompleteProvider.call(fakeThis);
-		const line = "/login subscription anthrop";
+		const line = "/login 订阅 anthrop";
 		const suggestions = await provider.getSuggestions([line], 0, line.length, {
 			signal: new AbortController().signal,
 		});
@@ -498,12 +497,13 @@ describe("InteractiveMode.createBaseAutocompleteProvider", () => {
 			{
 				value: "anthropic",
 				label: "anthropic",
-				description: "Anthropic · subscription/API key",
+				description: "Anthropic · 订阅/API 密钥",
 			},
 		]);
 	});
 });
 describe("InteractiveMode.showLoadedResources", () => {
+	beforeEach(() => setKeybindings(new KeybindingsManager()));
 	beforeAll(() => {
 		initTheme("dark");
 	});
@@ -712,9 +712,32 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer);
-		expect(output).toContain("[Skills]");
-		expect(output).toContain("commit");
+		expect(output).toContain("技能 1");
+		expect(output).toContain("Ctrl+O");
+		expect(output).toContain("展开文件列表");
+		expect(output).not.toContain("commit");
 		expect(output).not.toContain("resource-list");
+	});
+
+	test("updates the adjacent resource hint and preserves custom expansion bindings", () => {
+		setKeybindings(new KeybindingsManager({ "app.tools.expand": "ctrl+r" }));
+		const fixture = createShowLoadedResourcesThis({
+			quietStartup: false,
+			skills: [{ filePath: "/tmp/skill/SKILL.md", name: "commit" }],
+		});
+		const show = Reflect.get(InteractiveMode.prototype, "showLoadedResources") as (this: typeof fixture) => void;
+		show.call(fixture);
+		expect(normalizeRenderedOutput(fixture.loadedResourcesContainer)).toContain("Ctrl+R 展开文件列表");
+		const summary = fixture.loadedResourcesContainer.children[0] as Component & {
+			setExpanded: (expanded: boolean) => void;
+		};
+		expect(typeof summary.setExpanded).toBe("function");
+		summary.setExpanded(true);
+		expect(normalizeRenderedOutput(fixture.loadedResourcesContainer)).toContain("Ctrl+R 收起文件列表");
+		expect(normalizeRenderedOutput(fixture.loadedResourcesContainer)).toContain("commit");
+		summary.setExpanded(false);
+		expect(normalizeRenderedOutput(fixture.loadedResourcesContainer)).not.toContain("commit");
+		expect(normalizeRenderedOutput(fixture.loadedResourcesContainer)).not.toContain("Ctrl+O");
 	});
 
 	test("shows full resource listing when expanded", () => {
@@ -729,9 +752,9 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer);
-		expect(output).toContain("[Skills]");
+		expect(output).toContain("[技能]");
 		expect(output).toContain("resource-list");
-		expect(output).not.toContain("commit");
+		expect(output).toContain("commit");
 	});
 
 	test("shows full resource listing on verbose startup even when tool output is collapsed", () => {
@@ -747,14 +770,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer);
-		expect(output).toContain("[Skills]");
+		expect(output).toContain("[技能]");
 		expect(output).toContain("resource-list");
-		expect(output).not.toContain("commit");
+		expect(output).toContain("commit");
 	});
 
 	test("abbreviates extensions in compact listing", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions: [{ path: "/tmp/extensions/answer.ts" }, { path: "/tmp/extensions/btw.ts" }],
 		});
 
@@ -763,7 +787,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer);
-		expect(output).toContain("[Extensions]");
+		expect(output).toContain("[扩展]");
 		expect(output).toContain("answer.ts, btw.ts");
 		expect(output).not.toContain("extensions/answer.ts");
 	});
@@ -771,6 +795,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 	test("captures mixed extension layouts in compact output", () => {
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions: createExtensionFixtures(),
 			useRealScopeGroups: true,
 		});
@@ -779,9 +804,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  @scope/pi-scoped, answer.ts, cli-extension.ts, HazAT/pi-interactive-subagents, HazAT/pi-interactive-subagents:subagents, local-index, pi-markdown-preview, user-index"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"@scope/pi-scoped, answer.ts, cli-extension.ts, HazAT/pi-interactive-subagents, HazAT/pi-interactive-subagents:subagents, local-index, pi-markdown-preview, user-index"`);
 	});
 
 	test("adds more parent folders until local extension labels are unique", () => {
@@ -817,6 +848,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -825,9 +857,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  alpha/one, beta/one, gamma/one"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"alpha/one, beta/one, gamma/one"`);
 	});
 
 	test("strips index.ts from local extension label, showing parent dir", () => {
@@ -845,6 +883,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -853,9 +892,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  plan-mode"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"plan-mode"`);
 	});
 
 	test("strips index.js from local extension label, showing parent dir", () => {
@@ -873,6 +918,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -881,9 +927,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  plan-mode"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"plan-mode"`);
 	});
 
 	test("mixed single-file and subdirectory index.ts extensions strip index.ts", () => {
@@ -910,6 +962,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -918,9 +971,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  plan-mode, webfetch.ts"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"plan-mode, webfetch.ts"`);
 	});
 
 	test("multiple index.ts with unique parent dirs need no disambiguation", () => {
@@ -947,6 +1006,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -955,9 +1015,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  bar, foo"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"bar, foo"`);
 	});
 
 	test("multiple index.ts with same parent dir name disambiguated with grandparent", () => {
@@ -984,6 +1050,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -992,9 +1059,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  alpha/tools, beta/tools"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"alpha/tools, beta/tools"`);
 	});
 
 	test("non-index file in subdirectory stays as filename", () => {
@@ -1012,6 +1085,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -1020,9 +1094,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  main.ts"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"main.ts"`);
 	});
 
 	test("package extensions still strip index.ts correctly (regression guard)", () => {
@@ -1043,6 +1123,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -1051,9 +1132,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  pi-markdown-preview"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"pi-markdown-preview"`);
 	});
 
 	test("labels npm sibling extensions relative to the declaring package", () => {
@@ -1080,6 +1167,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -1088,9 +1176,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  primary-package, primary-package:../sibling-package"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"primary-package, primary-package:../sibling-package"`);
 	});
 
 	test("labels Windows npm sibling extensions relative to the declaring package", () => {
@@ -1120,6 +1214,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			extensions,
 			useRealScopeGroups: true,
 		});
@@ -1128,9 +1223,15 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  primary-package, primary-package:../sibling-package"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(0, 1)
+				.join("\n")
+				.trim(),
+		).toMatchInlineSnapshot(`
+"primary-package, primary-package:../sibling-package"`);
 	});
 
 	test("captures mixed extension layouts in expanded output", () => {
@@ -1145,22 +1246,30 @@ describe("InteractiveMode.showLoadedResources", () => {
 			force: false,
 		});
 
-		expect(normalizeRenderedOutput(fakeThis.loadedResourcesContainer)).toMatchInlineSnapshot(`
-"[Extensions]
-  project
-    /tmp/project/.agent-core/extensions/answer.ts
-    /tmp/project/.agent-core/extensions/local-index
-    git:github.com/HazAT/pi-interactive-subagents
-      extensions
-      extensions/subagents
-    npm:@scope/pi-scoped
-      extensions
-    npm:pi-markdown-preview
-      extensions
-  user
-    /tmp/agent/extensions/user-index
-  path
-    /tmp/temp/cli-extension.ts"`);
+		expect(
+			normalizeRenderedOutput(fakeThis.loadedResourcesContainer)
+				.split("[扩展]\n")[1]
+				.split("\n")
+				.slice(1)
+				.join("\n")
+				.split("\n\n")[0]
+				.trim(),
+		).toMatchInlineSnapshot(`
+			"project
+			     /tmp/project/.agent-core/extensions/answer.ts
+			     /tmp/project/.agent-core/extensions/local-index
+			     git:github.com/HazAT/pi-interactive-subagents
+			       extensions
+			       extensions/subagents
+			     npm:@scope/pi-scoped
+			       extensions
+			     npm:pi-markdown-preview
+			       extensions
+			   user
+			     /tmp/agent/extensions/user-index
+			   path
+			     /tmp/temp/cli-extension.ts"
+		`);
 	});
 
 	test("shows context paths relative to cwd while preserving full external paths", () => {
@@ -1168,6 +1277,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		const cwd = path.join(home, "Development", "pi-mono");
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			cwd,
 			contextFiles: [
 				{ path: path.join(home, ".agent-core", "agent", "AGENTS.md") },
@@ -1180,7 +1290,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer).replace(/\\/g, "/");
-		expect(output).toContain("[Context]");
+		expect(output).toContain("[上下文]");
 		expect(output).toContain("~/.agent-core/agent/AGENTS.md, AGENTS.md");
 		expect(output).not.toContain(`${cwd.replace(/\\/g, "/")}/AGENTS.md`);
 	});
@@ -1189,6 +1299,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		const cwd = "/tmp/project";
 		const fakeThis = createShowLoadedResourcesThis({
 			quietStartup: false,
+			toolOutputExpanded: true,
 			cwd,
 			systemPromptSource: { path: path.join(cwd, ".agent-core", "SYSTEM.md") },
 			appendSystemPromptSources: [{ path: path.join(cwd, ".agent-core", "APPEND_SYSTEM.md") }],
@@ -1200,7 +1311,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer).replace(/\\/g, "/");
-		expect(output).toContain("[Context]");
+		expect(output).toContain("[上下文]");
 		expect(output).toContain(".agent-core/SYSTEM.md, .agent-core/APPEND_SYSTEM.md, AGENTS.md");
 	});
 
@@ -1222,10 +1333,10 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer).replace(/\\/g, "/");
-		expect(output).toContain("[Context]");
+		expect(output).toContain("[上下文]");
 		expect(output).toContain("~/.agent-core/agent/AGENTS.md");
 		expect(output).toContain("~/Development/pi-mono/AGENTS.md");
-		expect(output).not.toContain("~/.agent-core/agent/AGENTS.md, AGENTS.md");
+		expect(output).toContain("~/.agent-core/agent/AGENTS.md, AGENTS.md");
 	});
 
 	test("does not show verbose listing on quiet startup during reload", () => {
@@ -1256,7 +1367,7 @@ describe("InteractiveMode.showLoadedResources", () => {
 		});
 
 		const output = renderAll(fakeThis.loadedResourcesContainer);
-		expect(output).toContain("[Skill conflicts]");
-		expect(output).not.toContain("[Skills]");
+		expect(output).toContain("[技能冲突]");
+		expect(output).not.toContain("[技能]");
 	});
 });

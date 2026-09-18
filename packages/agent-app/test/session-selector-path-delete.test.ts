@@ -212,8 +212,8 @@ describe("session selector path/delete interactions", () => {
 
 		expect(allLoadCalls).toBe(1);
 		const output = selector.render(120).join("\n");
-		expect(output).toContain("Resume Session (Current Folder)");
-		expect(output).not.toContain("Resume Session (All)");
+		expect(output).toContain("恢复会话（当前文件夹）");
+		expect(output).not.toContain("恢复会话（全部）");
 	});
 
 	it("does not start redundant All loads when toggling scopes while All is already loading", async () => {
@@ -349,6 +349,6 @@ describe("session selector path/delete interactions", () => {
 		list.handleInput(CTRL_D);
 
 		expect(confirmationChanges).toEqual([]);
-		expect(errorMessage).toBe("Cannot delete the currently active session");
+		expect(errorMessage).toBe("无法删除当前正在使用的会话");
 	});
 });

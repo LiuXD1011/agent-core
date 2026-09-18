@@ -258,10 +258,10 @@ describe("TreeSelectorComponent", () => {
 
 			const plainLines = selector.render(30).map(stripVTControlCharacters);
 			const plain = plainLines.join("\n");
-			expect(plain).toContain("branch");
-			expect(plain).toContain("filters");
-			expect(plain).toContain("cycle");
-			expect(plain).toContain("label time");
+			expect(plain).toContain("分支");
+			expect(plain).toContain("筛选");
+			expect(plain).toContain("切换");
+			expect(plain).toContain("标签时间");
 			expect(plain).not.toContain("...");
 			expect(plainLines.every((line) => visibleWidth(line) <= 30)).toBe(true);
 		});

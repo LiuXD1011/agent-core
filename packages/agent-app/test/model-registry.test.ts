@@ -1986,7 +1986,7 @@ describe("ModelRegistry", () => {
 				const registry = await createModelRegistry(authStorage, modelsJsonPath);
 				const auth = await registry.getApiKeyAndHeaders(registry.find("custom-provider", "test-model")!);
 
-				expect(auth).toEqual({ ok: false, error: 'No API key found for "custom-provider"' });
+				expect(auth).toEqual({ ok: false, error: '未找到 "custom-provider" 的 API 密钥' });
 			});
 
 			test("getApiKeyAndHeaders returns an error for failed authHeader resolution", async () => {

@@ -164,7 +164,7 @@ export class ToolExecutionComponent extends Container {
 		const remaining = lines.length - displayLines.length;
 		let text = displayLines.map((line) => theme.fg("toolOutput", line)).join("\n");
 		if (remaining > 0) {
-			text += `${theme.fg("muted", `\n... (${remaining} more lines,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+			text += `${theme.fg("muted", `\n…（还有 ${remaining} 行，`)} ${keyHint("app.tools.expand", "展开")}${theme.fg("muted", "）")}`;
 		}
 		return new Text(text, 0, 0);
 	}

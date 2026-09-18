@@ -50,7 +50,7 @@ describe("self-update branding", () => {
 		);
 		vi.stubGlobal("fetch", fetchMock);
 
-		await expect(getSelfUpdatePlan(false)).rejects.toThrow(/Refusing to install a different product/);
+		await expect(getSelfUpdatePlan(false)).rejects.toThrow(/拒绝安装其他产品/);
 		expect(fetchMock).toHaveBeenCalledOnce();
 	});
 

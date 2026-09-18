@@ -2492,7 +2492,7 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			settingsManager.setProjectPackages(["npm:example"]);
 
 			await expect(packageManager.update("example")).rejects.toThrow(
-				"No matching package found for example. Did you mean npm:example?",
+				"没有找到匹配 example 的包。你是想用 npm:example 吗？",
 			);
 		});
 
@@ -2500,7 +2500,7 @@ export default function(api) { api.registerTool({ name: "test", description: "te
 			settingsManager.setProjectPackages(["git:github.com/example/repo"]);
 
 			await expect(packageManager.update("github.com/example/repo")).rejects.toThrow(
-				"No matching package found for github.com/example/repo. Did you mean git:github.com/example/repo?",
+				"没有找到匹配 github.com/example/repo 的包。你是想用 git:github.com/example/repo 吗？",
 			);
 		});
 

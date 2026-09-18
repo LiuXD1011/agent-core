@@ -24,8 +24,8 @@ describe("TrustSelectorComponent", () => {
 		});
 
 		let output = stripAnsi(selector.render(120).join("\n"));
-		expect(output).toContain("Saved decision: trusted (/project)");
-		expect(output).toContain("Current session: trusted");
+		expect(output).toContain("已保存的决定：已信任（/project）");
+		expect(output).toContain("当前会话：已信任");
 		expect(output).toContain("→ ✓ Trust");
 
 		selector.handleInput("\x1b[B");
@@ -61,7 +61,7 @@ describe("TrustSelectorComponent", () => {
 
 		const output = stripAnsi(selector.render(120).join("\n"));
 
-		expect(output).toContain("Saved decision: trusted (inherited from /parent)");
+		expect(output).toContain("已保存的决定：已信任（继承自 /parent）");
 	});
 
 	it("adds a trust parent option", () => {
@@ -75,7 +75,7 @@ describe("TrustSelectorComponent", () => {
 		});
 
 		const output = stripAnsi(selector.render(120).join("\n"));
-		expect(output).toContain("Saved decision: trusted (inherited from /parent)");
+		expect(output).toContain("已保存的决定：已信任（继承自 /parent）");
 		expect(output).toContain("✓ Trust parent folder (/parent)");
 
 		selector.handleInput("\n");

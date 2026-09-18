@@ -20,13 +20,13 @@ export interface TrustSelectorOptions {
 
 function formatDecision(trustPath: string | undefined, decision: ProjectTrustStoreEntry | null): string {
 	if (decision === null) {
-		return "none";
+		return "无";
 	}
-	const label = decision.decision ? "trusted" : "untrusted";
+	const label = decision.decision ? "已信任" : "未信任";
 	if (trustPath !== undefined && decision.path !== trustPath) {
-		return `${label} (inherited from ${decision.path})`;
+		return `${label}（继承自 ${decision.path}）`;
 	}
-	return `${label} (${decision.path})`;
+	return `${label}（${decision.path}）`;
 }
 
 export class TrustSelectorComponent extends Container {
@@ -51,22 +51,20 @@ export class TrustSelectorComponent extends Container {
 
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
-		this.addChild(new Text(theme.fg("accent", theme.bold("Project trust")), 1, 0));
+		this.addChild(new Text(theme.fg("accent", theme.bold("项目信任")), 1, 0));
 		this.addChild(new Text(theme.fg("muted", options.cwd), 1, 0));
 		this.addChild(new Spacer(1));
 		this.addChild(
 			new Text(
 				theme.fg(
 					"muted",
-					`Saved decision: ${formatDecision(this.trustOptions[0]?.savedPath, options.savedDecision)}`,
+					`已保存的决定：${formatDecision(this.trustOptions[0]?.savedPath, options.savedDecision)}`,
 				),
 				1,
 				0,
 			),
 		);
-		this.addChild(
-			new Text(theme.fg("muted", `Current session: ${options.projectTrusted ? "trusted" : "untrusted"}`), 1, 0),
-		);
+		this.addChild(new Text(theme.fg("muted", `当前会话：${options.projectTrusted ? "已信任" : "未信任"}`), 1, 0));
 		this.addChild(new Spacer(1));
 
 		this.listContainer = new Container();
@@ -74,11 +72,11 @@ export class TrustSelectorComponent extends Container {
 		this.addChild(new Spacer(1));
 		this.addChild(
 			new Text(
-				rawKeyHint("↑↓", "navigate") +
+				rawKeyHint("↑↓", "选择") +
 					"  " +
-					keyHint("tui.select.confirm", "save") +
+					keyHint("tui.select.confirm", "保存") +
 					"  " +
-					keyHint("tui.select.cancel", "cancel"),
+					keyHint("tui.select.cancel", "取消"),
 				1,
 				0,
 			),

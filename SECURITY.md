@@ -1,12 +1,12 @@
-# Security
+# 安全
 
-## Execution boundaries
+## 执行边界
 
-- Agent Core runs with the permissions of the account that starts it. It can read and modify files, execute commands, and access network services and credentials available to that process.
-- Agent Core does not provide a built-in permission sandbox. Review its actions; use a container or virtual machine when isolation is needed. See [containerization guidance](packages/agent-app/docs/containerization.md).
-- Trust the repositories, extensions, and skills you load. Repository instructions, comments, and tool output can influence model behavior; extensions can execute code. Prompt instructions are not a substitute for operating-system isolation.
-- An attacker who can already change your workspace, configuration, or shell environment may influence the Agent. Reports involving prior local write access should explain any additional access or boundary crossing introduced by Agent Core.
+- Agent Core 以启动它的账户权限运行。它可以读取和修改文件、执行命令，并访问该进程可用的网络服务与凭据。
+- Agent Core 不提供内置的权限沙箱。请审阅它的操作；需要隔离时请使用容器或虚拟机。参见[容器化指引](packages/agent-app/docs/containerization.md)。
+- 请只信任你加载的仓库、扩展和技能。仓库指令、注释和工具输出都可能影响模型行为；扩展可以执行代码。提示词指令不能替代操作系统级隔离。
+- 能够更改你的工作区、配置或 shell 环境的攻击者本就可能影响 Agent。涉及已有本地写入权限的报告应说明 Agent Core 额外引入的访问或边界穿越。
 
-## Reporting a vulnerability
+## 报告漏洞
 
-Report privately through this repository's GitHub Security Advisories or contact the maintainer. Include the affected version or commit, impact, reproduction steps, and relevant logs with credentials removed.
+通过本仓库的 GitHub Security Advisories 私密报告，或联系维护者。请附上受影响的版本或提交、影响、复现步骤，以及已移除凭据的相关日志。

@@ -43,9 +43,7 @@ describe("issue #7829 invalid settings warning", () => {
 			void run.call(context);
 
 			await vi.waitFor(() => {
-				expect(render(chatContainer)).toContain(
-					"Warning: Invalid settings file /tmp/settings.json: malformed JSON",
-				);
+				expect(render(chatContainer)).toContain("警告：Invalid settings file /tmp/settings.json: malformed JSON");
 			});
 		} finally {
 			if (previousOffline === undefined) delete process.env.AGENT_CORE_OFFLINE;

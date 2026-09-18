@@ -1129,9 +1129,9 @@ class SearchLine implements Component {
 	render(width: number): string[] {
 		const query = this.treeList.getSearchQuery();
 		if (query) {
-			return [truncateToWidth(`  ${theme.fg("muted", "Type to search:")} ${theme.fg("accent", query)}`, width)];
+			return [truncateToWidth(`  ${theme.fg("muted", "输入以搜索：")} ${theme.fg("accent", query)}`, width)];
 		}
-		return [truncateToWidth(`  ${theme.fg("muted", "Type to search:")}`, width)];
+		return [truncateToWidth(`  ${theme.fg("muted", "输入以搜索：")}`, width)];
 	}
 
 	handleInput(_keyData: string): void {}
@@ -1178,11 +1178,11 @@ class TreeHelp implements Component {
 }
 
 const TREE_HELP_ITEMS: Array<{ keys: Keybinding[]; label: string; labelFirst?: boolean }> = [
-	{ keys: ["tui.select.up", "tui.select.down"], label: "move" },
-	{ keys: ["tui.editor.cursorLeft", "tui.editor.cursorRight"], label: "page" },
-	{ keys: ["app.tree.foldOrUp", "app.tree.unfoldOrDown"], label: "branch" },
-	{ keys: ["app.tree.editLabel"], label: "label" },
-	{ keys: ["app.tree.toggleLabelTimestamp"], label: "label time" },
+	{ keys: ["tui.select.up", "tui.select.down"], label: "移动" },
+	{ keys: ["tui.editor.cursorLeft", "tui.editor.cursorRight"], label: "翻页" },
+	{ keys: ["app.tree.foldOrUp", "app.tree.unfoldOrDown"], label: "分支" },
+	{ keys: ["app.tree.editLabel"], label: "标签" },
+	{ keys: ["app.tree.toggleLabelTimestamp"], label: "标签时间" },
 	{
 		keys: [
 			"app.tree.filter.default",
@@ -1191,10 +1191,10 @@ const TREE_HELP_ITEMS: Array<{ keys: Keybinding[]; label: string; labelFirst?: b
 			"app.tree.filter.labeledOnly",
 			"app.tree.filter.all",
 		],
-		label: "filters",
+		label: "筛选",
 		labelFirst: true,
 	},
-	{ keys: ["app.tree.filter.cycleForward", "app.tree.filter.cycleBackward"], label: "cycle", labelFirst: true },
+	{ keys: ["app.tree.filter.cycleForward", "app.tree.filter.cycleBackward"], label: "切换", labelFirst: true },
 ];
 
 function formatHelpKeys(keybindings: Keybinding[]): string {
@@ -1260,11 +1260,11 @@ class LabelInput implements Component, Focusable {
 		const lines: string[] = [];
 		const indent = "  ";
 		const availableWidth = width - indent.length;
-		lines.push(truncateToWidth(`${indent}${theme.fg("muted", "Label (empty to remove):")}`, width));
+		lines.push(truncateToWidth(`${indent}${theme.fg("muted", "标签（留空移除）：")}`, width));
 		lines.push(...this.input.render(availableWidth).map((line) => truncateToWidth(`${indent}${line}`, width)));
 		lines.push(
 			truncateToWidth(
-				`${indent}${keyHint("tui.select.confirm", "save")}  ${keyHint("tui.select.cancel", "cancel")}`,
+				`${indent}${keyHint("tui.select.confirm", "保存")}  ${keyHint("tui.select.cancel", "取消")}`,
 				width,
 			),
 		);
@@ -1334,7 +1334,7 @@ export class TreeSelectorComponent extends Container implements Focusable {
 
 		this.addChild(new Spacer(1));
 		this.addChild(new DynamicBorder());
-		this.addChild(new Text(theme.bold("  Session Tree"), 1, 0));
+		this.addChild(new Text(theme.bold("  会话树"), 1, 0));
 		this.addChild(new TreeHelp());
 		this.addChild(new SearchLine(this.treeList));
 		this.addChild(new DynamicBorder());

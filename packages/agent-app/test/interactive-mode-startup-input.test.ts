@@ -64,7 +64,7 @@ describe("InteractiveMode startup input", () => {
 		interactiveModePrototype.handleStartupSubmit.call(context, "early prompt");
 
 		expect(context.editor.setText).toHaveBeenCalledWith("early prompt");
-		expect(context.showStatus).toHaveBeenCalledWith("Startup is still in progress");
+		expect(context.showStatus).toHaveBeenCalledWith("启动仍在进行中");
 	});
 
 	it("queues a normal prompt submitted before the input callback is installed", async () => {

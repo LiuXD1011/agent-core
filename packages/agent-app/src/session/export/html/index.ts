@@ -177,7 +177,7 @@ export function generateSessionHtml(snapshot: SessionExportSnapshot, theme: Expo
 		})
 		.join("");
 	const archives = archiveLinks
-		? `<details id="session-artifacts"><summary>Archived evidence</summary><ul>${archiveLinks}</ul></details>`
+		? `<details id="session-artifacts"><summary>归档证据</summary><ul>${archiveLinks}</ul></details>`
 		: "";
 	return template
 		.replace("{{ARCHIVES}}", archives)

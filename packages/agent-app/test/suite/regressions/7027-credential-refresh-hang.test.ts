@@ -118,7 +118,7 @@ describe("issues #7027 and #7113 credential refresh hang", () => {
 
 		await vi.advanceTimersByTimeAsync(15_000);
 		expect(showWarning).toHaveBeenCalledWith(
-			"Saved API key for Stalled Login, but its model catalog refresh timed out; using cached models.",
+			"已保存 Stalled Login 的 API 密钥，但模型目录刷新超时，正在使用缓存模型。",
 		);
 	});
 });

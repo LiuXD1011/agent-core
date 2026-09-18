@@ -6,11 +6,11 @@ export const DEFAULT_HTTP_IDLE_TIMEOUT_MS = 300_000;
 const DEFAULT_AUTO_SELECT_FAMILY_ATTEMPT_TIMEOUT_MS = 2_000;
 
 export const HTTP_IDLE_TIMEOUT_CHOICES = [
-	{ label: "30 sec", timeoutMs: 30_000 },
-	{ label: "1 min", timeoutMs: 60_000 },
-	{ label: "2 min", timeoutMs: 120_000 },
-	{ label: "5 min", timeoutMs: 300_000 },
-	{ label: "disabled", timeoutMs: 0 },
+	{ label: "30 秒", timeoutMs: 30_000 },
+	{ label: "1 分钟", timeoutMs: 60_000 },
+	{ label: "2 分钟", timeoutMs: 120_000 },
+	{ label: "5 分钟", timeoutMs: 300_000 },
+	{ label: "禁用", timeoutMs: 0 },
 ] as const;
 
 const originalGlobalFetch = globalThis.fetch;

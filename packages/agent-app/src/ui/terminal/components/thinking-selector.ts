@@ -11,6 +11,7 @@ import {
 	Spacer,
 	Text,
 } from "@liuxuedeng/agent-core-tui";
+import { THINKING_LEVEL_DESCRIPTIONS, THINKING_LEVEL_LABELS } from "../../thinking-labels.ts";
 import { getSelectListTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyDisplayText } from "./keybinding-hints.ts";
@@ -18,16 +19,6 @@ import { keyDisplayText } from "./keybinding-hints.ts";
 const THINKING_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 	minPrimaryColumnWidth: 12,
 	maxPrimaryColumnWidth: 32,
-};
-
-const LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
-	off: "No reasoning",
-	minimal: "Very brief reasoning (~1k tokens)",
-	low: "Light reasoning (~2k tokens)",
-	medium: "Moderate reasoning (~8k tokens)",
-	high: "Deep reasoning (~16k tokens)",
-	xhigh: "Extra-high reasoning (~32k tokens)",
-	max: "Maximum reasoning",
 };
 
 /**
@@ -67,17 +58,19 @@ export class ThinkingSelectorComponent extends Container implements Focusable {
 
 		this.allItems = availableLevels.map((level) => ({
 			value: level,
-			label: `${level === currentLevel ? "✓ " : "  "}${level}`,
+			label: `${level === currentLevel ? "✓ " : "  "}${THINKING_LEVEL_LABELS[level]}`,
 			description:
-				level === defaultThinkingLevel ? `${LEVEL_DESCRIPTIONS[level]} · default` : LEVEL_DESCRIPTIONS[level],
+				level === defaultThinkingLevel
+					? `${THINKING_LEVEL_DESCRIPTIONS[level]} · 默认`
+					: THINKING_LEVEL_DESCRIPTIONS[level],
 		}));
 
 		// Add top border
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
-		this.addChild(new Text("Thinking Level", 0, 0));
+		this.addChild(new Text("推理强度", 0, 0));
 		this.addChild(new Spacer(1));
-		this.addChild(new Text(`${keyDisplayText("app.thinking.cycle")} cycles thinking levels in-session`, 0, 0));
+		this.addChild(new Text(`${keyDisplayText("app.thinking.cycle")} 切换当前会话的推理强度`, 0, 0));
 		this.addChild(new Spacer(1));
 
 		this.searchInput = new Input();
@@ -94,7 +87,7 @@ export class ThinkingSelectorComponent extends Container implements Focusable {
 			new Text(
 				theme.fg(
 					"dim",
-					`  ${keyDisplayText("tui.select.confirm")} to select · ${keyDisplayText("app.thinking.save")} to set as default · ${keyDisplayText("tui.select.cancel")} to cancel`,
+					`  ${keyDisplayText("tui.select.confirm")} 选择 · ${keyDisplayText("app.thinking.save")} 设为默认 · ${keyDisplayText("tui.select.cancel")} 取消`,
 				),
 				0,
 				0,
@@ -118,7 +111,7 @@ export class ThinkingSelectorComponent extends Container implements Focusable {
 
 	private applyFilter(query: string): void {
 		const filtered = query
-			? fuzzyFilter(this.allItems, query, (item) => `${item.value} ${item.description ?? ""}`)
+			? fuzzyFilter(this.allItems, query, (item) => `${item.value} ${item.label} ${item.description ?? ""}`)
 			: this.allItems;
 		const selectedValue = this.selectList.getSelectedItem()?.value as ThinkingLevel | undefined;
 		const newList = this.buildSelectList(filtered, selectedValue);

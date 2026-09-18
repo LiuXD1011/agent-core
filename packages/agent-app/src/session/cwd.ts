@@ -38,7 +38,7 @@ export function formatMissingSessionCwdError(issue: SessionCwdIssue): string {
 }
 
 export function formatMissingSessionCwdPrompt(issue: SessionCwdIssue): string {
-	return `cwd from session file does not exist\n${issue.sessionCwd}\n\ncontinue in current cwd\n${issue.fallbackCwd}`;
+	return `会话文件记录的工作目录不存在\n${issue.sessionCwd}\n\n是否在当前目录继续\n${issue.fallbackCwd}`;
 }
 
 export class MissingSessionCwdError extends Error {

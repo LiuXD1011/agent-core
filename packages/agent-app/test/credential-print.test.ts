@@ -1,6 +1,7 @@
 import { InMemoryModelsStore } from "@liuxuedeng/agent-core-ai";
 import { describe, expect, test, vi } from "vitest";
 import { AuthStorage } from "../src/app/auth-storage.ts";
+import * as modelResolver from "../src/app/model-resolver.ts";
 import { ModelRuntime } from "../src/app/model-runtime.ts";
 import { parseArgs } from "../src/cli/args.ts";
 import { AuthCommandError, isAuthCommandHelp, parseAuthCommand } from "../src/cli/auth-command.ts";
@@ -73,9 +74,9 @@ describe("credential print commands", () => {
 			process.exitCode = undefined;
 			await main(["auth", "check", "--provider", "openai-codex", "--credentails"]);
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stderr).toContain('Unknown option --credentails for "auth check".');
+			expect(stderr).toContain('"auth check" 存在未知选项 --credentails。');
 			expect(stderr).toContain(
-				'Use "agent-core --help" or "agent-core auth check --provider <provider> [--json] [--credentials] [--no-refresh]".',
+				'使用 "agent-core --help" 或 "agent-core auth check --provider <provider> [--json] [--credentials] [--no-refresh]"。',
 			);
 			expect(process.exitCode).toBe(1);
 		} finally {
@@ -113,7 +114,7 @@ describe("credential print commands", () => {
 			minExpiryMs: 30 * 60_000,
 		});
 		expect(() => parseAuthCommand(["auth", "print-api-key", "--min-expiry", "30m"])).toThrow(
-			"only supported by print-bearer-token",
+			"--min-expiry 仅 print-bearer-token 支持",
 		);
 		expect(isAuthCommandHelp(["auth", "--help"])).toBe(true);
 		expect(isAuthCommandHelp(["auth", "print-api-key", "--help"])).toBe(true);
@@ -121,10 +122,31 @@ describe("credential print commands", () => {
 		expect(isAuthCommandHelp(["auth", "check", "--help"])).toBe(true);
 		expect(() => parseAuthCommand(["auth", "unknown"])).toThrow(AuthCommandError);
 		await expect(resolveCredentialForPrint(parseArgs([]), runtime, "api_key")).rejects.toThrow(
-			"requires --provider <provider> or --model <model>",
+			"打印凭据需要 --provider <服务商> 或 --model <模型>",
 		);
 		await expect(
 			resolveCredentialForPrint(parseArgs(["--provider", "openai-codex"]), runtime, "api_key"),
-		).rejects.toThrow("configured with OAuth");
+		).rejects.toThrow("配置的是 OAuth");
+	});
+});
+
+describe("credential resolution ignores localized warning text", () => {
+	test.each([false, true])("checks catalog membership for inferred provider (synthetic=%s)", async (synthetic) => {
+		const runtime = await createRuntime(AuthStorage.inMemory({ openai: { type: "api_key", key: "fixture-key" } }));
+		const catalogModel = runtime.getModels().find((model) => model.provider === "openai");
+		if (!catalogModel) throw new Error("Missing offline catalog fixture");
+		const model = synthetic ? { ...catalogModel, id: "not-in-the-catalog" } : catalogModel;
+		const resolve = vi.spyOn(modelResolver, "resolveCliModel").mockReturnValue({
+			model,
+			error: undefined,
+			warning: synthetic ? undefined : "使用自定义模型 ID is only display text",
+		});
+		try {
+			const result = resolveCredentialForPrint(parseArgs(["--model", model.id]), runtime, "api_key");
+			if (synthetic) await expect(result).rejects.toThrow("未找到模型");
+			else await expect(result).resolves.toBe("fixture-key");
+		} finally {
+			resolve.mockRestore();
+		}
 	});
 });

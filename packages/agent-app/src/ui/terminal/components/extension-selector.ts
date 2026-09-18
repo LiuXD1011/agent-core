@@ -62,11 +62,11 @@ export class ExtensionSelectorComponent extends Container {
 		this.addChild(new Spacer(1));
 		this.addChild(
 			new Text(
-				rawKeyHint("↑↓", "navigate") +
+				rawKeyHint("↑↓", "选择") +
 					"  " +
-					keyHint("tui.select.confirm", "select") +
+					keyHint("tui.select.confirm", "选择") +
 					"  " +
-					keyHint("tui.select.cancel", "cancel"),
+					keyHint("tui.select.cancel", "取消"),
 				1,
 				0,
 			),

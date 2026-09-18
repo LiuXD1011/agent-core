@@ -28,11 +28,11 @@ describe("thinking selector", () => {
 				.map((line) => stripAnsi(line))
 				.find((line) => line.includes(level));
 
-		expect(selector.getSelectList().getSelectedItem()?.label).toBe("✓ medium");
-		expect(getLevelRow("medium")?.startsWith("→ ✓ medium")).toBe(true);
+		expect(selector.getSelectList().getSelectedItem()?.label).toBe("✓ 中");
+		expect(getLevelRow("中")?.startsWith("→ ✓ 中")).toBe(true);
 		selector.handleInput("\x1b[B");
-		expect(getLevelRow("medium")?.startsWith("  ✓ medium")).toBe(true);
-		expect(getLevelRow("high")?.startsWith("→   high")).toBe(true);
+		expect(getLevelRow("中")?.startsWith("  ✓ 中")).toBe(true);
+		expect(getLevelRow("高")?.startsWith("→   高")).toBe(true);
 	});
 
 	it("uses the configured save binding", () => {
@@ -46,7 +46,7 @@ describe("thinking selector", () => {
 			saveDefault,
 		);
 
-		expect(stripAnsi(selector.render(80).join("\n"))).toContain("Ctrl+R to set as default");
+		expect(stripAnsi(selector.render(80).join("\n"))).toContain("Ctrl+R 设为默认");
 		selector.handleInput("\x13");
 		expect(saveDefault).not.toHaveBeenCalled();
 		selector.handleInput("\x12");

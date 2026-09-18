@@ -167,7 +167,7 @@ describe("detectInstallMethod", () => {
 
 		expect(detectInstallMethod()).toBe("pnpm");
 		expect(getUpdateInstruction("@liuxuedeng/agent-core")).toBe(
-			"Run: pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @liuxuedeng/agent-core",
+			"请执行：pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @liuxuedeng/agent-core",
 		);
 	});
 
@@ -177,7 +177,7 @@ describe("detectInstallMethod", () => {
 		expect(detectInstallMethod()).toBe("unknown");
 		expect(getSelfUpdateCommand("@liuxuedeng/agent-core")).toBeUndefined();
 		expect(getUpdateInstruction("@liuxuedeng/agent-core")).toBe(
-			"Update @liuxuedeng/agent-core using the package manager, wrapper, or source checkout that provides this installation.",
+			"请使用提供此安装的包管理器、包装脚本或源码检出更新 @liuxuedeng/agent-core。",
 		);
 	});
 
@@ -302,7 +302,7 @@ describe("detectInstallMethod", () => {
 
 		expect(detectInstallMethod()).toBe("npm");
 		expect(getUpdateInstruction("@liuxuedeng/agent-core")).toBe(
-			"Run: npm install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core",
+			"请执行：npm install -g --ignore-scripts --min-release-age=0 @liuxuedeng/agent-core",
 		);
 	});
 
@@ -444,8 +444,6 @@ describe("detectInstallMethod", () => {
 		chmodSync(packageDir, 0o500);
 
 		expect(getSelfUpdateCommand("@liuxuedeng/agent-core")).toBeUndefined();
-		expect(getSelfUpdateUnavailableInstruction("@liuxuedeng/agent-core")).toContain(
-			"the install path is not writable",
-		);
+		expect(getSelfUpdateUnavailableInstruction("@liuxuedeng/agent-core")).toContain("安装路径不可写");
 	});
 });

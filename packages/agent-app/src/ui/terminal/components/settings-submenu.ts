@@ -11,6 +11,7 @@ import {
 	Text,
 } from "@liuxuedeng/agent-core-tui";
 import { getSelectListTheme, theme } from "../theme/theme.ts";
+import { keyDisplayText } from "./keybinding-hints.ts";
 
 const SUBMENU_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
 	minPrimaryColumnWidth: 12,
@@ -86,8 +87,8 @@ export class SelectSubmenu extends Container {
 		// Hint
 		this.addChild(new Spacer(1));
 		const hint = submenuOptions?.searchable
-			? "  Type to filter \u00b7 Enter to select \u00b7 Esc to go back"
-			: "  Enter to select \u00b7 Esc to go back";
+			? `  输入筛选 · ${keyDisplayText("tui.select.confirm")} 选择 · ${keyDisplayText("tui.select.cancel")} 返回`
+			: `  ${keyDisplayText("tui.select.confirm")} 选择 · ${keyDisplayText("tui.select.cancel")} 返回`;
 		this.addChild(new Text(theme.fg("dim", hint), 0, 0));
 	}
 
@@ -201,7 +202,7 @@ export class SteppedSubmenu extends Container {
 	private buildStep(stepIndex: number): Component {
 		const step = this.steps[stepIndex];
 		const total = this.steps.length;
-		const stepLabel = total > 1 ? `Step ${stepIndex + 1}/${total} \u00b7 ` : "";
+		const stepLabel = total > 1 ? `步骤 ${stepIndex + 1}/${total} · ` : "";
 
 		const title = typeof step.title === "function" ? step.title(this.context) : step.title;
 		const desc = typeof step.description === "function" ? step.description(this.context) : step.description;

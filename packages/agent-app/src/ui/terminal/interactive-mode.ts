@@ -1,5 +1,6 @@
 import type { ToolDefinition } from "../../extensions/types.ts";
 import { createToolHtmlRenderer } from "../renderers/html.ts";
+import { TerminalHeader } from "./components/terminal-header.ts";
 /**
  * Interactive mode for the coding agent.
  * Handles TUI rendering and user interaction, delegating business logic to AgentSession.
@@ -112,6 +113,7 @@ import { ensureTool, type ToolStatus } from "../../utils/tools-manager.ts";
 import { checkForNewPiVersion, type LatestPiRelease } from "../../utils/version-check.ts";
 import { type AppKeybinding, KeybindingsManager } from "../keybindings.ts";
 import { withBuiltInRenderers } from "../renderers/tools/index.ts";
+import { THINKING_LEVEL_LABELS } from "../thinking-labels.ts";
 import { createChatViewport } from "./chat-viewport.ts";
 import { AssistantMessageComponent } from "./components/assistant-message.ts";
 import { BashExecutionComponent } from "./components/bash-execution.ts";
@@ -124,9 +126,9 @@ import { DynamicBorder } from "./components/dynamic-border.ts";
 import { ExtensionEditorComponent } from "./components/extension-editor.ts";
 import { ExtensionInputComponent } from "./components/extension-input.ts";
 import { ExtensionSelectorComponent } from "./components/extension-selector.ts";
-import { FooterComponent, formatTokens } from "./components/footer.ts";
+import { FooterComponent, formatCwdForFooter, formatTokens } from "./components/footer.ts";
 import { formatKeyText, keyDisplayText, keyHint, keyText, rawKeyHint } from "./components/keybinding-hints.ts";
-import { LoginDialogComponent } from "./components/login-dialog.ts";
+import { LoginCancelledError, LoginDialogComponent } from "./components/login-dialog.ts";
 import { createMermaidMarkdownTransformer } from "./components/mermaid.ts";
 import { ModelSelectorComponent } from "./components/model-selector.ts";
 import {
@@ -399,8 +401,8 @@ export class InteractiveMode {
 	private workingMessage: string | undefined = undefined;
 	private workingVisible = true;
 	private workingIndicatorOptions: WorkingIndicatorOptions | undefined = undefined;
-	private readonly defaultWorkingMessage = "Working";
-	private readonly defaultHiddenThinkingLabel = "Thinking...";
+	private readonly defaultWorkingMessage = "处理中";
+	private readonly defaultHiddenThinkingLabel = "思考中…";
 	private hiddenThinkingLabel = this.defaultHiddenThinkingLabel;
 
 	private lastSigintTime = 0;
@@ -549,6 +551,7 @@ export class InteractiveMode {
 			paddingX: editorPaddingX,
 			autocompleteMaxVisible,
 			embedWorkingStatus: true,
+			showInputHints: true,
 		});
 		this.editor = this.defaultEditor;
 		this.editorContainer = new Container();
@@ -615,8 +618,8 @@ export class InteractiveMode {
 				type: "warning" as const,
 				message:
 					command.invocationName === command.name
-						? `Extension command '/${command.name}' conflicts with built-in interactive command. Skipping in autocomplete.`
-						: `Extension command '/${command.name}' conflicts with built-in interactive command. Available as '/${command.invocationName}'.`,
+						? `扩展命令 '/${command.name}' 与内置命令冲突，已从自动补全中跳过。`
+						: `扩展命令 '/${command.name}' 与内置命令冲突，可使用 '/${command.invocationName}'。`,
 				path: command.sourceInfo.path,
 			}));
 	}
@@ -658,10 +661,10 @@ export class InteractiveMode {
 				return createFuzzyAutocompleteItems(
 					this.session.getAvailableThinkingLevels(),
 					prefix,
-					(level) => level,
+					(level) => `${level} ${THINKING_LEVEL_LABELS[level]}`,
 					(level) => ({
 						value: level,
-						label: level,
+						label: THINKING_LEVEL_LABELS[level],
 					}),
 				);
 			};
@@ -753,10 +756,10 @@ export class InteractiveMode {
 		if (this.settingsManager.getCollapseChangelog()) {
 			const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\]?/);
 			const latestVersion = versionMatch ? versionMatch[1] : this.version;
-			const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
+			const condensedText = `已更新至 v${latestVersion}。使用 ${theme.bold("/changelog")} 查看完整变更记录。`;
 			this.chatContainer.addChild(new Text(condensedText, 1, 0));
 		} else {
-			this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
+			this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "新变化")), 1, 0));
 			this.chatContainer.addChild(new Spacer(1));
 			this.chatContainer.addChild(
 				new Markdown(this.changelogMarkdown.trim(), 1, 0, this.getMarkdownThemeWithSettings()),
@@ -881,52 +884,40 @@ export class InteractiveMode {
 
 		// Add header with keybindings from config (unless silenced)
 		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
-			const logo = theme.bold(theme.fg("accent", APP_NAME)) + theme.fg("dim", ` v${this.version}`);
-
 			// Build startup instructions using keybinding hint helpers
 			const hint = (keybinding: AppKeybinding, description: string) => keyHint(keybinding, description);
 
 			const expandedInstructions = [
-				hint("app.interrupt", "to interrupt"),
-				hint("app.clear", "to clear"),
-				rawKeyHint(`${keyText("app.clear")} twice`, "to exit"),
-				hint("app.exit", "to exit (empty)"),
-				hint("app.suspend", "to suspend"),
-				keyHint("tui.editor.deleteToLineEnd", "to delete to end"),
-				hint("app.thinking.cycle", "to cycle thinking level"),
-				hint("app.model.select", "to select model"),
-				hint("app.tools.expand", "to expand tools"),
-				hint("app.thinking.toggle", "to expand thinking"),
-				hint("app.editor.external", "for external editor"),
-				rawKeyHint("/", "for commands"),
-				rawKeyHint("!", "to run bash"),
-				rawKeyHint("!!", "to run bash (no context)"),
-				hint("app.message.followUp", "to queue follow-up"),
-				hint("app.message.dequeue", "to edit all queued messages"),
-				hint("app.clipboard.pasteImage", "to paste image (with text fallback)"),
-				rawKeyHint("drop files", "to attach"),
+				hint("app.interrupt", "中止"),
+				hint("app.clear", "清空"),
+				rawKeyHint(`连按两次 ${keyText("app.clear")}`, "退出"),
+				hint("app.exit", "输入为空时退出"),
+				hint("app.suspend", "挂起到后台"),
+				keyHint("tui.editor.deleteToLineEnd", "删除到行尾"),
+				hint("app.thinking.cycle", "切换推理强度"),
+				hint("app.model.select", "选择模型"),
+				hint("app.tools.expand", "展开工具输出"),
+				hint("app.thinking.toggle", "显示推理内容"),
+				hint("app.editor.external", "外部编辑器"),
+				rawKeyHint("/", "命令"),
+				rawKeyHint("!", "运行 bash"),
+				rawKeyHint("!!", "运行 bash（不进入上下文）"),
+				hint("app.message.followUp", "排队追加消息"),
+				hint("app.message.dequeue", "编辑全部排队消息"),
+				hint("app.clipboard.pasteImage", "粘贴图片（文本兜底）"),
+				rawKeyHint("拖入文件", "附加"),
 			].join("\n");
-			const compactInstructions = [
-				hint("app.interrupt", "interrupt"),
-				rawKeyHint(`${keyText("app.clear")}/${keyText("app.exit")}`, "clear/exit"),
-				rawKeyHint("/", "commands"),
-				rawKeyHint("!", "bash"),
-				hint("app.tools.expand", "more"),
-			].join(theme.fg("muted", " · "));
-			const compactOnboarding = theme.fg(
-				"dim",
-				`Press ${keyText("app.tools.expand")} to show full startup help and loaded resources.`,
-			);
-			const onboarding = theme.fg(
-				"dim",
-				`Agent Core can explain its own features and look up its docs. Ask it how to use or extend Agent Core.`,
-			);
-			this.builtInHeader = new ExpandableText(
-				() => `${logo}\n${compactInstructions}\n${compactOnboarding}\n\n${onboarding}`,
-				() => `${logo}\n${expandedInstructions}\n\n${onboarding}`,
+			this.builtInHeader = new TerminalHeader(
+				() => {
+					const cwd = formatCwdForFooter(
+						this.sessionManager.getCwd(),
+						process.env.HOME || process.env.USERPROFILE,
+					);
+					const branch = this.footerDataProvider.getGitBranch();
+					return `v${this.version} · ${cwd}${branch ? ` · ${branch}` : ""}`;
+				},
+				expandedInstructions,
 				this.getStartupExpansionState(),
-				1,
-				0,
 			);
 
 			// Setup UI layout
@@ -1063,12 +1054,12 @@ export class InteractiveMode {
 		}
 
 		if (migratedProviders && migratedProviders.length > 0) {
-			this.showWarning(`Migrated credentials to auth.json: ${migratedProviders.join(", ")}`);
+			this.showWarning(`已将凭据迁移到 auth.json：${migratedProviders.join("、")}`);
 		}
 
 		const modelsJsonError = this.session.modelRuntime.getError();
 		if (modelsJsonError) {
-			this.showError(`models.json error: ${modelsJsonError}`);
+			this.showError(`models.json 错误：${modelsJsonError}`);
 		}
 
 		if (modelFallbackMessage) {
@@ -1082,7 +1073,7 @@ export class InteractiveMode {
 			try {
 				await this.session.prompt(initialMessage, { images: initialImages });
 			} catch (error: unknown) {
-				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+				const errorMessage = error instanceof Error ? error.message : "发生未知错误";
 				this.showError(errorMessage);
 			}
 		}
@@ -1092,7 +1083,7 @@ export class InteractiveMode {
 				try {
 					await this.session.prompt(message);
 				} catch (error: unknown) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+					const errorMessage = error instanceof Error ? error.message : "发生未知错误";
 					this.showError(errorMessage);
 				}
 			}
@@ -1104,7 +1095,7 @@ export class InteractiveMode {
 			try {
 				await this.session.prompt(userInput);
 			} catch (error: unknown) {
-				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+				const errorMessage = error instanceof Error ? error.message : "发生未知错误";
 				this.showError(errorMessage);
 			}
 		}
@@ -1165,11 +1156,11 @@ export class InteractiveMode {
 		if (extendedKeys === undefined) return undefined;
 
 		if (extendedKeys !== "on" && extendedKeys !== "always") {
-			return "tmux extended-keys is off. Modified Enter keys may not work. Add `set -g extended-keys on` to ~/.tmux.conf and restart tmux.";
+			return "tmux extended-keys 已关闭。改写过的回车键可能不生效。请在 ~/.tmux.conf 中添加 `set -g extended-keys on` 并重启 tmux。";
 		}
 
 		if (extendedKeysFormat === "xterm") {
-			return "tmux extended-keys-format is xterm. Agent Core works best with csi-u. Add `set -g extended-keys-format csi-u` to ~/.tmux.conf and restart tmux.";
+			return "tmux extended-keys-format 为 xterm。Agent Core 在 csi-u 下工作最佳。请在 ~/.tmux.conf 中添加 `set -g extended-keys-format csi-u` 并重启 tmux。";
 		}
 
 		return undefined;
@@ -1545,7 +1536,7 @@ export class InteractiveMode {
 		for (const [name, collisionList] of collisions) {
 			const first = collisionList[0]?.collision;
 			if (!first) continue;
-			lines.push(theme.fg("warning", `  "${name}" collision:`));
+			lines.push(theme.fg("warning", `  "${name}" 名称冲突：`));
 			lines.push(
 				theme.fg(
 					"dim",
@@ -1557,7 +1548,7 @@ export class InteractiveMode {
 					lines.push(
 						theme.fg(
 							"dim",
-							`    ${theme.fg("warning", "✗")} ${this.formatPathWithSource(d.collision.loserPath, this.findSourceInfoForPath(d.collision.loserPath, sourceInfos))} (skipped)`,
+							`    ${theme.fg("warning", "✗")} ${this.formatPathWithSource(d.collision.loserPath, this.findSourceInfoForPath(d.collision.loserPath, sourceInfos))}（已跳过）`,
 						),
 					);
 				}
@@ -1599,21 +1590,16 @@ export class InteractiveMode {
 			}
 			return theme.fg("dim", `  ${labels.join(", ")}`);
 		};
+		const sections: string[] = [];
 		const addLoadedSection = (
 			name: string,
 			collapsedBody: string,
 			expandedBody = collapsedBody,
 			color: ThemeColor = "mdHeading",
 		): void => {
-			const section = new ExpandableText(
-				() => `${sectionHeader(name, color)}\n${collapsedBody}`,
-				() => `${sectionHeader(name, color)}\n${expandedBody}`,
-				this.getStartupExpansionState(),
-				0,
-				0,
+			sections.push(
+				`${sectionHeader(name, color)}\n${collapsedBody}${expandedBody !== collapsedBody ? `\n${expandedBody}` : ""}`,
 			);
-			this.loadedResourcesContainer.addChild(section);
-			this.loadedResourcesContainer.addChild(new Spacer(1));
 		};
 
 		const skillsResult = this.session.resourceLoader.getSkills();
@@ -1658,7 +1644,6 @@ export class InteractiveMode {
 				...this.session.resourceLoader.getAgentsFiles().agentsFiles,
 			];
 			if (contextFiles.length > 0) {
-				this.loadedResourcesContainer.addChild(new Spacer(1));
 				const contextList = contextFiles
 					.map((f) => theme.fg("dim", `  ${this.formatDisplayPath(f.path)}`))
 					.join("\n");
@@ -1666,7 +1651,7 @@ export class InteractiveMode {
 					contextFiles.map((contextFile) => this.formatContextPath(contextFile.path)),
 					{ sort: false },
 				);
-				addLoadedSection("Context", contextCompactList, contextList);
+				addLoadedSection("上下文", contextCompactList, contextList);
 			}
 
 			const skills = skillsResult.skills;
@@ -1679,7 +1664,7 @@ export class InteractiveMode {
 					formatPackagePath: (item) => this.getShortPath(item.path, item.sourceInfo),
 				});
 				const skillCompactList = formatCompactList(skills.map((skill) => skill.name));
-				addLoadedSection("Skills", skillCompactList, skillList);
+				addLoadedSection("技能", skillCompactList, skillList);
 			}
 
 			const templates = this.session.promptTemplates;
@@ -1699,7 +1684,7 @@ export class InteractiveMode {
 					},
 				});
 				const promptCompactList = formatCompactList(templates.map((template) => `/${template.name}`));
-				addLoadedSection("Prompts", promptCompactList, templateList);
+				addLoadedSection("提示模板", promptCompactList, templateList);
 			}
 
 			if (extensions.length > 0) {
@@ -1710,7 +1695,7 @@ export class InteractiveMode {
 						this.formatExtensionDisplayPath(this.getShortPath(item.path, item.sourceInfo)),
 				});
 				const extensionCompactList = formatCompactList(this.getCompactExtensionLabels(extensions));
-				addLoadedSection("Extensions", extensionCompactList, extList, "mdHeading");
+				addLoadedSection("扩展", extensionCompactList, extList, "mdHeading");
 			}
 
 			// Show loaded themes (excluding built-in)
@@ -1733,8 +1718,32 @@ export class InteractiveMode {
 							loadedTheme.name ?? this.getCompactPathLabel(loadedTheme.sourcePath!, loadedTheme.sourceInfo),
 					),
 				);
-				addLoadedSection("Themes", themeCompactList, themeList);
+				addLoadedSection("主题", themeCompactList, themeList);
 			}
+			const counts = [`上下文 ${contextFiles.length}`, `技能 ${skills.length}`, `扩展 ${extensions.length}`];
+			if (templates.length) counts.push(`提示模板 ${templates.length}`);
+			if (customThemes.length) counts.push(`主题 ${customThemes.length}`);
+			const summary = () => theme.fg("muted", `已加载：${counts.join(" · ")}`);
+			const resourceHint = (expanded: boolean) => {
+				const keys = keyDisplayText("app.tools.expand");
+				return keys
+					? `${theme.fg("accent", keys)} ${theme.fg("muted", expanded ? "收起文件列表" : "展开文件列表")}`
+					: theme.fg("muted", "未绑定资源展开快捷键");
+			};
+			this.loadedResourcesContainer.addChild(
+				new ExpandableText(
+					() => `${summary()}\n${resourceHint(false)}`,
+					() => `${summary()}\n${resourceHint(true)}${sections.length ? `\n\n${sections.join("\n\n")}` : ""}`,
+					this.getStartupExpansionState(),
+					1,
+					0,
+				),
+			);
+			this.loadedResourcesContainer.addChild(new Spacer(1));
+			this.loadedResourcesContainer.addChild(
+				new Text(theme.fg("muted", "输入任务即可开始，或输入 / 查看命令。"), 1, 0),
+			);
+			this.loadedResourcesContainer.addChild(new Spacer(1));
 		}
 
 		if (showDiagnostics) {
@@ -1742,7 +1751,7 @@ export class InteractiveMode {
 			if (skillDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(skillDiagnostics, sourceInfos);
 				this.loadedResourcesContainer.addChild(
-					new Text(`${theme.fg("warning", "[Skill conflicts]")}\n${warningLines}`, 0, 0),
+					new Text(`${theme.fg("warning", "[技能冲突]")}\n${warningLines}`, 0, 0),
 				);
 				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
@@ -1751,7 +1760,7 @@ export class InteractiveMode {
 			if (promptDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(promptDiagnostics, sourceInfos);
 				this.loadedResourcesContainer.addChild(
-					new Text(`${theme.fg("warning", "[Prompt conflicts]")}\n${warningLines}`, 0, 0),
+					new Text(`${theme.fg("warning", "[提示模板冲突]")}\n${warningLines}`, 0, 0),
 				);
 				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
@@ -1774,7 +1783,7 @@ export class InteractiveMode {
 			if (extensionDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(extensionDiagnostics, sourceInfos);
 				this.loadedResourcesContainer.addChild(
-					new Text(`${theme.fg("warning", "[Extension issues]")}\n${warningLines}`, 0, 0),
+					new Text(`${theme.fg("warning", "[扩展问题]")}\n${warningLines}`, 0, 0),
 				);
 				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
@@ -1783,7 +1792,7 @@ export class InteractiveMode {
 			if (themeDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(themeDiagnostics, sourceInfos);
 				this.loadedResourcesContainer.addChild(
-					new Text(`${theme.fg("warning", "[Theme conflicts]")}\n${warningLines}`, 0, 0),
+					new Text(`${theme.fg("warning", "[主题冲突]")}\n${warningLines}`, 0, 0),
 				);
 				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
@@ -1808,7 +1817,7 @@ export class InteractiveMode {
 					try {
 						return await this.runtimeHost.newSession(options);
 					} catch (error: unknown) {
-						return this.handleFatalRuntimeError("Failed to create session", error);
+						return this.handleFatalRuntimeError("创建会话失败", error);
 					}
 				},
 				fork: async (entryId, options) => {
@@ -1816,11 +1825,11 @@ export class InteractiveMode {
 						const result = await this.runtimeHost.fork(entryId, options);
 						if (!result.cancelled) {
 							this.editor.setText(result.selectedText ?? "");
-							this.showStatus("Forked to new session");
+							this.showStatus("已分叉到新会话");
 						}
 						return { cancelled: result.cancelled };
 					} catch (error: unknown) {
-						return this.handleFatalRuntimeError("Failed to fork session", error);
+						return this.handleFatalRuntimeError("分叉会话失败", error);
 					}
 				},
 				navigateTree: async (targetId, options) => {
@@ -1839,7 +1848,7 @@ export class InteractiveMode {
 					if (result.editorText && !this.editor.getText().trim()) {
 						this.editor.setText(result.editorText);
 					}
-					this.showStatus("Navigated to selected point");
+					this.showStatus("已跳转到所选位置");
 					void this.flushCompactionQueue({ willRetry: false });
 					return { cancelled: false };
 				},
@@ -1928,7 +1937,7 @@ export class InteractiveMode {
 
 	private async handleFatalRuntimeError(prefix: string, error: unknown): Promise<never> {
 		const message = error instanceof Error ? error.message : String(error);
-		this.showError(`${prefix}: ${message}`);
+		this.showError(`${prefix}：${message}`);
 		stopThemeWatcher();
 		this.stop("transcript");
 		process.exit(1);
@@ -2009,7 +2018,7 @@ export class InteractiveMode {
 				if (matchesKey(data, shortcutStr as KeyId)) {
 					// Run handler async, don't block input
 					Promise.resolve(shortcut.handler(createContext())).catch((err) => {
-						this.showError(`Shortcut handler error: ${err instanceof Error ? err.message : String(err)}`);
+						this.showError(`快捷键处理出错：${err instanceof Error ? err.message : String(err)}`);
 					});
 					return true;
 				}
@@ -2148,7 +2157,7 @@ export class InteractiveMode {
 				container.addChild(new Text(line, 1, 0));
 			}
 			if (content.length > InteractiveMode.MAX_WIDGET_LINES) {
-				container.addChild(new Text(theme.fg("muted", "... (widget truncated)"), 1, 0));
+				container.addChild(new Text(theme.fg("muted", "…（组件内容已截断）"), 1, 0));
 			}
 			component = container;
 		} else {
@@ -2199,9 +2208,7 @@ export class InteractiveMode {
 		this.workingVisible = true;
 		this.setWorkingIndicator();
 		if (this.activeStatusIndicator?.kind === "working") {
-			this.activeStatusIndicator.setMessage(
-				`${this.defaultWorkingMessage} (${keyText("app.interrupt")} to interrupt)`,
-			);
+			this.activeStatusIndicator.setMessage(`${this.defaultWorkingMessage} (${keyText("app.interrupt")} 中止)`);
 		}
 		this.setHiddenThinkingLabel();
 	}
@@ -2472,13 +2479,13 @@ export class InteractiveMode {
 		message: string,
 		opts?: ExtensionUIDialogOptions,
 	): Promise<boolean> {
-		const result = await this.showExtensionSelector(`${title}\n${message}`, ["Yes", "No"], opts);
-		return result === "Yes";
+		const result = await this.showExtensionSelector(`${title}\n${message}`, ["是", "否"], opts);
+		return result === "是";
 	}
 
 	private async promptForMissingSessionCwd(error: MissingSessionCwdError): Promise<string | undefined> {
 		const confirmed = await this.showExtensionConfirm(
-			"Session cwd not found",
+			"会话工作目录不存在",
 			formatMissingSessionCwdPrompt(error.issue),
 		);
 		return confirmed ? error.issue.fallbackCwd : undefined;
@@ -2759,7 +2766,7 @@ export class InteractiveMode {
 	 * Show an extension error in the UI.
 	 */
 	private showExtensionError(extensionPath: string, error: string, stack?: string): void {
-		const errorMsg = `Extension "${extensionPath}" error: ${error}`;
+		const errorMsg = `扩展 "${extensionPath}" 出错：${error}`;
 		const errorText = new Text(theme.fg("error", errorMsg), 1, 0);
 		this.chatContainer.addChild(errorText);
 		if (stack) {
@@ -2886,7 +2893,7 @@ export class InteractiveMode {
 
 	private handleStartupSubmit(text: string): void {
 		this.editor.setText(text);
-		this.showStatus("Startup is still in progress");
+		this.showStatus("启动仍在进行中");
 	}
 
 	private setupEditorSubmitHandler(): void {
@@ -3011,7 +3018,7 @@ export class InteractiveMode {
 				const command = isExcluded ? text.slice(2).trim() : text.slice(1).trim();
 				if (command) {
 					if (this.session.isBashRunning) {
-						this.showWarning("A bash command is already running. Press Esc to cancel it first.");
+						this.showWarning("已有 bash 命令在运行。请先按 Esc 取消它。");
 						this.editor.setText(text);
 						return;
 					}
@@ -3189,14 +3196,14 @@ export class InteractiveMode {
 						errorMessage =
 							retryAttempt > 0
 								? `Aborted after ${retryAttempt} retry attempt${retryAttempt > 1 ? "s" : ""}`
-								: "Operation aborted";
+								: "操作已中止";
 						this.streamingMessage.errorMessage = errorMessage;
 					}
 					this.streamingComponent.updateContent(this.streamingMessage, false);
 
 					if (this.streamingMessage.stopReason === "aborted" || this.streamingMessage.stopReason === "error") {
 						if (!errorMessage) {
-							errorMessage = this.streamingMessage.errorMessage || "Error";
+							errorMessage = this.streamingMessage.errorMessage || "错误";
 						}
 						for (const [, component] of this.pendingTools.entries()) {
 							component.updateResult({
@@ -3311,14 +3318,14 @@ export class InteractiveMode {
 				this.clearStatusIndicator("compaction");
 				if (event.aborted) {
 					if (event.reason === "manual") {
-						this.showError("Compaction cancelled");
+						this.showError("压缩已取消");
 					} else {
-						this.showStatus("Auto-compaction cancelled");
+						this.showStatus("自动压缩已取消");
 					}
 				} else if (event.result) {
 					const entries = this.sessionManager.buildContextEntries();
 					if (entries[0]?.type !== "compaction") {
-						throw new Error("Completed compaction is missing from the session context");
+						throw new Error("会话上下文中缺少已完成的压缩结果");
 					}
 					this.chatContainer.clear();
 					// The latest compaction is prepended for model context; append it below at its chronological position.
@@ -3373,7 +3380,7 @@ export class InteractiveMode {
 				this.clearStatusIndicator("retry");
 				// Show error only on final failure (success shows normal response)
 				if (!event.success) {
-					this.showError(`Retry failed after ${event.attempt} attempts: ${event.finalError || "Unknown error"}`);
+					this.showError(`重试 ${event.attempt} 次后仍失败：${event.finalError || "未知错误"}`);
 				}
 				this.ui.requestRender();
 				break;
@@ -3423,7 +3430,7 @@ export class InteractiveMode {
 			this.chatContainer.addChild(new Spacer(1));
 			this.managedToolStatusStarted = true;
 		}
-		const message = status.type === "warning" ? `Warning: ${status.message}` : status.message;
+		const message = status.type === "warning" ? `警告：${status.message}` : status.message;
 		const color = status.type === "warning" ? "warning" : "dim";
 		this.chatContainer.addChild(new Text(theme.fg(color, message), 1, 0));
 		this.lastStatusSpacer = undefined;
@@ -3642,9 +3649,9 @@ export class InteractiveMode {
 								errorMessage =
 									retryAttempt > 0
 										? `Aborted after ${retryAttempt} retry attempt${retryAttempt > 1 ? "s" : ""}`
-										: "Operation aborted";
+										: "操作已中止";
 							} else {
-								errorMessage = message.errorMessage || "Error";
+								errorMessage = message.errorMessage || "错误";
 							}
 							component.updateResult({ content: [{ type: "text", text: errorMessage }], isError: true });
 						} else {
@@ -3709,10 +3716,10 @@ export class InteractiveMode {
 		const { usage } = notice;
 		const tokens = usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
 		const cost = usage.cost.total >= 0.01 ? ` (~$${usage.cost.total.toFixed(2)})` : "";
-		const label = notice.kind === "compaction" ? "Compaction" : "Branch summary";
+		const label = notice.kind === "compaction" ? "上下文压缩" : "分支总结";
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(
-			new Text(theme.fg("warning", `${label}: ${formatTokens(tokens)} tokens billed${cost}`), 1, 0),
+			new Text(theme.fg("warning", `${label}：计费 ${formatTokens(tokens)} tokens${cost}`), 1, 0),
 		);
 	}
 
@@ -3734,10 +3741,10 @@ export class InteractiveMode {
 			});
 			if (dropped.length === 0) continue;
 
-			const noun = dropped.length === 1 ? "thinking block" : `${dropped.length} thinking blocks`;
+			const noun = dropped.length === 1 ? "思考块" : `${dropped.length} 个思考块`;
 			this.chatContainer.addChild(new Spacer(1));
 			this.chatContainer.addChild(
-				new Text(theme.fg("warning", `Anthropic dropped ${noun}: ${dropped.join("; ")}`), 1, 0),
+				new Text(theme.fg("warning", `Anthropic 丢弃了${noun}：${dropped.join("；")}`), 1, 0),
 			);
 		}
 	}
@@ -3759,12 +3766,12 @@ export class InteractiveMode {
 		if (miss.missedTokens < 20_000 && miss.missedCost < 0.1) return;
 
 		const cost = miss.missedCost >= 0.01 ? ` (~$${miss.missedCost.toFixed(2)})` : "";
-		const reBilled = `${formatTokens(miss.missedTokens)} tokens re-billed${cost}`;
-		let label = "Cache miss";
+		const reBilled = `重复计费 ${formatTokens(miss.missedTokens)} tokens${cost}`;
+		let label = "缓存未命中";
 		if (miss.modelChanged) {
-			label = "Cache miss after model switch";
+			label = "切换模型后缓存未命中";
 		} else if (miss.idleMs >= CACHE_TTL_MS) {
-			label = `Cache miss after ${Math.round(miss.idleMs / 60_000)}m idle`;
+			label = `空闲 ${Math.round(miss.idleMs / 60_000)} 分钟后缓存未命中`;
 		}
 		const text = theme.fg("warning", `${label}: ${reBilled}`);
 		this.chatContainer.addChild(new Spacer(1));
@@ -3783,8 +3790,7 @@ export class InteractiveMode {
 		const allEntries = this.sessionManager.getEntries();
 		const compactionCount = allEntries.filter((e) => e.type === "compaction").length;
 		if (compactionCount > 0) {
-			const times = compactionCount === 1 ? "1 time" : `${compactionCount} times`;
-			this.showStatus(`Session compacted ${times}`);
+			this.showStatus(`会话已压缩 ${compactionCount} 次`);
 		}
 	}
 
@@ -3800,7 +3806,7 @@ export class InteractiveMode {
 			new Text(
 				theme.fg(
 					"warning",
-					`This project is not trusted. Project ${CONFIG_DIR_NAME} resources and packages are ignored. Use /trust to save a trust decision, then restart ${APP_NAME}.`,
+					`此项目尚未受信任，已忽略项目中的 ${CONFIG_DIR_NAME} 资源和扩展包。使用 /trust 保存信任决定，再重启 ${APP_NAME}。`,
 				),
 				1,
 				0,
@@ -3888,7 +3894,7 @@ export class InteractiveMode {
 
 		const resumeCommand = formatResumeCommand(this.sessionManager);
 		if (resumeCommand) {
-			process.stdout.write(`${chalk.dim("To resume this session:")} ${resumeCommand}\n`);
+			process.stdout.write(`${chalk.dim("恢复此会话：")} ${resumeCommand}\n`);
 		}
 
 		process.exit(0);
@@ -3990,12 +3996,12 @@ export class InteractiveMode {
 
 	private handleCtrlZ(): void {
 		if (process.platform === "win32") {
-			this.showStatus("Suspend to background is not supported on Windows");
+			this.showStatus("Windows 不支持挂起到后台");
 			return;
 		}
 
 		// Keep the event loop alive while suspended. Without this, stopping the TUI
-		// can leave Node with no ref'ed handles, causing the process to exit on fg
+		// can leave Node with no ref'ed handles, causing the process 退出 on fg
 		// before the SIGCONT handler gets a chance to restore the terminal.
 		const suspendKeepAlive = setInterval(() => {}, 2 ** 30);
 
@@ -4060,9 +4066,9 @@ export class InteractiveMode {
 	private handleDequeue(): void {
 		const restored = this.restoreQueuedMessagesToEditor();
 		if (restored === 0) {
-			this.showStatus("No queued messages to restore");
+			this.showStatus("没有可恢复的排队消息");
 		} else {
-			this.showStatus(`Restored ${restored} queued message${restored > 1 ? "s" : ""} to editor`);
+			this.showStatus(`已将 ${restored} 条排队消息恢复到输入框`);
 		}
 	}
 
@@ -4082,11 +4088,11 @@ export class InteractiveMode {
 	private cycleThinkingLevel(): void {
 		const newLevel = this.session.cycleThinkingLevel();
 		if (newLevel === undefined) {
-			this.showStatus("Current model does not support thinking");
+			this.showStatus("当前模型不支持配置推理强度");
 		} else {
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
-			this.showStatus(`Thinking level: ${newLevel}`);
+			this.showStatus(`推理强度：${THINKING_LEVEL_LABELS[newLevel]}`);
 		}
 	}
 
@@ -4109,7 +4115,7 @@ export class InteractiveMode {
 				}
 			}
 		}
-		this.showStatus(`Tool output: ${expanded ? "expanded" : "collapsed"}`);
+		this.showStatus(`工具输出：${expanded ? "已展开" : "已收起"}`);
 	}
 
 	/** Update rendered assistant messages without rebuilding live tool components. */
@@ -4126,7 +4132,7 @@ export class InteractiveMode {
 		this.hideThinkingBlock = !this.hideThinkingBlock;
 		this.settingsManager.setHideThinkingBlock(this.hideThinkingBlock);
 		this.updateThinkingBlockVisibility();
-		this.showStatus(`Thinking blocks: ${this.hideThinkingBlock ? "hidden" : "visible"}`);
+		this.showStatus(`推理内容：${this.hideThinkingBlock ? "已隐藏" : "已显示"}`);
 	}
 
 	private async handleOpenExternalEditor(): Promise<void> {
@@ -4158,30 +4164,30 @@ export class InteractiveMode {
 
 	showError(errorMessage: string): void {
 		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(theme.fg("error", `Error: ${errorMessage}`), this.outputPad, 0));
+		this.chatContainer.addChild(new Text(theme.fg("error", `错误：${errorMessage}`), this.outputPad, 0));
 		this.ui.requestRender();
 	}
 
 	showWarning(warningMessage: string): void {
 		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(theme.fg("warning", `Warning: ${warningMessage}`), 1, 0));
+		this.chatContainer.addChild(new Text(theme.fg("warning", `警告：${warningMessage}`), 1, 0));
 		this.ui.requestRender();
 	}
 
 	showNewVersionNotification(release: LatestPiRelease): void {
 		const action = theme.fg("accent", `${APP_NAME} update`);
-		const updateInstruction = theme.fg("muted", `New version ${release.version} is available. Run `) + action;
+		const updateInstruction = theme.fg("muted", `发现新版本 ${release.version}。请执行 `) + action;
 		const changelogUrl = "https://github.com/LiuXD1011/agent-core/blob/main/packages/agent-app/CHANGELOG.md";
 		const changelogLink = getCapabilities().hyperlinks
 			? hyperlink(theme.fg("accent", changelogUrl), changelogUrl)
 			: theme.fg("accent", changelogUrl);
-		const changelogLine = theme.fg("muted", "Changelog: ") + changelogLink;
+		const changelogLine = theme.fg("muted", "变更记录：") + changelogLink;
 		const note = release.note?.trim();
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder((text) => theme.fg("warning", text)));
 		this.chatContainer.addChild(
-			new Text(`${theme.bold(theme.fg("warning", "Update Available"))}\n${updateInstruction}`, 1, 0),
+			new Text(`${theme.bold(theme.fg("warning", "有可用更新"))}\n${updateInstruction}`, 1, 0),
 		);
 		if (note) {
 			this.chatContainer.addChild(new Spacer(1));
@@ -4199,14 +4205,14 @@ export class InteractiveMode {
 
 	showPackageUpdateNotification(packages: string[]): void {
 		const action = theme.fg("accent", `${APP_NAME} update --extensions`);
-		const updateInstruction = theme.fg("muted", "Package updates are available. Run ") + action;
+		const updateInstruction = theme.fg("muted", "有可用的包更新。请执行 ") + action;
 		const packageLines = packages.map((pkg) => `- ${pkg}`).join("\n");
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder((text) => theme.fg("warning", text)));
 		this.chatContainer.addChild(
 			new Text(
-				`${theme.bold(theme.fg("warning", "Package Updates Available"))}\n${updateInstruction}\n${theme.fg("muted", "Packages:")}\n${packageLines}`,
+				`${theme.bold(theme.fg("warning", "有可用的包更新"))}\n${updateInstruction}\n${theme.fg("muted", "包：")}\n${packageLines}`,
 				1,
 				0,
 			),
@@ -4257,15 +4263,15 @@ export class InteractiveMode {
 		if (steeringMessages.length > 0 || followUpMessages.length > 0) {
 			this.pendingMessagesContainer.addChild(new Spacer(1));
 			for (const message of steeringMessages) {
-				const text = theme.fg("dim", `Steering: ${message}`);
+				const text = theme.fg("dim", `插话：${message}`);
 				this.pendingMessagesContainer.addChild(new TruncatedText(text, 1, 0));
 			}
 			for (const message of followUpMessages) {
-				const text = theme.fg("dim", `Follow-up: ${message}`);
+				const text = theme.fg("dim", `追加：${message}`);
 				this.pendingMessagesContainer.addChild(new TruncatedText(text, 1, 0));
 			}
 			const dequeueHint = this.getAppKeyDisplay("app.message.dequeue");
-			const hintText = theme.fg("dim", `↳ ${dequeueHint} to edit all queued messages`);
+			const hintText = theme.fg("dim", `↳ ${dequeueHint} 编辑全部排队消息`);
 			this.pendingMessagesContainer.addChild(new TruncatedText(hintText, 1, 0));
 		}
 	}
@@ -4296,7 +4302,7 @@ export class InteractiveMode {
 		this.editor.addToHistory?.(text);
 		this.editor.setText("");
 		this.updatePendingMessagesDisplay();
-		this.showStatus("Queued message for after compaction");
+		this.showStatus("消息已排队，压缩完成后发送");
 	}
 
 	private isExtensionCommand(text: string): boolean {
@@ -4527,7 +4533,7 @@ export class InteractiveMode {
 					onHttpIdleTimeoutMsChange: (timeoutMs) => {
 						this.settingsManager.setHttpIdleTimeoutMs(timeoutMs);
 						configureHttpDispatcher(timeoutMs);
-						this.showStatus(`HTTP idle timeout: ${formatHttpIdleTimeoutMs(timeoutMs)}`);
+						this.showStatus(`HTTP 空闲超时：${formatHttpIdleTimeoutMs(timeoutMs)}`);
 					},
 					onModelThinkingLevelChange: (provider, modelId, level) => {
 						this.settingsManager.setModelThinkingLevel(provider, modelId, level);
@@ -4636,12 +4642,12 @@ export class InteractiveMode {
 					onTuiModeChange: (mode) => {
 						if (!this.switchTuiMode(mode)) {
 							selector?.getSettingsList().updateValue("tui-mode", this.ui.mode);
-							this.showStatus("Close active overlays before changing TUI mode");
+							this.showStatus("请先关闭已打开的界面，再切换 TUI 模式");
 							return;
 						}
 						this.settingsManager.setTuiMode(mode);
 						if (!this.activeStatusIndicator) this.statusContainer.clear();
-						this.showStatus(`TUI mode: ${mode}`);
+						this.showStatus(`界面模式：${mode === "regular" ? "常规" : "全屏"}`);
 					},
 					onFullscreenExitOutputChange: (output) => {
 						this.settingsManager.setFullscreenExitOutput(output);
@@ -4673,7 +4679,7 @@ export class InteractiveMode {
 		const normalized = searchTerm.trim().toLowerCase();
 		const level = availableLevels.find((candidate) => candidate.toLowerCase() === normalized);
 		if (!level) {
-			this.showError(`Unknown thinking level "${searchTerm}". Available levels: ${availableLevels.join(", ")}.`);
+			this.showError(`未知推理强度 "${searchTerm}"。可选级别：${availableLevels.join("、")}。`);
 			return;
 		}
 
@@ -4685,7 +4691,9 @@ export class InteractiveMode {
 			this.session.setThinkingLevel(level, { persist });
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
-			this.showStatus(persist ? `Default thinking level: ${level}` : `Thinking level: ${level}`);
+			this.showStatus(
+				persist ? `默认推理强度：${THINKING_LEVEL_LABELS[level]}` : `推理强度：${THINKING_LEVEL_LABELS[level]}`,
+			);
 		} catch (error) {
 			this.showError(error instanceof Error ? error.message : String(error));
 		}
@@ -4724,7 +4732,7 @@ export class InteractiveMode {
 				await this.session.setModel(model, { persist: false });
 				this.footer.invalidate();
 				this.updateEditorBorderColor();
-				this.showStatus(`Model: ${model.id}`);
+				this.showStatus(`模型：${model.id}`);
 				void this.maybeWarnAboutAnthropicSubscriptionAuth(model);
 			} catch (error) {
 				this.showError(error instanceof Error ? error.message : String(error));
@@ -4741,7 +4749,7 @@ export class InteractiveMode {
 		]);
 		if (cachedMatch) return cachedMatch;
 
-		this.showStatus("Refreshing model catalogs…");
+		this.showStatus("正在刷新模型目录…");
 		const controller = new AbortController();
 		let timedOut = false;
 		const timeout = setTimeout(() => {
@@ -4751,15 +4759,15 @@ export class InteractiveMode {
 		try {
 			const result = await refreshModelCatalogs(this.session.modelRuntime, controller.signal);
 			if (result.aborted && timedOut) {
-				this.showWarning("Model refresh timed out; searching cached models.");
+				this.showWarning("模型刷新超时；正在搜索已缓存的模型。");
 			} else if (result.errors.size > 0) {
-				this.showWarning(`Could not refresh ${[...result.errors.keys()].join(", ")}; searching cached models.`);
+				this.showWarning(`无法刷新 ${[...result.errors.keys()].join("、")}；正在搜索已缓存的模型。`);
 			}
 		} catch (error) {
 			this.showWarning(
 				timedOut
-					? "Model refresh timed out; searching cached models."
-					: `Could not refresh model catalogs: ${error instanceof Error ? error.message : String(error)}`,
+					? "模型刷新超时；正在搜索已缓存的模型。"
+					: `无法刷新模型目录：${error instanceof Error ? error.message : String(error)}`,
 			);
 		} finally {
 			clearTimeout(timeout);
@@ -4823,9 +4831,7 @@ export class InteractiveMode {
 			this.autoTrustOnReloadCwd = undefined;
 			return true;
 		} catch (error) {
-			this.showWarning(
-				`Could not save project trust after reload: ${error instanceof Error ? error.message : String(error)}`,
-			);
+			this.showWarning(`重新加载后保存项目信任失败： ${error instanceof Error ? error.message : String(error)}`);
 			return false;
 		}
 	}
@@ -4842,9 +4848,7 @@ export class InteractiveMode {
 				onSelect: (selection) => {
 					trustStore.setMany(selection.updates);
 					done();
-					this.showStatus(
-						`Saved trust decision: ${selection.trusted ? "trusted" : "untrusted"}. Restart ${APP_NAME} for this to take effect.`,
-					);
+					this.showStatus(`已保存信任决定：${selection.trusted ? "信任" : "不信任"}。重启 ${APP_NAME} 后生效。`);
 				},
 				onCancel: () => {
 					done();
@@ -4864,7 +4868,7 @@ export class InteractiveMode {
 					this.footer.invalidate();
 					this.updateEditorBorderColor();
 					done();
-					this.showStatus(persist ? `Default model: ${model.provider}/${model.id}` : `Model: ${model.id}`);
+					this.showStatus(persist ? `默认模型：${model.provider}/${model.id}` : `模型：${model.id}`);
 					void this.maybeWarnAboutAnthropicSubscriptionAuth(model);
 				} catch (error) {
 					done();
@@ -4894,7 +4898,7 @@ export class InteractiveMode {
 		const userMessages = this.session.getUserMessagesForForking();
 
 		if (userMessages.length === 0) {
-			this.showStatus("No messages to fork from");
+			this.showStatus("没有可分叉的消息");
 			return;
 		}
 
@@ -4913,7 +4917,7 @@ export class InteractiveMode {
 						}
 
 						this.editor.setText(result.selectedText ?? "");
-						this.showStatus("Forked to new session");
+						this.showStatus("已分叉到新会话");
 					} catch (error: unknown) {
 						this.showError(error instanceof Error ? error.message : String(error));
 					}
@@ -4931,7 +4935,7 @@ export class InteractiveMode {
 	private async handleCloneCommand(): Promise<void> {
 		const leafId = this.sessionManager.getLeafId();
 		if (!leafId) {
-			this.showStatus("Nothing to clone yet");
+			this.showStatus("暂无可复制的内容");
 			return;
 		}
 
@@ -4943,7 +4947,7 @@ export class InteractiveMode {
 			}
 
 			this.editor.setText("");
-			this.showStatus("Cloned to new session");
+			this.showStatus("已复制到新会话");
 		} catch (error: unknown) {
 			this.showError(error instanceof Error ? error.message : String(error));
 		}
@@ -4955,7 +4959,7 @@ export class InteractiveMode {
 		const initialFilterMode = this.settingsManager.getTreeFilterMode();
 
 		if (tree.length === 0) {
-			this.showStatus("No entries in session");
+			this.showStatus("会话中没有条目");
 			return;
 		}
 
@@ -4968,7 +4972,7 @@ export class InteractiveMode {
 					// Selecting the current leaf is a no-op (already there)
 					if (entryId === this.sessionManager.getLeafId()) {
 						done();
-						this.showStatus("Already at this point");
+						this.showStatus("已在此处");
 						return;
 					}
 
@@ -4982,10 +4986,10 @@ export class InteractiveMode {
 					// Check if we should skip the prompt (user preference to always default to no summary)
 					if (!this.settingsManager.getBranchSummarySkipPrompt()) {
 						while (true) {
-							const summaryChoice = await this.showExtensionSelector("Summarize branch?", [
-								"No summary",
-								"Summarize",
-								"Summarize with custom prompt",
+							const summaryChoice = await this.showExtensionSelector("总结分支？", [
+								"不总结",
+								"总结",
+								"使用自定义提示总结",
 							]);
 
 							if (summaryChoice === undefined) {
@@ -4994,10 +4998,10 @@ export class InteractiveMode {
 								return;
 							}
 
-							wantsSummary = summaryChoice !== "No summary";
+							wantsSummary = summaryChoice !== "不总结";
 
-							if (summaryChoice === "Summarize with custom prompt") {
-								customInstructions = await this.showExtensionEditor("Custom summarization instructions");
+							if (summaryChoice === "使用自定义提示总结") {
+								customInstructions = await this.showExtensionEditor("自定义总结提示");
 								if (customInstructions === undefined) {
 									// User cancelled - loop back to summary selector
 									continue;
@@ -5037,12 +5041,12 @@ export class InteractiveMode {
 
 						if (result.aborted) {
 							// Summarization aborted - re-show tree selector with same selection
-							this.showStatus("Branch summarization cancelled");
+							this.showStatus("分支总结已取消");
 							this.showTreeSelector(entryId);
 							return;
 						}
 						if (result.cancelled) {
-							this.showStatus("Navigation cancelled");
+							this.showStatus("已取消导航");
 							return;
 						}
 
@@ -5052,7 +5056,7 @@ export class InteractiveMode {
 						if (result.editorText && !this.editor.getText().trim()) {
 							this.editor.setText(result.editorText);
 						}
-						this.showStatus("Navigated to selected point");
+						this.showStatus("已跳转到所选位置");
 						void this.flushCompactionQueue({ willRetry: false });
 					} catch (error) {
 						this.showError(error instanceof Error ? error.message : String(error));
@@ -5129,13 +5133,13 @@ export class InteractiveMode {
 			if (result.cancelled) {
 				return result;
 			}
-			this.showStatus("Resumed session");
+			this.showStatus("已恢复会话");
 			return result;
 		} catch (error: unknown) {
 			if (error instanceof MissingSessionCwdError) {
 				const selectedCwd = await this.promptForMissingSessionCwd(error);
 				if (!selectedCwd) {
-					this.showStatus("Resume cancelled");
+					this.showStatus("已取消恢复");
 					return { cancelled: true };
 				}
 				const result = await this.runtimeHost.switchSession(sessionPath, {
@@ -5146,10 +5150,10 @@ export class InteractiveMode {
 				if (result.cancelled) {
 					return result;
 				}
-				this.showStatus("Resumed session in current cwd");
+				this.showStatus("已在当前目录恢复会话");
 				return result;
 			}
-			return this.handleFatalRuntimeError("Failed to resume session", error);
+			return this.handleFatalRuntimeError("恢复会话失败", error);
 		}
 	}
 
@@ -5191,7 +5195,7 @@ export class InteractiveMode {
 				id: providerId,
 				name: this.session.modelRuntime.getProvider(providerId)?.name ?? providerId,
 				authType: type,
-				status: { type, source: "stored credential" },
+				status: { type, source: "已保存的凭据" },
 			}))
 			.sort((a, b) => a.name.localeCompare(b.name));
 	}
@@ -5246,8 +5250,8 @@ export class InteractiveMode {
 		const oauthProvider = providerOptions?.find((provider) => provider.authType === "oauth");
 		const oauthLoginLabel =
 			oauthProvider?.method && "loginLabel" in oauthProvider.method ? oauthProvider.method.loginLabel : undefined;
-		const subscriptionLabel = oauthLoginLabel ?? "Sign in with an account";
-		const apiKeyLabel = "Sign in with an API key";
+		const subscriptionLabel = oauthLoginLabel ?? "使用账号登录";
+		const apiKeyLabel = "使用 API 密钥登录";
 		const availableAuthTypes = providerOptions
 			? new Set(providerOptions.map((provider) => provider.authType))
 			: new Set<AuthSelectorProvider["authType"]>(["oauth", "api_key"]);
@@ -5260,7 +5264,7 @@ export class InteractiveMode {
 		}
 
 		if (options.length === 0) {
-			this.showStatus("No login methods available.");
+			this.showStatus("没有可用的登录方式。");
 			return;
 		}
 
@@ -5272,9 +5276,7 @@ export class InteractiveMode {
 			return;
 		}
 
-		const title = providerOptions?.[0]
-			? `Select authentication method for ${providerOptions[0].name}:`
-			: "Select authentication method:";
+		const title = providerOptions?.[0] ? `为 ${providerOptions[0].name} 选择认证方式：` : "选择认证方式：";
 		this.showSelector((done) => {
 			const selector = new ExtensionSelectorComponent(
 				title,
@@ -5305,10 +5307,10 @@ export class InteractiveMode {
 		if (providerOptions.length === 0) {
 			const message =
 				authType === "oauth"
-					? "No subscription providers available."
+					? "没有可用的订阅服务商。"
 					: authType === "api_key"
-						? "No API key providers available."
-						: "No login providers available.";
+						? "没有可用的 API 密钥服务商。"
+						: "没有可用的登录服务商。";
 			this.showStatus(message);
 			return;
 		}
@@ -5353,12 +5355,12 @@ export class InteractiveMode {
 		try {
 			providerOptions = await this.getLogoutProviderOptions();
 		} catch (error) {
-			this.showError(`Could not read stored credentials: ${error instanceof Error ? error.message : String(error)}`);
+			this.showError(`读取已存储的凭据失败：${error instanceof Error ? error.message : String(error)}`);
 			return;
 		}
 		if (providerOptions.length === 0) {
 			this.showStatus(
-				"No stored credentials to remove. /logout only removes credentials saved by /login; environment variables and models.json config are unchanged.",
+				"没有可移除的已存储凭据。/logout 只移除由 /login 保存的凭据；环境变量和 models.json 配置保持不变。",
 			);
 			return;
 		}
@@ -5382,15 +5384,15 @@ export class InteractiveMode {
 						await this.updateAvailableProviderCount();
 						const message =
 							providerOption.authType === "oauth"
-								? `Logged out of ${providerOption.name}`
-								: `Removed stored API key for ${providerOption.name}. Environment variables and models.json config are unchanged.`;
+								? `已退出 ${providerOption.name} 登录`
+								: `已移除 ${providerOption.name} 已保存的 API 密钥，环境变量和 models.json 配置保持不变。`;
 						this.showStatus(message);
 					} catch (error: unknown) {
 						const message = error instanceof Error ? error.message : String(error);
 						this.showError(
 							error instanceof CredentialSynchronizationError
-								? `Credentials removed for ${providerOption.name}, but local model state could not be synchronized: ${message}`
-								: `Logout failed: ${message}`,
+								? `已移除 ${providerOption.name} 的凭据，但本地模型状态未能同步： ${message}`
+								: `退出登录失败：${message}`,
 						);
 					}
 				},
@@ -5409,7 +5411,7 @@ export class InteractiveMode {
 		authType: "oauth" | "api_key",
 		previousModel: Model<any> | undefined,
 	): Promise<void> {
-		const actionLabel = authType === "oauth" ? `Logged in to ${providerName}` : `Saved API key for ${providerName}`;
+		const actionLabel = authType === "oauth" ? `已登录 ${providerName}` : `已保存 ${providerName} 的 API 密钥`;
 
 		let selectedModel: Model<any> | undefined;
 		let selectionError: string | undefined;
@@ -5417,21 +5419,21 @@ export class InteractiveMode {
 			const availableModels = this.session.modelRuntime.getAvailableSnapshot();
 			const providerModels = availableModels.filter((model) => model.provider === providerId);
 			if (!hasDefaultModelProvider(providerId)) {
-				selectionError = `${actionLabel}, but no default model is configured for provider "${providerId}". Use /model to select a model.`;
+				selectionError = `${actionLabel}，但服务商 "${providerId}" 未配置默认模型。请使用 /model 选择模型。`;
 			} else if (providerModels.length === 0) {
-				selectionError = `${actionLabel}, but no models are available for that provider. Use /model to select a model.`;
+				selectionError = `${actionLabel}，但该服务商没有可用模型。请使用 /model 选择模型。`;
 			} else {
 				const defaultModelId = defaultModelPerProvider[providerId];
 				selectedModel = providerModels.find((model) => model.id === defaultModelId);
 				if (!selectedModel) {
-					selectionError = `${actionLabel}, but its default model "${defaultModelId}" is not available. Use /model to select a model.`;
+					selectionError = `${actionLabel}，但默认模型 "${defaultModelId}" 不可用。请使用 /model 选择模型。`;
 				} else {
 					try {
 						await this.session.setModel(selectedModel, { persist: true });
 					} catch (error: unknown) {
 						selectedModel = undefined;
 						const errorMessage = error instanceof Error ? error.message : String(error);
-						selectionError = `${actionLabel}, but selecting its default model failed: ${errorMessage}. Use /model to select a model.`;
+						selectionError = `${actionLabel}，但选择默认模型失败：${errorMessage}。请使用 /model 选择模型。`;
 					}
 				}
 			}
@@ -5441,10 +5443,10 @@ export class InteractiveMode {
 		this.footer.invalidate();
 		this.updateEditorBorderColor();
 		if (selectedModel) {
-			this.showStatus(`${actionLabel}. Selected ${selectedModel.id}. Credentials saved to ${getAuthPath()}`);
+			this.showStatus(`${actionLabel}。已选择 ${selectedModel.id}。凭据已保存至 ${getAuthPath()}`);
 			void this.maybeWarnAboutAnthropicSubscriptionAuth(selectedModel);
 		} else {
-			this.showStatus(`${actionLabel}. Credentials saved to ${getAuthPath()}`);
+			this.showStatus(`${actionLabel}。凭据已保存至 ${getAuthPath()}`);
 			if (selectionError) {
 				this.showError(selectionError);
 			} else {
@@ -5458,9 +5460,9 @@ export class InteractiveMode {
 			.refresh({ providers: [providerId], signal: controller.signal })
 			.then((result) => {
 				if (result.aborted) {
-					this.showWarning(`${actionLabel}, but its model catalog refresh timed out; using cached models.`);
+					this.showWarning(`${actionLabel}，但模型目录刷新超时，正在使用缓存模型。`);
 				} else if (result.errors.size > 0) {
-					this.showWarning(`${actionLabel}, but its model catalog could not be refreshed; using cached models.`);
+					this.showWarning(`${actionLabel}，但模型目录刷新失败，正在使用缓存模型。`);
 				}
 				this.updateAvailableProviderCount();
 				this.footer.invalidate();
@@ -5468,7 +5470,7 @@ export class InteractiveMode {
 			})
 			.catch((error: unknown) => {
 				this.showWarning(
-					`${actionLabel}, but its model catalog could not be refreshed: ${error instanceof Error ? error.message : String(error)}`,
+					`${actionLabel}，但模型目录刷新失败： ${error instanceof Error ? error.message : String(error)}`,
 				);
 			})
 			.finally(() => clearTimeout(timeout));
@@ -5487,13 +5489,9 @@ export class InteractiveMode {
 			providerOption.id,
 			() => restoreEditor(),
 			providerOption.name,
-			`${providerOption.name} setup`,
+			`配置 ${providerOption.name}`,
 		);
-		dialog.showInfo(
-			`${providerOption.method?.name ?? "Authentication"} is configured outside ${APP_NAME}.`,
-			[],
-			true,
-		);
+		dialog.showInfo(`${providerOption.method?.name ?? "认证"} 已在 ${APP_NAME} 之外配置。`, [], true);
 
 		this.editorContainer.clear();
 		this.editorContainer.addChild(dialog);
@@ -5515,8 +5513,8 @@ export class InteractiveMode {
 
 		if (providerId === "amazon-bedrock") {
 			dialog.showDetails([
-				theme.fg("text", "You can also use an AWS profile, IAM keys, or role-based credentials."),
-				theme.fg("muted", "See:"),
+				theme.fg("text", "也可以使用 AWS 配置档、IAM 密钥或基于角色的凭据。"),
+				theme.fg("muted", "参见："),
 				theme.fg("accent", `  ${path.join(getDocsPath(), "models.md")}`),
 			]);
 		}
@@ -5541,11 +5539,9 @@ export class InteractiveMode {
 			restoreEditor();
 			const errorMsg = error instanceof Error ? error.message : String(error);
 			if (error instanceof CredentialSynchronizationError) {
-				this.showError(
-					`Saved API key for ${providerName}, but local model state could not be synchronized: ${errorMsg}`,
-				);
-			} else if (errorMsg !== "Login cancelled") {
-				this.showError(`Failed to save API key for ${providerName}: ${errorMsg}`);
+				this.showError(`已保存 ${providerName} 的 API 密钥，但本地模型状态未能同步： ${errorMsg}`);
+			} else if (!(error instanceof LoginCancelledError) && !dialog.signal.aborted) {
+				this.showError(`保存 ${providerName} 的 API 密钥失败：${errorMsg}`);
 			}
 		}
 	}
@@ -5569,11 +5565,11 @@ export class InteractiveMode {
 					restoreDialog();
 					const id = prompt.options.find((option) => option.label === optionLabel)?.id;
 					if (id) resolve(id);
-					else reject(new Error("Login cancelled"));
+					else reject(new LoginCancelledError());
 				},
 				() => {
 					restoreDialog();
-					reject(new Error("Login cancelled"));
+					reject(new LoginCancelledError());
 				},
 			);
 			this.editorContainer.clear();
@@ -5593,11 +5589,11 @@ export class InteractiveMode {
 			response = dialog.showPrompt(prompt.message, prompt.placeholder);
 		}
 		if (!prompt.signal) return response;
-		if (prompt.signal.aborted) throw new Error("Login cancelled");
+		if (prompt.signal.aborted) throw new LoginCancelledError();
 		const signal = prompt.signal;
 		let onAbort: (() => void) | undefined;
 		const aborted = new Promise<string>((_resolve, reject) => {
-			onAbort = () => reject(new Error("Login cancelled"));
+			onAbort = () => reject(new LoginCancelledError());
 			signal.addEventListener("abort", onAbort, { once: true });
 		});
 		try {
@@ -5612,7 +5608,7 @@ export class InteractiveMode {
 			dialog.showAuth(event.url, event.instructions);
 		} else if (event.type === "device_code") {
 			dialog.showDeviceCode(event);
-			dialog.showWaiting("Waiting for authentication...");
+			dialog.showWaiting("等待认证…");
 		} else if (event.type === "info") {
 			dialog.showInfo(event.message, event.links);
 		} else {
@@ -5655,11 +5651,9 @@ export class InteractiveMode {
 			restoreEditor();
 			const errorMsg = error instanceof Error ? error.message : String(error);
 			if (error instanceof CredentialSynchronizationError) {
-				this.showError(
-					`Logged in to ${providerName}, but local model state could not be synchronized: ${errorMsg}`,
-				);
-			} else if (errorMsg !== "Login cancelled") {
-				this.showError(`Failed to login to ${providerName}: ${errorMsg}`);
+				this.showError(`已登录 ${providerName}，但本地模型状态未能同步：${errorMsg}`);
+			} else if (!(error instanceof LoginCancelledError) && !dialog.signal.aborted) {
+				this.showError(`登录 ${providerName} 失败：${errorMsg}`);
 			}
 		}
 	}
@@ -5670,11 +5664,11 @@ export class InteractiveMode {
 
 	private async handleReloadCommand(): Promise<void> {
 		if (this.session.isStreaming) {
-			this.showWarning("Wait for the current response to finish before reloading.");
+			this.showWarning("请等待当前回复完成后再重新加载。");
 			return;
 		}
 		if (this.session.isCompacting) {
-			this.showWarning("Wait for compaction to finish before reloading.");
+			this.showWarning("请等待压缩完成后再重新加载。");
 			return;
 		}
 
@@ -5685,11 +5679,7 @@ export class InteractiveMode {
 		reloadBox.addChild(new DynamicBorder(borderColor));
 		reloadBox.addChild(new Spacer(1));
 		reloadBox.addChild(
-			new Text(
-				theme.fg("muted", "Reloading keybindings, extensions, skills, prompts, themes, and context files..."),
-				1,
-				0,
-			),
+			new Text(theme.fg("muted", "正在重新加载快捷键、扩展、技能、提示模板、主题和上下文文件…"), 1, 0),
 		);
 		reloadBox.addChild(new Spacer(1));
 		reloadBox.addChild(new DynamicBorder(borderColor));
@@ -5741,12 +5731,12 @@ export class InteractiveMode {
 			const savedImplicitProjectTrust = this.maybeSaveImplicitProjectTrustAfterReload();
 			const modelsJsonError = this.session.modelRuntime.getError();
 			if (modelsJsonError) {
-				this.showError(`models.json error: ${modelsJsonError}`);
+				this.showError(`models.json 错误：${modelsJsonError}`);
 			}
 			this.showStatus(
 				savedImplicitProjectTrust
-					? "Reloaded keybindings, extensions, skills, prompts, themes, and context files; saved project trust"
-					: "Reloaded keybindings, extensions, skills, prompts, themes, and context files",
+					? "已重新加载快捷键、扩展、技能、提示模板、主题和上下文文件，并保存项目信任"
+					: "已重新加载快捷键、扩展、技能、提示模板、主题和上下文文件",
 			);
 			dismissReloadBox(this.editor as Component);
 			reloadBoxDismissed = true;
@@ -5754,7 +5744,7 @@ export class InteractiveMode {
 			if (!reloadBoxDismissed) {
 				dismissReloadBox(previousEditor as Component);
 			}
-			this.showError(`Reload failed: ${error instanceof Error ? error.message : String(error)}`);
+			this.showError(`重新加载失败：${error instanceof Error ? error.message : String(error)}`);
 		}
 	}
 
@@ -5764,7 +5754,7 @@ export class InteractiveMode {
 		try {
 			if (outputPath?.endsWith(".jsonl")) {
 				const filePath = this.session.exportToJsonl(outputPath);
-				this.showStatus(`Session exported to: ${filePath}`);
+				this.showStatus(`会话已导出至：${filePath}`);
 			} else {
 				const filePath = await this.session.exportToHtml(outputPath, {
 					toolRenderer: createToolHtmlRenderer({
@@ -5775,10 +5765,10 @@ export class InteractiveMode {
 					}),
 					themeName: theme.name,
 				});
-				this.showStatus(`Session exported to: ${filePath}`);
+				this.showStatus(`会话已导出至：${filePath}`);
 			}
 		} catch (error: unknown) {
-			this.showError(`Failed to export session: ${error instanceof Error ? error.message : "Unknown error"}`);
+			this.showError(`导出会话失败：${error instanceof Error ? error.message : "未知错误"}`);
 		}
 	}
 
@@ -5814,13 +5804,13 @@ export class InteractiveMode {
 	private async handleImportCommand(text: string): Promise<void> {
 		const inputPath = this.getPathCommandArgument(text, "/import");
 		if (!inputPath) {
-			this.showError("Usage: /import <path.jsonl>");
+			this.showError("用法：/import <路径.jsonl>");
 			return;
 		}
 
-		const confirmed = await this.showExtensionConfirm("Import session", `Replace current session with ${inputPath}?`);
+		const confirmed = await this.showExtensionConfirm("导入会话", `用 ${inputPath} 替换当前会话？`);
 		if (!confirmed) {
-			this.showStatus("Import cancelled");
+			this.showStatus("已取消导入");
 			return;
 		}
 
@@ -5828,30 +5818,30 @@ export class InteractiveMode {
 			this.clearStatusIndicator();
 			const result = await this.runtimeHost.importFromJsonl(inputPath);
 			if (result.cancelled) {
-				this.showStatus("Import cancelled");
+				this.showStatus("已取消导入");
 				return;
 			}
-			this.showStatus(`Session imported from: ${inputPath}`);
+			this.showStatus(`已从以下路径导入会话：${inputPath}`);
 		} catch (error: unknown) {
 			if (error instanceof MissingSessionCwdError) {
 				const selectedCwd = await this.promptForMissingSessionCwd(error);
 				if (!selectedCwd) {
-					this.showStatus("Import cancelled");
+					this.showStatus("已取消导入");
 					return;
 				}
 				const result = await this.runtimeHost.importFromJsonl(inputPath, selectedCwd);
 				if (result.cancelled) {
-					this.showStatus("Import cancelled");
+					this.showStatus("已取消导入");
 					return;
 				}
-				this.showStatus(`Session imported from: ${inputPath}`);
+				this.showStatus(`已从以下路径导入会话：${inputPath}`);
 				return;
 			}
 			if (error instanceof SessionImportFileNotFoundError) {
-				this.showError(`Failed to import session: ${error.message}`);
+				this.showError(`导入会话失败：${error.message}`);
 				return;
 			}
-			await this.handleFatalRuntimeError("Failed to import session", error);
+			await this.handleFatalRuntimeError("导入会话失败", error);
 		}
 	}
 
@@ -5861,9 +5851,9 @@ export class InteractiveMode {
 			const currentName = this.sessionManager.getSessionName();
 			if (currentName) {
 				this.chatContainer.addChild(new Spacer(1));
-				this.chatContainer.addChild(new Text(theme.fg("dim", `Session name: ${currentName}`), 1, 0));
+				this.chatContainer.addChild(new Text(theme.fg("dim", `会话名称：${currentName}`), 1, 0));
 			} else {
-				this.showWarning("Usage: /name <name>");
+				this.showWarning("用法：/name <名称>");
 			}
 			this.ui.requestRender();
 			return;
@@ -5873,11 +5863,11 @@ export class InteractiveMode {
 		const sessionName = result.applied ?? this.sessionManager.getSessionName();
 		if (result.normalizedFrom !== undefined) {
 			this.showWarning(
-				`Session name was normalized from ${JSON.stringify(result.normalizedFrom)} to ${JSON.stringify(sessionName)}`,
+				`会话名称已从 ${JSON.stringify(result.normalizedFrom)} 规范化为 ${JSON.stringify(sessionName)}`,
 			);
 		}
 		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(theme.fg("dim", `Session name set: ${sessionName ?? name}`), 1, 0));
+		this.chatContainer.addChild(new Text(theme.fg("dim", `会话名称已设置：${sessionName ?? name}`), 1, 0));
 		this.ui.requestRender();
 	}
 
@@ -5892,17 +5882,17 @@ export class InteractiveMode {
 		// grouped separately so the breakdown reconciles with the session total.
 		const usageBreakdown = getUsageCostBreakdown(entries);
 
-		let info = `${theme.bold("Session Info")}\n\n`;
+		let info = `${theme.bold("会话信息")}\n\n`;
 		if (sessionName) {
-			info += `${theme.fg("dim", "Name:")} ${sessionName}\n`;
+			info += `${theme.fg("dim", "名称：")} ${sessionName}\n`;
 		}
-		info += `${theme.fg("dim", "File:")} ${stats.sessionFile ?? "In-memory"}\n`;
-		info += `${theme.fg("dim", "ID:")} ${stats.sessionId}\n\n`;
-		info += `${theme.bold("Messages")}\n`;
-		info += `${theme.fg("dim", "Total:")} ${stats.totalMessages}\n`;
-		info += `${theme.fg("dim", "User:")} ${stats.userMessages}\n`;
-		info += `${theme.fg("dim", "Assistant:")} ${stats.assistantMessages}\n`;
-		info += `${theme.fg("dim", "Tools:")} ${stats.toolCalls} calls, ${stats.toolResults} results\n\n`;
+		info += `${theme.fg("dim", "文件：")} ${stats.sessionFile ?? "内存中"}\n`;
+		info += `${theme.fg("dim", "ID：")} ${stats.sessionId}\n\n`;
+		info += `${theme.bold("消息")}\n`;
+		info += `${theme.fg("dim", "总计：")} ${stats.totalMessages}\n`;
+		info += `${theme.fg("dim", "用户：")} ${stats.userMessages}\n`;
+		info += `${theme.fg("dim", "助手：")} ${stats.assistantMessages}\n`;
+		info += `${theme.fg("dim", "工具：")} ${stats.toolCalls} 次调用，${stats.toolResults} 条结果\n\n`;
 		info += `${theme.bold("Tokens")}\n`;
 		// "Input" is the full prompt volume. With cache activity, split it into
 		// cached (served from cache) vs uncached (everything else) - the only
@@ -5910,32 +5900,31 @@ export class InteractiveMode {
 		// of the uncached portion.
 		const { input, cacheRead, cacheWrite } = stats.tokens;
 		const promptTokens = input + cacheRead + cacheWrite;
-		info += `${theme.fg("dim", "Input:")} ${promptTokens.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "输入：")} ${promptTokens.toLocaleString()}\n`;
 		if (promptTokens > 0 && (cacheRead > 0 || cacheWrite > 0)) {
 			const hitRate = theme.fg("dim", `(${((cacheRead / promptTokens) * 100).toFixed(1)}%)`);
-			info += `  ${theme.fg("dim", "Cached:")} ${cacheRead.toLocaleString()} ${hitRate}\n`;
-			const written =
-				cacheWrite > 0 ? ` ${theme.fg("dim", `(${cacheWrite.toLocaleString()} written to cache)`)}` : "";
-			info += `  ${theme.fg("dim", "Uncached:")} ${(input + cacheWrite).toLocaleString()}${written}\n`;
+			info += `  ${theme.fg("dim", "缓存命中：")} ${cacheRead.toLocaleString()} ${hitRate}\n`;
+			const written = cacheWrite > 0 ? ` ${theme.fg("dim", `（缓存写入 ${cacheWrite.toLocaleString()}）`)}` : "";
+			info += `  ${theme.fg("dim", "未缓存：")} ${(input + cacheWrite).toLocaleString()}${written}\n`;
 		}
-		info += `${theme.fg("dim", "Output:")} ${stats.tokens.output.toLocaleString()}\n`;
-		info += `${theme.fg("dim", "Total:")} ${stats.tokens.total.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "输出：")} ${stats.tokens.output.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "总计：")} ${stats.tokens.total.toLocaleString()}\n`;
 
 		if (stats.cost > 0 || cacheWaste.missedTokens > 0) {
-			info += `\n${theme.bold("Cost")}\n`;
-			info += `${theme.fg("dim", "Total:")} $${stats.cost.toFixed(3)}`;
+			info += `\n${theme.bold("费用")}\n`;
+			info += `${theme.fg("dim", "总计：")} $${stats.cost.toFixed(3)}`;
 			if (usageBreakdown.length > 1) {
 				for (const entry of usageBreakdown) {
 					info += `\n  ${theme.fg("dim", `${entry.key}:`)} $${entry.cost.toFixed(3)} ${theme.fg("dim", `(${formatTokens(entry.tokens)} tokens)`)}`;
 				}
 			}
 			if (cacheWaste.missedTokens > 0) {
-				const missLabel = cacheWaste.missCount === 1 ? "1 miss" : `${cacheWaste.missCount} misses`;
-				const detail = `${cacheWaste.missedTokens.toLocaleString()} tokens, ${missLabel}`;
+				const missLabel = cacheWaste.missCount === 1 ? "1 次未命中" : `${cacheWaste.missCount} 次未命中`;
+				const detail = `${cacheWaste.missedTokens.toLocaleString()} tokens，${missLabel}`;
 				info +=
 					cacheWaste.missedCost >= 0.0001
-						? `\n${theme.fg("dim", "Cache Re-billed:")} $${cacheWaste.missedCost.toFixed(3)} ${theme.fg("dim", `(${detail})`)}`
-						: `\n${theme.fg("dim", "Cache Re-billed:")} ${detail}`;
+						? `\n${theme.fg("dim", "缓存重复计费：")} $${cacheWaste.missedCost.toFixed(3)} ${theme.fg("dim", `（${detail}）`)}`
+						: `\n${theme.fg("dim", "缓存重复计费：")} ${detail}`;
 			}
 		}
 
@@ -5954,11 +5943,11 @@ export class InteractiveMode {
 						.reverse()
 						.map((e) => normalizeChangelogLinks(e.content, e))
 						.join("\n\n")
-				: "No changelog entries found.";
+				: "没有变更记录。";
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder());
-		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "新变化")), 1, 0));
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Markdown(changelogMarkdown, 1, 1, this.getMarkdownThemeWithSettings()));
 		this.chatContainer.addChild(new DynamicBorder());
@@ -6021,49 +6010,49 @@ export class InteractiveMode {
 		const pasteImage = this.getAppKeyDisplay("app.clipboard.pasteImage");
 
 		let hotkeys = `
-**Navigation**
-| Key | Action |
+**导航**
+| 按键 | 操作 |
 |-----|--------|
-| \`${cursorUp}\` / \`${cursorDown}\` / \`${cursorLeft}\` / \`${cursorRight}\` | Move cursor / browse history |
-| \`${cursorWordLeft}\` / \`${cursorWordRight}\` | Move by word |
-| \`${cursorLineStart}\` | Start of line |
-| \`${cursorLineEnd}\` | End of line |
-| \`${jumpForward}\` | Jump forward to character |
-| \`${jumpBackward}\` | Jump backward to character |
-| \`${pageUp}\` / \`${pageDown}\` | Scroll by page |
+| \`${cursorUp}\` / \`${cursorDown}\` / \`${cursorLeft}\` / \`${cursorRight}\` | 移动光标 / 浏览历史 |
+| \`${cursorWordLeft}\` / \`${cursorWordRight}\` | 按词移动 |
+| \`${cursorLineStart}\` | 移至行首 |
+| \`${cursorLineEnd}\` | 移至行尾 |
+| \`${jumpForward}\` | 向后查找字符 |
+| \`${jumpBackward}\` | 向前查找字符 |
+| \`${pageUp}\` / \`${pageDown}\` | 按页滚动 |
 
-**Editing**
-| Key | Action |
+**编辑**
+| 按键 | 操作 |
 |-----|--------|
-| \`${submit}\` | Send message |
-| \`${newLine}\` | New line${process.platform === "win32" ? " (Ctrl+Enter on Windows Terminal)" : ""} |
-| \`${deleteWordBackward}\` | Delete word backwards |
-| \`${deleteWordForward}\` | Delete word forwards |
-| \`${deleteToLineStart}\` | Delete to start of line |
-| \`${deleteToLineEnd}\` | Delete to end of line |
-| \`${yank}\` | Paste the most-recently-deleted text |
-| \`${yankPop}\` | Cycle through the deleted text after pasting |
-| \`${undo}\` | Undo |
+| \`${submit}\` | 发送消息 |
+| \`${newLine}\` | 换行${process.platform === "win32" ? "（Windows Terminal 中使用 Ctrl+Enter）" : ""} |
+| \`${deleteWordBackward}\` | 删除前一个词 |
+| \`${deleteWordForward}\` | 删除后一个词 |
+| \`${deleteToLineStart}\` | 删除到行首 |
+| \`${deleteToLineEnd}\` | 删除到行尾 |
+| \`${yank}\` | 粘贴最近删除的文本 |
+| \`${yankPop}\` | 粘贴后切换已删除的文本 |
+| \`${undo}\` | 撤销 |
 
-**Other**
-| Key | Action |
+**其他**
+| 按键 | 操作 |
 |-----|--------|
-| \`${tab}\` | Path completion / accept autocomplete |
-| \`${interrupt}\` | Cancel autocomplete / abort streaming |
-| \`${clear}\` | Clear editor (first) / exit (second) |
-| \`${exit}\` | Exit (when editor is empty) |
-| \`${suspend}\` | Suspend to background |
-| \`${cycleThinkingLevel}\` | Cycle thinking level |
-| \`${selectModel}\` | Open model selector |
-| \`${expandTools}\` | Toggle tool output expansion |
-| \`${toggleThinking}\` | Toggle thinking block visibility |
-| \`${externalEditor}\` | Edit message in external editor |
-| \`${followUp}\` | Queue follow-up message |
-| \`${dequeue}\` | Restore queued messages |
-| \`${pasteImage}\` | Paste image or text from clipboard |
-| \`/\` | Slash commands |
-| \`!\` | Run bash command |
-| \`!!\` | Run bash command (excluded from context) |
+| \`${tab}\` | 补全路径 / 接受补全 |
+| \`${interrupt}\` | 取消补全 / 中止生成 |
+| \`${clear}\` | 首次清空输入框 / 再次退出 |
+| \`${exit}\` | 输入框为空时退出 |
+| \`${suspend}\` | 挂起到后台 |
+| \`${cycleThinkingLevel}\` | 切换推理强度 |
+| \`${selectModel}\` | 打开模型选择器 |
+| \`${expandTools}\` | 展开 / 收起工具输出 |
+| \`${toggleThinking}\` | 显示 / 隐藏推理内容 |
+| \`${externalEditor}\` | 在外部编辑器中编辑消息 |
+| \`${followUp}\` | 排队追加消息 |
+| \`${dequeue}\` | 恢复排队消息 |
+| \`${pasteImage}\` | 粘贴剪贴板图片或文本 |
+| \`/\` | 斜杠命令 |
+| \`!\` | 运行 bash 命令 |
+| \`!!\` | 运行 bash 命令（不进入上下文） |
 `;
 
 		// Add extension-registered shortcuts
@@ -6071,8 +6060,8 @@ export class InteractiveMode {
 		const shortcuts = extensionRunner.getShortcuts(this.keybindings.getEffectiveConfig());
 		if (shortcuts.size > 0) {
 			hotkeys += `
-**Extensions**
-| Key | Action |
+**扩展**
+| 按键 | 操作 |
 |-----|--------|
 `;
 			for (const [key, shortcut] of shortcuts) {
@@ -6084,7 +6073,7 @@ export class InteractiveMode {
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder());
-		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Keyboard Shortcuts")), 1, 0));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "键盘快捷键")), 1, 0));
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Markdown(hotkeys.trim(), 1, 1, this.getMarkdownThemeWithSettings()));
 		this.chatContainer.addChild(new DynamicBorder());
@@ -6099,10 +6088,10 @@ export class InteractiveMode {
 				return;
 			}
 			this.chatContainer.addChild(new Spacer(1));
-			this.chatContainer.addChild(new Text(`${theme.fg("accent", "✓ New session started")}`, 1, 1));
+			this.chatContainer.addChild(new Text(`${theme.fg("accent", "✓ 已开始新会话")}`, 1, 1));
 			this.ui.requestRender();
 		} catch (error: unknown) {
-			await this.handleFatalRuntimeError("Failed to create session", error);
+			await this.handleFatalRuntimeError("创建会话失败", error);
 		}
 	}
 
@@ -6134,7 +6123,7 @@ export class InteractiveMode {
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(
-			new Text(`${theme.fg("accent", "✓ Debug log written")}\n${theme.fg("muted", debugLogPath)}`, 1, 1),
+			new Text(`${theme.fg("accent", "✓ 已写入调试日志")}\n${theme.fg("muted", debugLogPath)}`, 1, 1),
 		);
 		this.ui.requestRender();
 	}
@@ -6219,7 +6208,7 @@ export class InteractiveMode {
 			if (this.bashComponent) {
 				this.bashComponent.setComplete(undefined, false);
 			}
-			this.showError(`Bash command failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+			this.showError(`bash 命令失败：${error instanceof Error ? error.message : "未知错误"}`);
 		}
 
 		this.bashComponent = undefined;

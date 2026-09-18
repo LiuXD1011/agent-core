@@ -17,8 +17,8 @@ export class ShowImagesSelectorComponent extends Container {
 		super();
 
 		const items: SelectItem[] = [
-			{ value: "yes", label: "Yes", description: "Show images inline in terminal" },
-			{ value: "no", label: "No", description: "Show text placeholder instead" },
+			{ value: "yes", label: "是", description: "在终端内嵌显示图像" },
+			{ value: "no", label: "否", description: "改为显示文本占位符" },
 		];
 
 		// Add top border

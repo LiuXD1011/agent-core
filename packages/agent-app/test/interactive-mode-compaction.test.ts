@@ -37,8 +37,8 @@ describe("InteractiveMode compaction events", () => {
 			usage,
 		});
 		const output = stripAnsi(enabled.chatContainer.render(120).join("\n"));
-		expect(output).toContain("Compaction: 100 tokens billed (~$0.13)");
-		expect(output).toContain("Branch summary: 100 tokens billed (~$0.13)");
+		expect(output).toContain("上下文压缩：计费 100 tokens (~$0.13)");
+		expect(output).toContain("分支总结：计费 100 tokens (~$0.13)");
 
 		const disabled = {
 			chatContainer: new Container(),

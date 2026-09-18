@@ -119,7 +119,7 @@ function formatWriteCall(
 		const remaining = lines.length - maxLines;
 		text += `\n\n${displayLines.map((line) => (lang ? line : theme.fg("toolOutput", replaceTabs(line)))).join("\n")}`;
 		if (remaining > 0) {
-			text += `${theme.fg("muted", `\n... (${remaining} more lines, ${totalLines} total,`)} ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+			text += `${theme.fg("muted", `\n…（还有 ${remaining} 行，共 ${totalLines} 行，`)} ${keyHint("app.tools.expand", "展开")}${theme.fg("muted", "）")}`;
 		}
 	}
 

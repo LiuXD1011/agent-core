@@ -1,27 +1,27 @@
-# Using Agent Core
+# 使用 Agent Core
 
-This page is the main user manual: installation, day-to-day usage, sessions, and the CLI reference.
+本页是主要用户手册：涵盖安装、日常使用、会话与 CLI 参考。
 
-## Install and Uninstall
+## 安装与卸载
 
-Agent Core is distributed as an npm package:
+Agent Core 以 npm 包形式分发：
 
 ```bash
 npm install -g --ignore-scripts @liuxuedeng/agent-core
 ```
 
-`--ignore-scripts` disables dependency lifecycle scripts during install. Agent Core does not require install scripts for normal npm installs.
+`--ignore-scripts` 会在安装期间禁用依赖的生命周期脚本。正常的 npm 安装不需要 Agent Core 的安装脚本。
 
-Then start it in the project directory you want it to work on:
+然后在你希望它工作的项目目录中启动：
 
 ```bash
 cd /path/to/project
 agent-core
 ```
 
-### Uninstall
+### 卸载
 
-Use the package manager that installed Agent Core:
+使用安装 Agent Core 时所用的包管理器：
 
 ```bash
 # npm install -g
@@ -37,90 +37,90 @@ yarn global remove @liuxuedeng/agent-core
 bun uninstall -g @liuxuedeng/agent-core
 ```
 
-Uninstalling Agent Core leaves settings, credentials, sessions, and installed packages in `~/.agent-core/agent/`.
+卸载 Agent Core 后，设置、凭据、会话和已安装的包仍保留在 `~/.agent-core/agent/` 中。
 
-## Authenticate
+## 认证
 
-Agent Core can use subscription providers through `/login`, or API-key providers through environment variables or the auth file.
+Agent Core 可以通过 `/login` 使用订阅型服务商，或通过环境变量和认证文件使用 API 密钥型服务商。
 
-- **Subscription login:** start Agent Core and run `/login`, then select a provider. Built-in subscription logins include Claude Pro/Max, ChatGPT Plus/Pro (Codex), and GitHub Copilot.
-- **API key:** set an API key before launching, for example `export ANTHROPIC_API_KEY=sk-ant-...`, then run `agent-core`. You can also run `/login` and select an API-key provider to store the key in `~/.agent-core/agent/auth.json`.
+- **订阅登录：** 启动 Agent Core 并运行 `/login`，然后选择服务商。内置的订阅登录包括 Claude Pro/Max、ChatGPT Plus/Pro（Codex）和 GitHub Copilot。
+- **API 密钥：** 启动前设置 API 密钥，例如 `export ANTHROPIC_API_KEY=sk-ant-...`，然后运行 `agent-core`。也可以运行 `/login` 并选择 API 密钥型服务商，把密钥保存到 `~/.agent-core/agent/auth.json`。
 
-See [Models and Providers](models.md) for all supported providers, environment variables, and cloud-provider setup.
+所有支持的服务商、环境变量和云服务商配置见 [模型与服务商](models.md)。
 
-## Interactive Mode
+## 交互模式
 
 <p align="center"><img src="images/interactive-mode.png" alt="Interactive Mode" width="600"></p>
 
-The interface has four main areas:
+界面分为四个主要区域：
 
-- **Startup header** - shortcuts, loaded context files, prompt templates, skills, and extensions
-- **Messages** - user messages, assistant responses, tool calls, tool results, notifications, errors, and extension UI
-- **Editor** - where you type; border color indicates the current thinking level
-- **Footer** - working directory, session name, token/cache usage, cost, context usage, and current model. Totals include assistant responses, usage reported by tools, and summary generation.
+- **启动页眉** - 快捷键、已加载的上下文文件、提示模板、技能和扩展
+- **消息** - 用户消息、助手回复、工具调用、工具结果、通知、错误和扩展 UI
+- **编辑器** - 你的输入区域；边框颜色表示当前思考级别
+- **页脚** - 工作目录、会话名称、Token/缓存用量、费用、上下文使用情况和当前模型。统计包含助手回复、工具上报的用量以及摘要生成。
 
-The editor can be replaced temporarily by built-in UI such as `/settings` or by custom extension UI.
+编辑器可以被 `/settings` 等内置 UI 或自定义扩展 UI 临时替换。
 
-### Editor Features
+### 编辑器功能
 
-| Feature | How |
+| 功能 | 操作 |
 |---------|-----|
-| File reference | Type `@` to fuzzy-search project files |
-| Path completion | Press Tab to complete paths |
-| Multi-line input | Shift+Enter, or Ctrl+Enter on Windows Terminal |
-| Images | Paste with Ctrl+V, Alt+V on Windows, or drag into the terminal |
-| Shell command | `!command` runs and sends output to the model |
-| Hidden shell command | `!!command` runs without sending output to the model |
-| External editor | Ctrl+G opens `externalEditor`, `$VISUAL`, `$EDITOR`, Notepad on Windows, or `nano` elsewhere |
+| 文件引用 | 输入 `@` 模糊搜索项目文件 |
+| 路径补全 | 按 Tab 补全路径 |
+| 多行输入 | Shift+Enter，Windows Terminal 中为 Ctrl+Enter |
+| 图像 | 用 Ctrl+V 粘贴（Windows 上为 Alt+V），或拖入终端 |
+| Shell 命令 | `!command` 执行并把输出发送给模型 |
+| 隐藏 Shell 命令 | `!!command` 执行但不把输出发送给模型 |
+| 外部编辑器 | Ctrl+G 依次打开 `externalEditor`、`$VISUAL`、`$EDITOR`、Windows 上的记事本或其他平台上的 `nano` |
 
-See [Keybindings](keybindings.md) for all shortcuts and customization.
+所有快捷键与自定义方式见 [快捷键](keybindings.md)。
 
-## Slash Commands
+## 斜杠命令
 
-Type `/` in the editor to open command completion. Extensions can register custom commands, skills are available as `/skill:name`, and prompt templates expand via `/templatename`.
+在编辑器中输入 `/` 打开命令补全。扩展可以注册自定义命令，技能以 `/skill:name` 的形式提供，提示模板通过 `/templatename` 展开。
 
-| Command | Description |
+| 命令 | 说明 |
 |---------|-------------|
-| `/login`, `/logout` | Manage OAuth or API-key credentials |
-| `/model` | Switch models; Ctrl+S in the picker saves the startup default |
-| `/thinking` | Switch thinking level; Ctrl+S in the picker saves the startup default |
-| `/settings` | Theme, message delivery, transport, and other preferences |
-| `/resume` | Pick from previous sessions |
-| `/new` | Start a new session |
-| `/name <name>` | Set session display name |
-| `/session` | Show session file, ID, messages, tokens, and cost |
-| `/tree` | Jump to any point in the session and continue from there |
-| `/trust` | Save project trust decision for future sessions |
-| `/fork` | Create a new session from a previous user message |
-| `/clone` | Duplicate the current active branch into a new session |
-| `/compact [prompt]` | Manually compact context, optionally with custom instructions |
-| `/export [file]` | Export session to HTML or JSONL |
-| `/import <file>` | Import and resume a session from a JSONL file |
-| `/reload` | Reload keybindings, extensions, skills, prompts, themes, and context files |
-| `/hotkeys` | Show all keyboard shortcuts |
-| `/changelog` | Display version history |
-| `/quit` | Quit agent-core |
+| `/login`, `/logout` | 管理 OAuth 或 API 密钥凭据 |
+| `/model` | 切换模型；在选择器中按 Ctrl+S 保存启动默认值 |
+| `/thinking` | 切换思考级别；在选择器中按 Ctrl+S 保存启动默认值 |
+| `/settings` | 主题、消息投递、传输方式及其他偏好设置 |
+| `/resume` | 从历史会话中选择 |
+| `/new` | 开始新会话 |
+| `/name <name>` | 设置会话显示名称 |
+| `/session` | 显示会话文件、ID、消息数、Token 和费用 |
+| `/tree` | 跳转到会话中的任意位置并从那里继续 |
+| `/trust` | 保存项目信任决定供后续会话使用 |
+| `/fork` | 从之前的用户消息创建新会话 |
+| `/clone` | 将当前活动分支复制为新会话 |
+| `/compact [prompt]` | 手动压缩上下文，可附带自定义指令 |
+| `/export [file]` | 将会话导出为 HTML 或 JSONL |
+| `/import <file>` | 从 JSONL 文件导入并恢复会话 |
+| `/reload` | 重新加载快捷键、扩展、技能、提示、主题和上下文文件 |
+| `/hotkeys` | 显示所有键盘快捷键 |
+| `/changelog` | 显示版本历史 |
+| `/quit` | 退出 agent-core |
 
-## Message Queue
+## 消息队列
 
-You can submit messages while the agent is still working:
+Agent 仍在工作时你也可以提交消息：
 
-- **Enter** queues a steering message, delivered after the current assistant turn finishes executing its tool calls.
-- **Alt+Enter** queues a follow-up message, delivered after the agent finishes all work.
-- **Escape** aborts and restores queued messages to the editor.
-- **Alt+Up** retrieves queued messages back to the editor.
+- **Enter** 入队一条插话消息，在当前助手回合执行完工具调用后投递。
+- **Alt+Enter** 入队一条追加消息，在 Agent 完成全部工作后投递。
+- **Escape** 中止并把队列中的消息恢复到编辑器。
+- **Alt+Up** 把队列中的消息取回编辑器。
 
-On Windows Terminal, Alt+Enter is fullscreen by default. Remap it as described in [Terminal setup](terminal-setup.md) if you want agent-core to receive the shortcut.
+在 Windows Terminal 中，Alt+Enter 默认切换全屏。如果想让 agent-core 接收该快捷键，请按 [终端配置](terminal-setup.md) 中的说明重新映射。
 
-Configure delivery in [Settings](settings.md) with `steeringMode` and `followUpMode`.
+可在 [设置](settings.md) 中通过 `steeringMode` 和 `followUpMode` 配置投递方式。
 
-## Sessions
+## 会话
 
-Agent Core saves conversations as sessions so you can continue work, branch from earlier turns, and revisit previous paths.
+Agent Core 把对话保存为会话，方便你继续工作、从较早的回合创建分支，或回访之前的路径。
 
-### Session Storage
+### 会话存储
 
-Sessions auto-save to `~/.agent-core/agent/sessions/`, organized by working directory. Each session is a JSONL file with a tree structure.
+会话自动保存到 `~/.agent-core/agent/sessions/`，按工作目录组织。每个会话是一个树状结构的 JSONL 文件。
 
 ```bash
 agent-core -c                  # Continue most recent session
@@ -131,63 +131,63 @@ agent-core --session <path|id> # Use a specific session file or partial session 
 agent-core --fork <path|id>    # Fork a session file or partial session ID into a new session
 ```
 
-Use `/session` in interactive mode to see the current session file, session ID, message count, tokens, and cost.
+在交互模式中使用 `/session` 查看当前会话文件、会话 ID、消息数、Token 和费用。
 
-For the JSONL file format and SessionManager API, see [Session Format](session-format.md).
+JSONL 文件格式与 SessionManager API 见 [会话文件格式](session-format.md)。
 
-### Session Commands
+### 会话命令
 
-| Command | Description |
+| 命令 | 说明 |
 |---------|-------------|
-| `/resume` | Browse and select previous sessions |
-| `/new` | Start a new session |
-| `/name <name>` | Set the current session display name |
-| `/session` | Show session info |
-| `/tree` | Navigate the current session tree |
-| `/fork` | Create a new session from a previous user message |
-| `/clone` | Duplicate the current active branch into a new session |
-| `/compact [prompt]` | Summarize older context; see [Compaction](compaction.md) |
-| `/export [file]` | Export session to HTML |
+| `/resume` | 浏览并选择历史会话 |
+| `/new` | 开始新会话 |
+| `/name <name>` | 设置当前会话显示名称 |
+| `/session` | 显示会话信息 |
+| `/tree` | 浏览当前会话树 |
+| `/fork` | 从之前的用户消息创建新会话 |
+| `/clone` | 将当前活动分支复制为新会话 |
+| `/compact [prompt]` | 摘要较旧的上下文；见 [上下文压缩](compaction.md) |
+| `/export [file]` | 将会话导出为 HTML |
 
-### Resuming and Deleting Sessions
+### 恢复与删除会话
 
-`/resume` opens an interactive session picker for the current project. `agent-core -r` opens the same picker at startup.
+`/resume` 打开当前项目的交互式会话选择器。`agent-core -r` 在启动时打开同样的选择器。
 
-In the picker you can:
+在选择器中可以：
 
-- search by typing
-- toggle path display with Ctrl+P
-- toggle sort mode with Ctrl+S
-- filter to named sessions with Ctrl+N
-- rename with Ctrl+R
-- delete with Ctrl+D, then confirm
+- 输入文字搜索
+- 用 Ctrl+P 切换路径显示
+- 用 Ctrl+S 切换排序方式
+- 用 Ctrl+N 只筛选已命名的会话
+- 用 Ctrl+R 重命名
+- 用 Ctrl+D 删除，然后确认
 
-When available, agent-core uses the `trash` CLI for deletion instead of permanently removing files.
+如果可用，agent-core 会使用 `trash` 命令行工具删除，而不是永久移除文件。
 
-### Naming Sessions
+### 会话命名
 
-Use `/name <name>` to set a human-readable session name:
+使用 `/name <name>` 设置易读的会话名称：
 
 ```text
 /name Refactor auth module
 ```
 
-Set the name at startup with `--name` or `-n`:
+启动时用 `--name` 或 `-n` 设置名称：
 
 ```bash
 agent-core --name "Refactor auth module"
 agent-core --name "CI audit" -p "Review this build failure"
 ```
 
-Named sessions are easier to find in `/resume` and `agent-core -r`.
+命名的会话在 `/resume` 和 `agent-core -r` 中更容易找到。
 
-### Branching with `/tree`
+### 使用 `/tree` 分支
 
-Sessions are stored as trees. Every entry has an `id` and `parentId`, and the current position is the active leaf. `/tree` lets you jump to any previous point and continue from there without creating a new file.
+会话以树的形式存储。每个条目都有 `id` 和 `parentId`，当前位置是活动叶子节点。`/tree` 可以跳转到之前任意位置并从那里继续，无需创建新文件。
 
 <p align="center"><img src="images/tree-view.png" alt="Tree View" width="600"></p>
 
-Example shape:
+形状示例：
 
 ```text
 ├─ user: "Hello, can you help..."
@@ -199,109 +199,109 @@ Example shape:
 │        └─ assistant: "For approach B..."
 ```
 
-#### Tree Controls
+#### 树视图控制按键
 
-| Key | Action |
+| 按键 | 动作 |
 |-----|--------|
-| ↑/↓ | Navigate visible entries |
-| ←/→ | Page up/down |
-| Ctrl+←/Ctrl+→ or Alt+←/Alt+→ | Fold/unfold or jump between branch segments |
-| Shift+L | Set or clear a label on the selected entry |
-| Shift+T | Toggle label timestamps |
-| Enter | Select entry |
-| Escape/Ctrl+C | Cancel |
-| Ctrl+O | Cycle filter mode |
+| ↑/↓ | 在可见条目间移动 |
+| ←/→ | 上/下翻页 |
+| Ctrl+←/Ctrl+→ 或 Alt+←/Alt+→ | 折叠/展开，或在分支段之间跳转 |
+| Shift+L | 为选中条目设置或清除标签 |
+| Shift+T | 切换标签时间戳显示 |
+| Enter | 选中条目 |
+| Escape/Ctrl+C | 取消 |
+| Ctrl+O | 循环切换筛选模式 |
 
-Filter modes are: default, no-tools, user-only, labeled-only, and all. Configure the default with `treeFilterMode` in [Settings](settings.md).
+筛选模式有：default、no-tools、user-only、labeled-only 和 all。可在 [设置](settings.md) 中用 `treeFilterMode` 配置默认值。
 
-#### Selection Behavior
+#### 选中行为
 
-Selecting a user or custom message:
+选中用户或自定义消息时：
 
-1. Moves the leaf to the selected message's parent.
-2. Places the selected message text in the editor.
-3. Lets you edit and resubmit, creating a new branch.
+1. 把叶子节点移到所选消息的父节点。
+2. 把所选消息文本放入编辑器。
+3. 你可以编辑并重新提交，从而创建新分支。
 
-Selecting an assistant, tool, compaction, or other non-user entry:
+选中助手、工具、压缩或其他非用户条目时：
 
-1. Moves the leaf to that entry.
-2. Leaves the editor empty.
-3. Lets you continue from that point.
+1. 把叶子节点移到该条目。
+2. 编辑器保持为空。
+3. 你可以从该位置继续。
 
-Selecting the root user message resets the leaf to an empty conversation and places the original prompt in the editor.
+选中根用户消息会把叶子节点重置为空对话，并把最初的提示放入编辑器。
 
-### `/tree`, `/fork`, and `/clone`
+### `/tree`、`/fork` 与 `/clone`
 
-| Feature | `/tree` | `/fork` | `/clone` |
+| 功能 | `/tree` | `/fork` | `/clone` |
 |---------|---------|---------|----------|
-| Output | Same session file | New session file | New session file |
-| View | Full tree | User-message selector | Current active branch |
-| Typical use | Explore alternatives in place | Start a new session from an earlier prompt | Duplicate current work before continuing |
-| Summary | Optional branch summary | None | None |
+| 输出 | 同一会话文件 | 新会话文件 | 新会话文件 |
+| 视图 | 完整树 | 用户消息选择器 | 当前活动分支 |
+| 典型用途 | 原地探索不同方案 | 从较早的提示开始新会话 | 继续之前先复制当前工作 |
+| 摘要 | 可选的分支摘要 | 无 | 无 |
 
-Use `/tree` when you want to keep alternatives together. Use `/fork` or `/clone` when you want a separate session file.
+想把不同方案放在同一会话中就用 `/tree`；想要独立的会话文件就用 `/fork` 或 `/clone`。
 
-### Branch Summaries
+### 分支摘要
 
-When `/tree` switches away from one branch to another, agent-core can summarize the abandoned branch and attach that summary at the new position. This preserves important context from the path you left without replaying the whole branch.
+当 `/tree` 从一个分支切换到另一个分支时，agent-core 可以摘要被离开的分支，并把摘要附加到新位置。这样无需重放整个分支，就能保留原路径的重要上下文。
 
-When prompted, choose one of:
+出现提示时，可选择：
 
-1. no summary
-2. summarize with the default prompt
-3. summarize with custom focus instructions
+1. 不生成摘要
+2. 用默认提示生成摘要
+3. 用自定义关注点指令生成摘要
 
-See [Compaction](compaction.md) for branch summarization internals and extension hooks.
+分支摘要的内部机制和扩展钩子见 [上下文压缩](compaction.md)。
 
-## Context Files
+## 上下文文件
 
-Agent Core loads `AGENTS.md` or `CLAUDE.md` at startup from:
+Agent Core 启动时从以下位置加载 `AGENTS.md` 或 `CLAUDE.md`：
 
-- `~/.agent-core/agent/AGENTS.md` for global instructions
-- parent directories, walking up from the current working directory
-- the current directory
+- `~/.agent-core/agent/AGENTS.md`，全局指令
+- 父目录，从当前工作目录向上逐级查找
+- 当前目录
 
-If a directory contains `AGENTS.override.md`, Agent Core loads it instead of `AGENTS.md` or `CLAUDE.md` from that directory. Context files from other directories still layer normally.
+如果某目录包含 `AGENTS.override.md`，Agent Core 会加载它，而不是该目录的 `AGENTS.md` 或 `CLAUDE.md`。其他目录的上下文文件仍正常叠加。
 
-Use context files for project conventions, commands, safety rules, and preferences. Disable loading with `--no-context-files` or `-nc`.
+上下文文件用于记录项目约定、命令、安全规则和偏好。用 `--no-context-files` 或 `-nc` 禁用加载。
 
-### System Prompt Files
+### 系统提示文件
 
-Replace the default system prompt with:
+用以下文件替换默认系统提示：
 
-- `.agent-core/SYSTEM.md` for a project
-- `~/.agent-core/agent/SYSTEM.md` globally
+- `.agent-core/SYSTEM.md`（项目级）
+- `~/.agent-core/agent/SYSTEM.md`（全局）
 
-Append to the default prompt without replacing it with `APPEND_SYSTEM.md` in either location.
+在这两个位置放置 `APPEND_SYSTEM.md` 可在不替换默认提示的情况下追加内容。
 
-### Project Trust
+### 项目信任
 
-On interactive startup, Agent Core asks before trusting a project folder that contains project-local settings, resources, or project `.agents/skills` and has no saved decision for the folder or a parent folder in `~/.agent-core/agent/trust.json`. Trusting a project allows agent-core to load project settings (`.agent-core/settings.json`) and project resources under `.agent-core/`, install missing project packages, and execute project extensions.
+交互模式启动时，如果项目文件夹包含项目级设置、资源或项目 `.agents/skills`，且 `~/.agent-core/agent/trust.json` 中没有该文件夹或其父文件夹的信任记录，Agent Core 会先询问是否信任该项目。信任项目后，agent-core 才能加载项目设置（`.agent-core/settings.json`）和 `.agent-core/` 下的项目资源、安装缺失的项目包，并执行项目扩展。
 
-Before the trust decision, agent-core loads only context files, user/global extensions, and CLI `-e` extensions so they can handle the `project_trust` event. Project-local extensions, project package-managed extensions, and project settings are loaded only after the project is trusted. This split also applies when switching to a session from a different cwd whose trust has not been resolved in the current process.
+在做出信任决定之前，agent-core 只加载上下文文件、用户/全局扩展和 CLI `-e` 扩展，让它们能处理 `project_trust` 事件。项目本地扩展、项目包管理的扩展和项目设置只在项目被信任后才加载。切换到来自不同 cwd 且信任状态在当前进程中尚未确定的会话时，同样适用这一划分。
 
-Non-interactive modes (`-p`, `--mode json`, and `--mode rpc`) do not show a trust prompt. Without an applicable saved trust decision, they use `defaultProjectTrust` from global settings: `ask` (default) and `never` ignore those project resources, while `always` trusts them. Pass `--approve`/`-a` or `--no-approve`/`-na` to override project trust for one run.
+非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有适用的已保存信任决定时，它们使用全局设置中的 `defaultProjectTrust`：`ask`（默认）和 `never` 会忽略这些项目资源，`always` 则信任它们。可传 `--approve`/`-a` 或 `--no-approve`/`-na` 为单次运行覆盖项目信任。
 
-If no extension or saved decision applies, `defaultProjectTrust` controls the fallback behavior. Set it to `"ask"`, `"always"`, or `"never"` in `~/.agent-core/agent/settings.json`, or change it with `/settings`.
+如果没有扩展或已保存的决定适用，`defaultProjectTrust` 决定回退行为。可在 `~/.agent-core/agent/settings.json` 中将其设为 `"ask"`、`"always"` 或 `"never"`，或通过 `/settings` 修改。
 
-`agent-core config` and package commands use the same project trust flow, except `agent-core update` never prompts. Pass `--approve` to trust project-local settings for one command or `--no-approve` to ignore them.
+`agent-core config` 和包命令使用相同的项目信任流程，但 `agent-core update` 从不提示。传 `--approve` 为单条命令信任项目本地设置，或传 `--no-approve` 忽略它们。
 
-Use `/trust` in interactive mode to save a project trust decision for future sessions, including trust for the immediate parent folder. It writes `~/.agent-core/agent/trust.json` only; the current session is not reloaded, so restart agent-core for changes to take effect.
+在交互模式中使用 `/trust` 可保存项目信任决定供后续会话使用，包括对直接父文件夹的信任。它只写入 `~/.agent-core/agent/trust.json`；当前会话不会重新加载，需重启 agent-core 才能生效。
 
 
-## Exporting Sessions
+## 导出会话
 
-Use `/export [file]` to write a session to HTML.
+使用 `/export [file]` 将会话写入 HTML。
 
 If you use Agent Core for open source work and want to publish sessions for model, prompt, tool, and evaluation research, see [`badlogic/pi-share-hf`](https://github.com/badlogic/pi-share-hf). It publishes sessions to Hugging Face datasets.
 
-## CLI Reference
+## CLI 参考
 
 ```bash
 agent-core [options] [--] [@files...] [messages...]
 ```
 
-### Package Commands
+### 包命令
 
 ```bash
 agent-core install <source> [-l]     # Install package, -l for project-local
@@ -317,101 +317,101 @@ agent-core list                      # List installed packages
 agent-core config                    # Enable/disable package resources
 ```
 
-These commands manage Agent Core packages and `agent-core update` can update the agent-core CLI installation. To uninstall agent-core itself, see [Uninstall](#uninstall). `agent-core config` and project package commands accept `--approve`/`--no-approve` to trust or ignore project-local settings for one command. `agent-core update` never prompts for project trust.
+这些命令管理 Agent Core 包，`agent-core update` 还可以更新 agent-core CLI 安装。要卸载 agent-core 本身，见 [卸载](#卸载)。`agent-core config` 和项目包命令接受 `--approve`/`--no-approve`，为单条命令信任或忽略项目本地设置。`agent-core update` 从不提示项目信任。
 
-See [Agent Core Packages](packages.md) for package sources and security notes.
+包来源与安全说明见 [Agent Core 包](packages.md)。
 
-### Modes
+### 模式
 
-| Flag | Description |
+| 标志 | 说明 |
 |------|-------------|
-| default | Interactive mode |
-| `-p`, `--print` | Print response and exit |
-| `--mode json` | Output all events as JSON lines; see [Print JSON event stream](rpc.md#print-json-event-stream) |
-| `--mode rpc` | RPC mode over stdin/stdout; see [RPC mode](rpc.md) |
-| `--export <in> [out]` | Export a session to HTML |
+| default | 交互模式 |
+| `-p`, `--print` | 打印响应并退出 |
+| `--mode json` | 以 JSON 行输出所有事件；见 [打印 JSON 事件流](rpc.md#print-json-event-stream) |
+| `--mode rpc` | 基于 stdin/stdout 的 RPC 模式；见 [RPC 模式](rpc.md) |
+| `--export <in> [out]` | 将会话导出为 HTML |
 
-In print mode, agent-core also reads piped stdin and merges it into the initial prompt:
+打印模式下，agent-core 还会读取管道输入的 stdin，并将其合并到初始提示中：
 
 ```bash
 cat README.md | agent-core -p "Summarize this text"
 ```
 
-### Model Options
+### 模型选项
 
-| Option | Description |
+| 选项 | 说明 |
 |--------|-------------|
-| `--provider <name>` | Provider, such as `anthropic`, `openai`, or `google` |
-| `--model <pattern>` | Model pattern or ID; supports `provider/id` and optional `:<thinking>` |
-| `--api-key <key>` | API key, overriding environment variables |
+| `--provider <name>` | 服务商，如 `anthropic`、`openai` 或 `google` |
+| `--model <pattern>` | 模型匹配模式或 ID；支持 `provider/id` 和可选的 `:<thinking>` |
+| `--api-key <key>` | API 密钥，覆盖环境变量 |
 | `--thinking <level>` | `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` |
-| `--list-models [search]` | List available models |
+| `--list-models [search]` | 列出可用模型 |
 
-### Session Options
+### 会话选项
 
-| Option | Description |
+| 选项 | 说明 |
 |--------|-------------|
-| `-c`, `--continue` | Continue the most recent session |
-| `-r`, `--resume` | Browse and select a session |
-| `--session <path\|id>` | Use a specific session file or partial UUID |
-| `--fork <path\|id>` | Fork a session file or partial UUID into a new session |
-| `--session-dir <dir>` | Custom session storage directory |
-| `--no-session` | Ephemeral mode; do not save |
-| `--name <name>`, `-n <name>` | Set session display name at startup |
+| `-c`, `--continue` | 继续最近的会话 |
+| `-r`, `--resume` | 浏览并选择会话 |
+| `--session <path\|id>` | 使用指定的会话文件或部分 UUID |
+| `--fork <path\|id>` | 将会话文件或部分 UUID 分叉为新会话 |
+| `--session-dir <dir>` | 自定义会话存储目录 |
+| `--no-session` | 临时模式；不保存 |
+| `--name <name>`, `-n <name>` | 启动时设置会话显示名称 |
 
-### Tool Options
+### 工具选项
 
-| Option | Description |
+| 选项 | 说明 |
 |--------|-------------|
-| `--tools <list>`, `-t <list>` | Allowlist specific built-in, extension, and custom tools |
-| `--exclude-tools <list>`, `-xt <list>` | Disable specific built-in, extension, and custom tools |
-| `--no-builtin-tools`, `-nbt` | Disable built-in tools but keep extension/custom tools enabled |
-| `--no-tools`, `-nt` | Disable all tools |
+| `--tools <list>`, `-t <list>` | 将指定的内置、扩展和自定义工具加入允许列表 |
+| `--exclude-tools <list>`, `-xt <list>` | 禁用指定的内置、扩展和自定义工具 |
+| `--no-builtin-tools`, `-nbt` | 禁用内置工具，但保留扩展/自定义工具 |
+| `--no-tools`, `-nt` | 禁用所有工具 |
 
-Built-in tools: `read`, `bash`, `powershell` (Windows), `edit`, `write`, `grep`, `find`, `ls`.
+内置工具：`read`、`bash`、`powershell`（Windows）、`edit`、`write`、`grep`、`find`、`ls`。
 
-### Resource Options
+### 资源选项
 
-| Option | Description |
+| 选项 | 说明 |
 |--------|-------------|
-| `-e`, `--extension <source>` | Load an extension from path, npm, or git; repeatable |
-| `--no-extensions` | Disable extension discovery |
-| `--skill <path>` | Load a skill; repeatable |
-| `--no-skills` | Disable skill discovery |
-| `--prompt-template <path>` | Load a prompt template; repeatable |
-| `--no-prompt-templates` | Disable prompt template discovery |
-| `--theme <path>` | Load a theme; repeatable |
-| `--no-themes` | Disable theme discovery |
-| `--no-context-files`, `-nc` | Disable `AGENTS.md` and `CLAUDE.md` discovery |
+| `-e`, `--extension <source>` | 从路径、npm 或 git 加载扩展；可重复 |
+| `--no-extensions` | 禁用扩展发现 |
+| `--skill <path>` | 加载技能；可重复 |
+| `--no-skills` | 禁用技能发现 |
+| `--prompt-template <path>` | 加载提示模板；可重复 |
+| `--no-prompt-templates` | 禁用提示模板发现 |
+| `--theme <path>` | 加载主题；可重复 |
+| `--no-themes` | 禁用主题发现 |
+| `--no-context-files`, `-nc` | 禁用 `AGENTS.md` 和 `CLAUDE.md` 发现 |
 
-Combine `--no-*` with explicit flags to load exactly what you need, ignoring settings. Example:
+将 `--no-*` 与显式加载项组合，可忽略设置、只加载所需内容。例如：
 
 ```bash
 agent-core --no-extensions -e ./my-extension.ts
 ```
 
-### Other Options
+### 其他选项
 
-| Option | Description |
+| 选项 | 说明 |
 |--------|-------------|
-| `--system-prompt <text>` | Replace default prompt; context files and skills are still appended |
-| `--append-system-prompt <text>` | Append to system prompt |
-| `--tui-mode <mode>` | TUI mode: `regular` (default) or experimental `fullscreen` |
-| `--use-theme <name[/name]>` | Set the initial interactive theme for this run without changing settings |
-| `--verbose` | Force verbose startup |
-| `-a`, `--approve` | Trust project-local files for this run |
-| `-na`, `--no-approve` | Ignore project-local files for this run |
-| `--` | Stop option parsing; remaining arguments are prompts or `@file` inputs |
-| `-h`, `--help` | Show help |
-| `-v`, `--version` | Show version |
+| `--system-prompt <text>` | 替换默认提示；上下文文件和技能仍会追加 |
+| `--append-system-prompt <text>` | 追加到系统提示 |
+| `--tui-mode <mode>` | TUI 模式：`regular`（默认）或实验性的 `fullscreen` |
+| `--use-theme <name[/name]>` | 为本次运行设置初始交互主题，不修改设置 |
+| `--verbose` | 强制显示详细启动信息 |
+| `-a`, `--approve` | 本次运行信任项目本地文件 |
+| `-na`, `--no-approve` | 本次运行忽略项目本地文件 |
+| `--` | 停止解析选项；其余参数视为提示或 `@file` 输入 |
+| `-h`, `--help` | 显示帮助 |
+| `-v`, `--version` | 显示版本 |
 
-In `fullscreen` mode, the transcript scrolls inside the terminal viewport while queued messages, working status, extension widgets, editor, and footer remain fixed at the bottom. Mouse/trackpad input scrolls the region under the pointer; keyboard viewport actions always remain available. Inline images work in terminals that support the Kitty graphics protocol, including Kitty and Ghostty. In iTerm2 they render as text placeholders because its inline-image protocol cannot delete or crop placements during application-owned scrolling. In `regular` mode, agent-core uses the main screen and terminal-owned scrollback, and iTerm2 inline images continue to render normally. See [Terminal setup](terminal-setup.md) for terminal-specific settings and workarounds.
+在 `fullscreen` 模式下，对话记录在终端视口内滚动，而队列消息、工作状态、扩展小部件、编辑器和页脚固定在底部。鼠标/触控板输入滚动指针所在区域；键盘视口操作始终可用。内联图像在支持 Kitty 图形协议的终端（如 Kitty 和 Ghostty）中可用。在 iTerm2 中它们渲染为文本占位符，因为其内联图像协议无法在应用接管滚动时删除或裁剪已放置的图像。`regular` 模式下，agent-core 使用主屏幕和终端自带的回滚缓冲，iTerm2 内联图像可正常渲染。终端相关的设置与变通方法见 [终端配置](terminal-setup.md)。
 
-Set **TUI mode** in `/settings` to switch between `regular` and `fullscreen` immediately and choose the default for future sessions. **Fullscreen exit output** controls whether exiting fullscreen prints the final transcript or restores the previous screen and prints only the session resume hint.
+在 `/settings` 中设置 **TUI 模式**，可立即在 `regular` 和 `fullscreen` 之间切换并选择后续会话的默认值。**全屏退出输出** 控制退出全屏时是打印最终对话记录，还是恢复之前的屏幕并只打印会话恢复提示。
 
-### File Arguments
+### 文件参数
 
-Prefix files with `@` to include them in the message:
+在文件前加 `@` 前缀即可将其包含在消息中：
 
 ```bash
 agent-core @prompt.md "Answer this"
@@ -419,7 +419,7 @@ agent-core -p @screenshot.png "What's in this image?"
 agent-core @code.ts @test.ts "Review these files"
 ```
 
-### Examples
+### 示例
 
 ```bash
 # Interactive with initial prompt
@@ -453,10 +453,10 @@ agent-core --tools read,grep,find,ls -p "Review the code"
 agent-core --exclude-tools ask_question
 ```
 
-## Design Principles
+## 设计原则
 
-Agent Core keeps the core small and pushes workflow-specific behavior into extensions, skills, prompt templates, and packages.
+Agent Core 保持核心精简，把特定工作流的行为交给扩展、技能、提示模板和包。
 
-It intentionally does not include built-in MCP, sub-agents, permission popups, plan mode, to-dos, or background bash. You can build or install those workflows as extensions or packages, or use external tools such as containers and tmux.
+它有意不内置 MCP、子 Agent、权限弹窗、计划模式、待办事项或后台 bash。这些工作流可以作为扩展或包自行构建或安装，也可以使用容器、tmux 等外部工具。
 
-For the full rationale, read the [blog post](https://mariozechner.at/posts/2025-11-30-pi-coding-agent/).
+完整理由见这篇[博客文章](https://mariozechner.at/posts/2025-11-30-pi-coding-agent/)。

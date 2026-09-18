@@ -13,6 +13,8 @@ export interface SettingItem {
 	description?: string;
 	/** Current value to display (right side) */
 	currentValue: string;
+	/** Format the value for display only; callbacks retain the original value. */
+	formatValue?: (value: string) => string;
 	/** If provided, Enter/Space cycles through these values */
 	values?: string[];
 	/** If provided, Enter opens this submenu. Receives current value and done callback.
@@ -111,7 +113,7 @@ export class SettingsList implements Component {
 		}
 
 		if (this.items.length === 0) {
-			lines.push(this.theme.hint("  No settings available"));
+			lines.push(truncateToWidth(this.theme.hint("  暂无设置项"), width));
 			if (this.searchEnabled) {
 				this.addHintLine(lines, width);
 			}
@@ -120,7 +122,7 @@ export class SettingsList implements Component {
 
 		const displayItems = this.getDisplayItems();
 		if (displayItems.length === 0) {
-			lines.push(truncateToWidth(this.theme.hint("  No matching settings"), width));
+			lines.push(truncateToWidth(this.theme.hint("  没有匹配的设置"), width));
 			this.addHintLine(lines, width);
 			return lines;
 		}
@@ -149,7 +151,10 @@ export class SettingsList implements Component {
 			const usedWidth = prefixWidth + maxLabelWidth + visibleWidth(separator);
 			const valueMaxWidth = width - usedWidth - 2;
 
-			const valueText = this.theme.value(truncateToWidth(item.currentValue, valueMaxWidth, ""), isSelected);
+			const valueText = this.theme.value(
+				truncateToWidth(item.formatValue?.(item.currentValue) ?? item.currentValue, valueMaxWidth, ""),
+				isSelected,
+			);
 
 			lines.push(truncateToWidth(prefix + labelText + separator + valueText, width));
 		}
@@ -314,12 +319,15 @@ export class SettingsList implements Component {
 
 	private addHintLine(lines: string[], width: number): void {
 		lines.push("");
+		const bindings = getKeybindings();
+		const confirm = bindings.getKeys("tui.select.confirm").join("/");
+		const cancel = bindings.getKeys("tui.select.cancel").join("/");
 		lines.push(
 			truncateToWidth(
 				this.theme.hint(
 					this.searchEnabled
-						? "  Type to search · Enter/Space to change · Esc to cancel"
-						: "  Enter/Space to change · Esc to cancel",
+						? `  输入搜索 · ${confirm}/空格更改 · ${cancel}取消`
+						: `  ${confirm}/空格更改 · ${cancel}取消`,
 				),
 				width,
 			),

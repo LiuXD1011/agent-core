@@ -70,7 +70,7 @@ describe("model selector", () => {
 			saveDefault,
 		);
 
-		expect(stripAnsi(selector.render(120).join("\n"))).toContain("Ctrl+R to set as default");
+		expect(stripAnsi(selector.render(120).join("\n"))).toContain("Ctrl+R 设为默认");
 		selector.handleInput("\x13");
 		expect(saveDefault).not.toHaveBeenCalled();
 		selector.handleInput("\x12");
@@ -97,7 +97,7 @@ describe("model selector", () => {
 
 		await vi.waitFor(() => {
 			const rendered = stripAnsi(selector.render(120).join("\n"));
-			expect(rendered).toContain("Could not refresh 2 model catalogs (openai, anthropic); showing cached models.");
+			expect(rendered).toContain("无法刷新 2 个模型目录（openai、anthropic）；显示已缓存的模型。");
 		});
 	});
 });

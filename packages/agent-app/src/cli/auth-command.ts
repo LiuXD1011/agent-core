@@ -37,12 +37,12 @@ export function isAuthCommandHelp(args: string[]): boolean {
 }
 
 export function printAuthCommandHelp(): void {
-	console.log(`Usage:
-  ${APP_NAME} auth print-api-key [--provider <provider>] [--model <model>]
-  ${APP_NAME} auth print-bearer-token [--provider <provider>] [--model <model>] [--min-expiry <duration>]
-  ${APP_NAME} auth check [--provider <provider>] [--model <model>] [--json] [--credentials] [--no-refresh]
+	console.log(`用法:
+  ${APP_NAME} auth print-api-key [--provider <服务商>] [--model <模型>]
+  ${APP_NAME} auth print-bearer-token [--provider <服务商>] [--model <模型>] [--min-expiry <时长>]
+  ${APP_NAME} auth check [--provider <服务商>] [--model <模型>] [--json] [--credentials] [--no-refresh]
 
-Auth commands require at least one of --provider or --model. Checks refresh expired OAuth credentials by default; --no-refresh prevents this. --credentials emits the credential, or includes it in JSON output.`);
+认证命令至少需要 --provider 或 --model 之一。默认会刷新过期的 OAuth 凭据；--no-refresh 可阻止刷新。--credentials 会输出凭据，或将其包含在 JSON 输出中。`);
 }
 
 export function parseAuthCommand(args: string[]): AuthCommand | undefined {
@@ -58,7 +58,7 @@ export function parseAuthCommand(args: string[]): AuthCommand | undefined {
 					: undefined;
 	if (!kind) {
 		throw new AuthCommandError(
-			`Unknown auth command "${args[1] ?? ""}". Use "${APP_NAME} auth print-api-key", "${APP_NAME} auth print-bearer-token", or "${APP_NAME} auth check".`,
+			`未知认证命令 "${args[1] ?? ""}"。请使用 "${APP_NAME} auth print-api-key"、"${APP_NAME} auth print-bearer-token" 或 "${APP_NAME} auth check"。`,
 		);
 	}
 
@@ -70,18 +70,17 @@ export function parseAuthCommand(args: string[]): AuthCommand | undefined {
 	for (let index = 2; index < args.length; index++) {
 		const arg = args[index];
 		if (arg === "--min-expiry") {
-			if (kind !== "bearer_token")
-				throw new AuthCommandError("--min-expiry is only supported by print-bearer-token");
+			if (kind !== "bearer_token") throw new AuthCommandError("--min-expiry 仅 print-bearer-token 支持");
 			const value = args[++index];
 			const match = value ? /^(\d+)(ms|s|m|h)$/iu.exec(value) : undefined;
-			if (!match) throw new AuthCommandError("--min-expiry must use a duration such as 30m or 1h");
+			if (!match) throw new AuthCommandError("--min-expiry 需要时长格式，例如 30m 或 1h");
 			const amount = Number(match[1]);
 			const unit = match[2];
 			minExpiryMs = amount * (unit === "ms" ? 1 : unit === "s" ? 1_000 : unit === "m" ? 60_000 : 3_600_000);
 			continue;
 		}
 		if (arg === "--json" || arg === "--credentials" || arg === "--no-refresh") {
-			if (kind !== "check") throw new AuthCommandError(`${arg} is only supported by auth check`);
+			if (kind !== "check") throw new AuthCommandError(`${arg} 仅 auth check 支持`);
 			if (arg === "--json") json = true;
 			else if (arg === "--credentials") credentials = true;
 			else noRefresh = true;
@@ -100,19 +99,19 @@ export function validateAuthCommandArgs(args: Args, kind: AuthCommandKind): { pr
 	const model = args.model?.trim() || undefined;
 	if (args.unknownFlags.size > 0) {
 		const option = args.unknownFlags.keys().next().value;
-		throw new AuthCommandError(`Unknown option --${option} for "${getAuthCommandName(kind)}".`);
+		throw new AuthCommandError(`"${getAuthCommandName(kind)}" 存在未知选项 --${option}。`);
 	}
 	if (args.apiKey !== undefined || args.messages.length > 0 || args.fileArgs.length > 0) {
-		throw new AuthCommandError("Auth commands only accept --provider and --model");
+		throw new AuthCommandError("认证命令只接受 --provider 和 --model");
 	}
 	if (kind === "check") {
 		if (!provider && !model) {
-			throw new AuthCommandError("Auth checks require --provider <provider> or --model <model>");
+			throw new AuthCommandError("认证检查需要 --provider <服务商> 或 --model <模型>");
 		}
 		return { provider, model };
 	}
 	if (!provider && !model) {
-		throw new AuthCommandError("Credential printing requires --provider <provider> or --model <model>");
+		throw new AuthCommandError("打印凭据需要 --provider <服务商> 或 --model <模型>");
 	}
 	return { provider, model };
 }

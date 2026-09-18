@@ -120,7 +120,7 @@ describe("parseModelPattern", () => {
 			const result = parseModelPattern("sonnet:random", allModels);
 			expect(result.model?.id).toBe("claude-sonnet-4-5");
 			expect(result.thinkingLevel).toBeUndefined();
-			expect(result.warning).toContain("Invalid thinking level");
+			expect(result.warning).toContain("思考级别");
 			expect(result.warning).toContain("random");
 		});
 
@@ -128,7 +128,7 @@ describe("parseModelPattern", () => {
 			const result = parseModelPattern("gpt-4o:invalid", allModels);
 			expect(result.model?.id).toBe("gpt-4o");
 			expect(result.thinkingLevel).toBeUndefined();
-			expect(result.warning).toContain("Invalid thinking level");
+			expect(result.warning).toContain("思考级别");
 		});
 	});
 
@@ -176,7 +176,7 @@ describe("parseModelPattern", () => {
 			const result = parseModelPattern("qwen/qwen3-coder:exacto:random", allModels);
 			expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
 			expect(result.thinkingLevel).toBeUndefined();
-			expect(result.warning).toContain("Invalid thinking level");
+			expect(result.warning).toContain("思考级别");
 			expect(result.warning).toContain("random");
 		});
 
@@ -184,7 +184,7 @@ describe("parseModelPattern", () => {
 			const result = parseModelPattern("qwen/qwen3-coder:exacto:high:random", allModels);
 			expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
 			expect(result.thinkingLevel).toBeUndefined();
-			expect(result.warning).toContain("Invalid thinking level");
+			expect(result.warning).toContain("思考级别");
 			expect(result.warning).toContain("random");
 		});
 	});
@@ -202,7 +202,7 @@ describe("parseModelPattern", () => {
 			// Empty string after colon is not a valid thinking level
 			// So it tries to match "sonnet:" which won't match, then tries "sonnet"
 			expect(result.model?.id).toBe("claude-sonnet-4-5");
-			expect(result.warning).toContain("Invalid thinking level");
+			expect(result.warning).toContain("思考级别");
 		});
 	});
 });
@@ -313,7 +313,7 @@ describe("resolveCliModel", () => {
 		});
 
 		expect(result.model).toBeUndefined();
-		expect(result.error).toContain("No models available");
+		expect(result.error).toContain("没有可用模型");
 	});
 
 	test("prefers the sole authenticated provider for an ambiguous bare exact model id", () => {
@@ -368,10 +368,10 @@ describe("resolveCliModel", () => {
 		});
 
 		expect(result.model).toBeUndefined();
-		expect(result.error).toContain('Model "gpt-5.6-sol" is ambiguous across providers');
+		expect(result.error).toContain("在多个服务商中存在歧义");
 		expect(result.error).toContain("azure-openai-responses/gpt-5.6-sol");
 		expect(result.error).toContain("openai-codex/gpt-5.6-sol");
-		expect(result.error).toContain("Use --provider or provider/model");
+		expect(result.error).toContain("请使用 --provider 或 provider/model 形式");
 	});
 
 	test("prefers provider/model split over gateway model with matching id", () => {

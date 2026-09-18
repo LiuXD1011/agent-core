@@ -19,27 +19,47 @@ import type {
 	TuiMode,
 	WarningSettings,
 } from "../../../app/settings-manager.ts";
+import { THINKING_LEVEL_DESCRIPTIONS, THINKING_LEVEL_LABELS } from "../../thinking-labels.ts";
 import { getSettingsListTheme, parseAutoThemeSetting, type TerminalTheme, theme } from "../theme/theme.ts";
 import { DynamicBorder } from "./dynamic-border.ts";
 import { keyDisplayText } from "./keybinding-hints.ts";
 import { SelectSubmenu, SteppedSubmenu, type SteppedSubmenuStep } from "./settings-submenu.ts";
 
-const MODEL_PICKER_LAYOUT = { minPrimaryColumnWidth: 12, maxPrimaryColumnWidth: 46 };
-
-const THINKING_DESCRIPTIONS: Record<ThinkingLevel, string> = {
-	off: "No reasoning",
-	minimal: "Very brief reasoning (~1k tokens)",
-	low: "Light reasoning (~2k tokens)",
-	medium: "Moderate reasoning (~8k tokens)",
-	high: "Deep reasoning (~16k tokens)",
-	xhigh: "Extra-high reasoning (~32k tokens)",
-	max: "Maximum reasoning",
+const SETTING_VALUE_LABELS: Readonly<Record<string, string>> = {
+	true: "开启",
+	false: "关闭",
+	"one-at-a-time": "逐条",
+	all: "全部",
+	off: "关闭",
+	final: "完成后",
+	streaming: "流式",
+	auto: "自动",
+	tree: "会话树",
+	fork: "创建分支",
+	none: "无",
+	default: "默认",
+	"no-tools": "隐藏工具结果",
+	"user-only": "仅用户",
+	"labeled-only": "仅带标签",
+	regular: "常规",
+	fullscreen: "全屏",
+	transcript: "会话记录",
+	"resume-hint": "恢复提示",
+	always: "始终显示",
+	hidden: "隐藏",
+	"websocket-cached": "WebSocket（复用连接）",
 };
 
+function formatSettingValue(value: string): string {
+	return Object.hasOwn(SETTING_VALUE_LABELS, value) ? SETTING_VALUE_LABELS[value] : value;
+}
+
+const MODEL_PICKER_LAYOUT = { minPrimaryColumnWidth: 12, maxPrimaryColumnWidth: 46 };
+
 const DEFAULT_PROJECT_TRUST_LABELS: Record<DefaultProjectTrust, string> = {
-	ask: "Ask",
-	always: "Always trust",
-	never: "Never trust",
+	ask: "询问",
+	always: "总是信任",
+	never: "从不信任",
 };
 
 const DEFAULT_PROJECT_TRUST_BY_LABEL = new Map(
@@ -137,8 +157,9 @@ class WarningSettingsSubmenu extends Container {
 		const items: SettingItem[] = [
 			{
 				id: "anthropic-extra-usage",
-				label: "Anthropic extra usage",
-				description: "Warn when Anthropic subscription auth may use paid extra usage",
+				formatValue: formatSettingValue,
+				label: "Anthropic 额外用量提醒",
+				description: "当 Anthropic 订阅认证可能产生付费额外用量时提醒",
 				currentValue: (this.state.anthropicExtraUsage ?? true) ? "true" : "false",
 				values: ["true", "false"],
 			},
@@ -179,8 +200,8 @@ function modelDisplayLabel(model: Model<any>): string {
 
 function modelThinkingOverridesSummary(overrides: Record<string, ThinkingLevel>): string {
 	const count = Object.keys(overrides).length;
-	if (count === 0) return "none";
-	return `${count} configured`;
+	if (count === 0) return "无";
+	return `已配置 ${count} 项`;
 }
 
 function modelItemLabel(model: Model<any>): string {
@@ -200,8 +221,8 @@ function singleModeThemeItems(availableThemes: string[], currentTheme: string): 
 	return [
 		{
 			value: AUTOMATIC_THEME_VALUE,
-			label: "  Automatic",
-			description: "Use separate themes for light and dark terminal appearance",
+			label: "  自动",
+			description: "按终端亮暗外观分别使用不同主题",
 		},
 		...themeItems(availableThemes, currentTheme),
 	];
@@ -282,8 +303,8 @@ class ThemeSubmenu extends Container {
 	private showSingleMenu(): void {
 		this.mode = "single";
 		const menu = new SelectSubmenu(
-			"Theme",
-			"Select a theme, or choose Automatic to follow terminal appearance.",
+			"主题",
+			"选择主题，或选择“自动”以跟随终端外观。",
 			singleModeThemeItems(this.availableThemes, this.singleTheme),
 			this.singleTheme,
 			(value) => {
@@ -308,62 +329,50 @@ class ThemeSubmenu extends Container {
 	private showAutomaticMenu(): void {
 		this.mode = "automatic";
 		const content = new Container();
-		content.addChild(new Text(theme.bold(theme.fg("accent", "Automatic Theme")), 0, 0));
+		content.addChild(new Text(theme.bold(theme.fg("accent", "自动主题")), 0, 0));
 		content.addChild(new Spacer(1));
-		content.addChild(new Text(theme.fg("muted", "Choose themes for terminal light and dark appearance."), 0, 0));
-		content.addChild(new Text(theme.fg("muted", "Light/dark detection requires terminal support."), 0, 0));
+		content.addChild(new Text(theme.fg("muted", "为终端的亮色和暗色外观分别选择主题。"), 0, 0));
+		content.addChild(new Text(theme.fg("muted", "亮暗检测需要终端支持。"), 0, 0));
 		content.addChild(new Spacer(1));
 
 		const items: SettingItem[] = [
 			{
 				id: "light-theme",
-				label: "Light theme",
-				description: "Theme to use in automatic mode when the terminal is light",
+				label: "亮色主题",
+				description: "自动模式下终端为亮色时使用的主题",
 				currentValue: this.lightTheme,
 				submenu: (currentValue, done) =>
-					this.createThemeSelect(
-						"Light Theme",
-						"Select the theme to use for light terminal appearance",
-						currentValue,
-						done,
-						(value) => {
-							this.lightTheme = value;
-							this.callbacks.onThemePreview?.(this.getThemeSetting());
-							done(value);
-						},
-					),
+					this.createThemeSelect("亮色主题", "选择终端亮色外观使用的主题", currentValue, done, (value) => {
+						this.lightTheme = value;
+						this.callbacks.onThemePreview?.(this.getThemeSetting());
+						done(value);
+					}),
 			},
 			{
 				id: "dark-theme",
-				label: "Dark theme",
-				description: "Theme to use in automatic mode when the terminal is dark",
+				label: "暗色主题",
+				description: "自动模式下终端为暗色时使用的主题",
 				currentValue: this.darkTheme,
 				submenu: (currentValue, done) =>
-					this.createThemeSelect(
-						"Dark Theme",
-						"Select the theme to use for dark terminal appearance",
-						currentValue,
-						done,
-						(value) => {
-							this.darkTheme = value;
-							this.callbacks.onThemePreview?.(this.getThemeSetting());
-							done(value);
-						},
-					),
+					this.createThemeSelect("暗色主题", "选择终端暗色外观使用的主题", currentValue, done, (value) => {
+						this.darkTheme = value;
+						this.callbacks.onThemePreview?.(this.getThemeSetting());
+						done(value);
+					}),
 			},
 			{
 				id: "apply",
-				label: "Apply",
-				description: "Save and go back",
-				currentValue: "save and go back",
-				values: ["save and go back"],
+				label: "应用",
+				description: "保存并返回",
+				currentValue: "保存并返回",
+				values: ["保存并返回"],
 			},
 			{
 				id: "single-mode",
-				label: "Change mode",
-				description: "Switch to one theme for light and dark",
-				currentValue: "switch to single theme",
-				values: ["switch to single theme"],
+				label: "更改模式",
+				description: "亮暗改用同一主题",
+				currentValue: "改用单一主题",
+				values: ["改用单一主题"],
 			},
 		];
 
@@ -456,102 +465,100 @@ export class SettingsSelectorComponent extends Container {
 		const items: SettingItem[] = [
 			{
 				id: "autocompact",
-				label: "Auto-compact",
-				description: "Automatically compact context when it gets too large",
+				label: "自动压缩",
+				description: "上下文过大时自动压缩上下文",
 				currentValue: config.autoCompact ? "true" : "false",
 				values: ["true", "false"],
 			},
 			{
 				id: "steering-mode",
-				label: "Steering mode",
-				description:
-					"Enter while streaming queues steering messages. 'one-at-a-time': deliver one, wait for response. 'all': deliver all at once.",
+				label: "插话模式",
+				description: "流式输出期间按回车可将消息排队插话。“逐条”：先送达一条并等待回复。“全部”：一次性全部送达。",
 				currentValue: config.steeringMode,
 				values: ["one-at-a-time", "all"],
 			},
 			{
 				id: "follow-up-mode",
-				label: "Follow-up mode",
-				description: `${followUpKey} queues follow-up messages until agent stops. 'one-at-a-time': deliver one, wait for response. 'all': deliver all at once.`,
+				label: "追问模式",
+				description: `${followUpKey} 可将追加消息排队，直到 Agent 停止。“逐条”：先送达一条并等待回复。“全部”：一次性全部送达。`,
 				currentValue: config.followUpMode,
 				values: ["one-at-a-time", "all"],
 			},
 			{
 				id: "transport",
-				label: "Transport",
-				description: "Preferred transport for providers that support multiple transports",
+				label: "传输方式",
+				description: "支持多种传输方式的服务商优先使用的传输方式",
 				currentValue: config.transport,
 				values: ["sse", "websocket", "websocket-cached", "auto"],
 			},
 			{
 				id: "http-idle-timeout",
-				label: "HTTP idle timeout",
-				description:
-					"Maximum idle gap while waiting for HTTP headers or body chunks. Disable for local models that pause longer than five minutes.",
+				label: "HTTP 空闲超时",
+				description: "等待 HTTP 响应头或内容块时的最大空闲间隔。本地模型若停顿超过五分钟可选择禁用。",
 				currentValue: formatHttpIdleTimeoutMs(config.httpIdleTimeoutMs),
 				values: HTTP_IDLE_TIMEOUT_CHOICES.map((choice) => choice.label),
 			},
 			{
 				id: "hide-thinking",
-				label: "Hide thinking",
-				description: "Hide thinking blocks in assistant responses",
+				label: "隐藏思考",
+				description: "隐藏回复中的思考块",
 				currentValue: config.hideThinkingBlock ? "true" : "false",
 				values: ["true", "false"],
 			},
 			{
 				id: "mermaid-rendering",
-				label: "Mermaid diagrams",
-				description: "Render Mermaid code blocks as Unicode diagrams",
+				label: "Mermaid 图表",
+				description: "将 Mermaid 代码块渲染为 Unicode 图表",
 				currentValue: config.mermaidRenderingMode,
 				values: ["off", "final", "streaming"],
 			},
 			{
 				id: "cache-miss-notices",
-				label: "Cache miss notices",
-				description: "Show transcript notices for cache costs and provider recovery diagnostics",
+				label: "缓存未命中提示",
+				description: "在会话记录中显示缓存费用与服务商恢复诊断提示",
 				currentValue: config.showCacheMissNotices ? "true" : "false",
 				values: ["true", "false"],
 			},
 			{
 				id: "collapse-changelog",
-				label: "Collapse changelog",
-				description: "Show condensed changelog after updates",
+				label: "折叠变更记录",
+				description: "更新后显示精简的变更记录",
 				currentValue: config.collapseChangelog ? "true" : "false",
 				values: ["true", "false"],
 			},
 			{
 				id: "quiet-startup",
-				label: "Quiet startup",
-				description: "Disable verbose printing at startup",
+				label: "安静启动",
+				description: "启动时不输出详细日志",
 				currentValue: config.quietStartup ? "true" : "false",
 				values: ["true", "false"],
 			},
 			{
 				id: "default-project-trust",
-				label: "Default project trust",
-				description: "Fallback behavior when no extension or saved trust decision decides project trust",
+				label: "默认项目信任",
+				description: "没有扩展或已保存的信任决定时，项目信任的默认行为",
 				currentValue: DEFAULT_PROJECT_TRUST_LABELS[config.defaultProjectTrust],
 				values: Object.values(DEFAULT_PROJECT_TRUST_LABELS),
 			},
 			{
 				id: "double-escape-action",
-				label: "Double-escape action",
-				description: "Action when pressing Escape twice with empty editor",
+				label: "双击 Esc 动作",
+				description: "输入框为空时连按两次 Esc 触发的动作",
 				currentValue: config.doubleEscapeAction,
 				values: ["tree", "fork", "none"],
 			},
 			{
 				id: "tree-filter-mode",
-				label: "Tree filter mode",
-				description: "Default filter when opening /tree",
+				label: "会话树筛选模式",
+				description: "打开 /tree 时的默认筛选方式",
 				currentValue: config.treeFilterMode,
 				values: ["default", "no-tools", "user-only", "labeled-only", "all"],
 			},
 			{
 				id: "warnings",
-				label: "Warnings",
-				description: "Enable or disable individual warnings",
-				currentValue: "configure",
+				label: "警告",
+				description: "启用或禁用单项警告",
+				currentValue: "配置",
 				submenu: (_currentValue, done) =>
 					new WarningSettingsSubmenu(
 						currentWarnings,
@@ -564,15 +571,15 @@ export class SettingsSelectorComponent extends Container {
 			},
 			{
 				id: "model-thinking",
-				label: "Default thinking level per model",
-				description: `Override the default thinking level for specific models. ${cycleThinkingKey} cycles in-session.`,
+				label: "各模型默认推理强度",
+				description: `为指定模型设置默认推理强度。${cycleThinkingKey} 可切换当前会话的强度。`,
 				currentValue: modelThinkingOverridesSummary(currentModelThinkingLevels),
 				submenu: (_currentValue, done) => {
 					const steps: SteppedSubmenuStep[] = [
 						{
 							key: "model",
-							title: "Per-Model Thinking Level",
-							description: "Select a model to configure",
+							title: "按模型设置推理强度",
+							description: "选择要配置的模型",
 							options: () => {
 								const sorted = [...config.availableDefaultModels].sort((a, b) => {
 									const aKey = modelSettingKey(a);
@@ -589,14 +596,14 @@ export class SettingsSelectorComponent extends Container {
 									return {
 										value: key,
 										label: modelItemLabel(model),
-										description: override ?? undefined,
+										description: override === undefined ? undefined : THINKING_LEVEL_LABELS[override],
 									};
 								});
 								if (items.length === 0) {
 									items.push({
 										value: "__none__",
-										label: "No models available",
-										description: "Log in to a provider or configure an API key first",
+										label: "没有可用模型",
+										description: "请先登录服务商或配置 API 密钥",
 									});
 								}
 								return items;
@@ -609,9 +616,9 @@ export class SettingsSelectorComponent extends Container {
 							key: "level",
 							title: (ctx) => {
 								const m = defaultModelByValue.get(ctx.model);
-								return `Thinking Level for ${m ? modelDisplayLabel(m) : ctx.model}`;
+								return `${m ? modelDisplayLabel(m) : ctx.model} 的推理强度`;
 							},
-							description: "Select default thinking level for this model",
+							description: "选择该模型的默认推理强度",
 							options: (ctx) => {
 								const model = defaultModelByValue.get(ctx.model);
 								if (!model) return [];
@@ -621,14 +628,14 @@ export class SettingsSelectorComponent extends Container {
 								const activeLevel = currentModelThinkingLevels[ctx.model];
 								const items: SelectItem[] = levels.map((level) => ({
 									value: level,
-									label: `${level === activeLevel ? "✓ " : "  "}${level}`,
-									description: THINKING_DESCRIPTIONS[level],
+									label: `${level === activeLevel ? "✓ " : "  "}${THINKING_LEVEL_LABELS[level]}`,
+									description: THINKING_LEVEL_DESCRIPTIONS[level],
 								}));
 								if (currentModelThinkingLevels[ctx.model] !== undefined) {
 									items.push({
 										value: CLEAR_OVERRIDE_VALUE,
-										label: "  (clear override)",
-										description: `Revert to global default (${config.thinkingLevel})`,
+										label: "  （清除覆盖）",
+										description: `恢复为全局默认（${THINKING_LEVEL_LABELS[config.thinkingLevel]}）`,
 									});
 								}
 								return items;
@@ -665,29 +672,29 @@ export class SettingsSelectorComponent extends Container {
 			},
 			{
 				id: "tui-mode",
-				label: "TUI mode",
-				description: "Interface layout; fullscreen mode is experimental",
+				label: "TUI 模式",
+				description: "界面布局；全屏模式为实验性",
 				currentValue: config.tuiMode,
 				values: ["regular", "fullscreen"],
 			},
 			{
 				id: "fullscreen-exit-output",
-				label: "Fullscreen exit output",
-				description: "Print the transcript or only a session resume hint when exiting fullscreen mode",
+				label: "全屏退出输出",
+				description: "退出全屏模式时输出会话记录，还是仅显示恢复会话提示",
 				currentValue: config.fullscreenExitOutput,
 				values: ["transcript", "resume-hint"],
 			},
 			{
 				id: "fullscreen-scrollbar",
-				label: "Fullscreen scrollbar",
-				description: "Scrollbar behavior in fullscreen mode; has no effect in regular mode",
+				label: "全屏滚动条",
+				description: "全屏模式下的滚动条行为；常规模式无效",
 				currentValue: config.fullscreenScrollbar,
 				values: ["auto", "always", "hidden"],
 			},
 			{
 				id: "theme",
-				label: "Theme",
-				description: "Color theme for the interface",
+				label: "主题",
+				description: "界面配色主题",
 				currentValue: config.currentTheme,
 				submenu: (currentValue, done) =>
 					new ThemeSubmenu(currentValue, config.terminalTheme, config.availableThemes, callbacks, done),
@@ -699,15 +706,15 @@ export class SettingsSelectorComponent extends Container {
 			// Insert after autocompact
 			items.splice(1, 0, {
 				id: "show-images",
-				label: "Show images",
-				description: "Render images inline in terminal",
+				label: "显示图像",
+				description: "在终端内嵌显示图像",
 				currentValue: config.showImages ? "true" : "false",
 				values: ["true", "false"],
 			});
 			items.splice(2, 0, {
 				id: "image-width-cells",
-				label: "Image width",
-				description: "Preferred inline image width in terminal cells",
+				label: "图像宽度",
+				description: "内嵌图像在终端中占用的首选宽度（单元格）",
 				currentValue: String(config.imageWidthCells),
 				values: ["60", "80", "120"],
 			});
@@ -716,8 +723,8 @@ export class SettingsSelectorComponent extends Container {
 		// Image auto-resize toggle (always available, affects both attached and read images)
 		items.splice(supportsImages ? 3 : 1, 0, {
 			id: "auto-resize-images",
-			label: "Auto-resize images",
-			description: "Resize large images to 2000x2000 max for better model compatibility",
+			label: "自动缩放图像",
+			description: "将大图缩放到最大 2000x2000，以提升模型兼容性",
 			currentValue: config.autoResizeImages ? "true" : "false",
 			values: ["true", "false"],
 		});
@@ -726,8 +733,8 @@ export class SettingsSelectorComponent extends Container {
 		const autoResizeIndex = items.findIndex((item) => item.id === "auto-resize-images");
 		items.splice(autoResizeIndex + 1, 0, {
 			id: "block-images",
-			label: "Block images",
-			description: "Prevent images from being sent to LLM providers",
+			label: "阻止图像",
+			description: "禁止向模型服务商发送图像",
 			currentValue: config.blockImages ? "true" : "false",
 			values: ["true", "false"],
 		});
@@ -736,8 +743,8 @@ export class SettingsSelectorComponent extends Container {
 		const blockImagesIndex = items.findIndex((item) => item.id === "block-images");
 		items.splice(blockImagesIndex + 1, 0, {
 			id: "skill-commands",
-			label: "Skill commands",
-			description: "Register skills as /skill:name commands",
+			label: "技能命令",
+			description: "将技能注册为 /skill:名称 命令",
 			currentValue: config.enableSkillCommands ? "true" : "false",
 			values: ["true", "false"],
 		});
@@ -746,8 +753,8 @@ export class SettingsSelectorComponent extends Container {
 		const skillCommandsIndex = items.findIndex((item) => item.id === "skill-commands");
 		items.splice(skillCommandsIndex + 1, 0, {
 			id: "show-hardware-cursor",
-			label: "Show hardware cursor",
-			description: "Show the terminal cursor while still positioning it for IME support",
+			label: "显示硬件光标",
+			description: "显示终端光标，同时为输入法支持定位光标",
 			currentValue: config.showHardwareCursor ? "true" : "false",
 			values: ["true", "false"],
 		});
@@ -756,8 +763,8 @@ export class SettingsSelectorComponent extends Container {
 		const hardwareCursorIndex = items.findIndex((item) => item.id === "show-hardware-cursor");
 		items.splice(hardwareCursorIndex + 1, 0, {
 			id: "editor-padding",
-			label: "Editor padding",
-			description: "Horizontal padding for input editor (0-3)",
+			label: "输入框内边距",
+			description: "输入编辑器的水平内边距（0-3）",
 			currentValue: String(config.editorPaddingX),
 			values: ["0", "1", "2", "3"],
 		});
@@ -766,8 +773,8 @@ export class SettingsSelectorComponent extends Container {
 		const editorPaddingIndex = items.findIndex((item) => item.id === "editor-padding");
 		items.splice(editorPaddingIndex + 1, 0, {
 			id: "output-padding",
-			label: "Output padding",
-			description: "Horizontal padding for user messages, assistant messages, and thinking",
+			label: "输出内边距",
+			description: "用户消息、助手回复和思考内容的水平内边距",
 			currentValue: String(config.outputPad),
 			values: ["0", "1"],
 		});
@@ -776,8 +783,8 @@ export class SettingsSelectorComponent extends Container {
 		const outputPaddingIndex = items.findIndex((item) => item.id === "output-padding");
 		items.splice(outputPaddingIndex + 1, 0, {
 			id: "autocomplete-max-visible",
-			label: "Autocomplete max items",
-			description: "Max visible items in autocomplete dropdown (3-20)",
+			label: "自动补全最大条数",
+			description: "自动补全下拉最多可见条数（3-20）",
 			currentValue: String(config.autocompleteMaxVisible),
 			values: ["3", "5", "7", "10", "15", "20"],
 		});
@@ -786,8 +793,8 @@ export class SettingsSelectorComponent extends Container {
 		const autocompleteIndex = items.findIndex((item) => item.id === "autocomplete-max-visible");
 		items.splice(autocompleteIndex + 1, 0, {
 			id: "clear-on-shrink",
-			label: "Clear on shrink",
-			description: "Clear empty rows when content shrinks (may cause flicker)",
+			label: "收缩时清除",
+			description: "内容收缩时清除空行（可能导致闪烁）",
 			currentValue: config.clearOnShrink ? "true" : "false",
 			values: ["true", "false"],
 		});
@@ -796,11 +803,14 @@ export class SettingsSelectorComponent extends Container {
 		const clearOnShrinkIndex = items.findIndex((item) => item.id === "clear-on-shrink");
 		items.splice(clearOnShrinkIndex + 1, 0, {
 			id: "terminal-progress",
-			label: "Terminal progress",
-			description: "Show OSC 9;4 progress indicators in the terminal tab bar",
+			label: "终端进度",
+			description: "在终端标签栏显示 OSC 9;4 进度指示",
 			currentValue: config.showTerminalProgress ? "true" : "false",
 			values: ["true", "false"],
 		});
+
+		// Keep selection/storage values separate from Chinese labels.
+		for (const item of items) if (item.values) item.formatValue = formatSettingValue;
 
 		// Add borders
 		this.addChild(new DynamicBorder());

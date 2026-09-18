@@ -29,12 +29,12 @@ export async function resolveCredentialForPrint(
 	if (cliProvider) {
 		const provider = modelRuntime.getProvider(cliProvider);
 		if (!provider) {
-			throw new AuthCommandError(`Unknown provider "${cliProvider}". Use --list-models to see available providers.`);
+			throw new AuthCommandError(`未知服务商 "${cliProvider}"。使用 --list-models 查看可用服务商。`);
 		}
 		if (cliModel) {
 			const resolved = resolveCliModel({ cliProvider: provider.id, cliModel, modelRuntime });
 			if (resolved.error || !resolved.model) {
-				throw new AuthCommandError(resolved.error ?? "Unable to resolve the requested provider/model");
+				throw new AuthCommandError(resolved.error ?? "无法解析所请求的服务商/模型");
 			}
 			providers.push({ id: provider.id, model: resolved.model });
 		} else {
@@ -44,12 +44,18 @@ export async function resolveCredentialForPrint(
 		for (const provider of modelRuntime.getProviders()) {
 			if (!credentialTypes.has(provider.id)) continue;
 			const resolved = resolveCliModel({ cliProvider: provider.id, cliModel: cliModel!, modelRuntime });
-			if (resolved.model && !resolved.error && !resolved.warning?.includes("Using custom model id")) {
+			if (
+				resolved.model &&
+				!resolved.error &&
+				modelRuntime
+					.getModels()
+					.some((model) => model.provider === resolved.model?.provider && model.id === resolved.model.id)
+			) {
 				providers.push({ id: provider.id, model: resolved.model });
 			}
 		}
 		if (providers.length === 0) {
-			throw new AuthCommandError(`Model "${cliModel}" not found. Use --list-models to see available models.`);
+			throw new AuthCommandError(`未找到模型 "${cliModel}"。使用 --list-models 查看可用模型。`);
 		}
 	}
 
@@ -74,14 +80,14 @@ export async function resolveCredentialForPrint(
 		const providerId = providers[0]?.id;
 		const type = providerId ? credentialTypes.get(providerId) : undefined;
 		if (cliProvider && kind === "api_key" && type === "oauth") {
-			throw new AuthCommandError(`Provider "${providerId}" is configured with OAuth, not an API key`);
+			throw new AuthCommandError(`服务商 "${providerId}" 配置的是 OAuth，而非 API 密钥`);
 		}
 		if (cliProvider && kind === "bearer_token" && type !== "oauth") {
-			throw new AuthCommandError(`Provider "${providerId}" is not configured with an OAuth bearer token`);
+			throw new AuthCommandError(`服务商 "${providerId}" 未配置 OAuth Bearer Token`);
 		}
-		throw new AuthCommandError(`No usable ${kind === "api_key" ? "API key" : "OAuth bearer token"} is configured`);
+		throw new AuthCommandError(`未配置可用的${kind === "api_key" ? " API 密钥" : " OAuth Bearer Token"}`);
 	}
 	throw new AuthCommandError(
-		`Multiple configured providers matched (${credentials.map(({ providerId }) => providerId).join(", ")}). Specify --provider.`,
+		`匹配到多个已配置的服务商（${credentials.map(({ providerId }) => providerId).join("、")}）。请指定 --provider。`,
 	);
 }

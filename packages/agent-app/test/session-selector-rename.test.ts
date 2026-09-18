@@ -54,7 +54,7 @@ describe("session selector rename", () => {
 
 		const output = selector.render(120).join("\n");
 		expect(output).toContain("ctrl+r");
-		expect(output).toContain("rename");
+		expect(output).toContain("重命名");
 	});
 
 	it("does not show rename hint in --resume picker configuration", async () => {
@@ -73,7 +73,7 @@ describe("session selector rename", () => {
 
 		const output = selector.render(120).join("\n");
 		expect(output).not.toContain("ctrl+r");
-		expect(output).not.toContain("rename");
+		expect(output).not.toContain("重命名");
 	});
 
 	it("enters rename mode on Ctrl+R and submits with Enter", async () => {
@@ -97,8 +97,8 @@ describe("session selector rename", () => {
 
 		// Rename mode layout
 		const output = selector.render(120).join("\n");
-		expect(output).toContain("Rename Session");
-		expect(output).not.toContain("Resume Session");
+		expect(output).toContain("重命名会话");
+		expect(output).not.toContain("恢复会话");
 
 		// Type and submit
 		selector.handleInput("X");

@@ -49,19 +49,19 @@ describe("export HTML markdown link sanitization", () => {
 		// The tree renders session metadata via innerHTML, so dynamic fields must be escaped.
 		expect(templateJs).not.toMatch(/\[\$\{msg\.toolName \|\| 'tool'\}\]/);
 		expect(templateJs).not.toMatch(/\[\$\{msg\.role\}\]/);
-		expect(templateJs).not.toMatch(/\[model: \$\{entry\.modelId\}\]/);
-		expect(templateJs).not.toMatch(/\[thinking: \$\{entry\.thinkingLevel\}\]/);
+		expect(templateJs).not.toMatch(/\[模型：\$\{entry\.modelId\}\]/);
+		expect(templateJs).not.toMatch(/\[推理强度：\$\{entry\.thinkingLevel\}\]/);
 		expect(templateJs).not.toMatch(/\[\$\{entry\.type\}\]/);
 		expect(templateJs).toMatch(/\$\{escapeHtml\(msg\.toolName \|\| 'tool'\)\}/);
 		expect(templateJs).toMatch(/\$\{escapeHtml\(msg\.role\)\}/);
 		expect(templateJs).toMatch(/\$\{escapeHtml\(entry\.modelId\)\}/);
-		expect(templateJs).toMatch(/\$\{escapeHtml\(entry\.thinkingLevel\)\}/);
+		expect(templateJs).toMatch(/\$\{escapeHtml\(formatThinkingLevel\(entry\.thinkingLevel\)\)\}/);
 		expect(templateJs).toMatch(/\$\{escapeHtml\(entry\.type\)\}/);
 	});
 
 	it("escapes model names in the exported header", () => {
 		// Assistant message provider/model values are collected from the session and rendered with innerHTML.
-		expect(templateJs).not.toMatch(/\$\{globalStats\.models\.join\(', '\) \|\| 'unknown'\}/);
-		expect(templateJs).toMatch(/\$\{escapeHtml\(globalStats\.models\.join\(', '\) \|\| 'unknown'\)\}/);
+		expect(templateJs).not.toMatch(/\$\{globalStats\.models\.join\(', '\) \|\| '未知'\}/);
+		expect(templateJs).toMatch(/\$\{escapeHtml\(globalStats\.models\.join\(', '\) \|\| '未知'\)\}/);
 	});
 });

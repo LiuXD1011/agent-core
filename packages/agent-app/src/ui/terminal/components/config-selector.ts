@@ -32,10 +32,10 @@ export type ScopedResolvedPaths = Record<ConfigWriteScope, ResolvedPaths>;
 const RESOURCE_TYPES = ["extensions", "skills", "prompts", "themes"] as const satisfies readonly ResourceType[];
 
 const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {
-	extensions: "Extensions",
-	skills: "Skills",
-	prompts: "Prompts",
-	themes: "Themes",
+	extensions: "扩展",
+	skills: "技能",
+	prompts: "提示模板",
+	themes: "主题",
 };
 
 interface ResourceItem {
@@ -88,12 +88,12 @@ function getGroupLabel(metadata: PathMetadata, agentDir: string): string {
 	if (metadata.source === "auto") {
 		if (metadata.baseDir) {
 			return metadata.scope === "user"
-				? `User (${formatBaseDir(metadata.baseDir)})`
-				: `Project (${formatBaseDir(metadata.baseDir)})`;
+				? `用户级（${formatBaseDir(metadata.baseDir)}）`
+				: `项目级（${formatBaseDir(metadata.baseDir)}）`;
 		}
-		return metadata.scope === "user" ? `User (${formatBaseDir(agentDir)})` : `Project (${CONFIG_DIR_NAME}/)`;
+		return metadata.scope === "user" ? `用户级（${formatBaseDir(agentDir)}）` : `项目级（${CONFIG_DIR_NAME}/）`;
 	}
-	return metadata.scope === "user" ? "User settings" : "Project settings";
+	return metadata.scope === "user" ? "用户级设置" : "项目级设置";
 }
 
 function buildGroups(resolved: ResolvedPaths, agentDir: string): ResourceGroup[] {
@@ -200,12 +200,12 @@ class ConfigSelectorHeader implements Component {
 	invalidate(): void {}
 
 	render(width: number): string[] {
-		const title = theme.bold(this.writeScope === "project" ? "Project Local Resources" : "Global Resources");
+		const title = theme.bold(this.writeScope === "project" ? "项目级资源" : "全局资源");
 		const sep = theme.fg("muted", " · ");
-		const switchHint = this.projectModeAvailable ? keyHint("tui.input.tab", "switch mode") + sep : "";
+		const switchHint = this.projectModeAvailable ? keyHint("tui.input.tab", "切换作用域") + sep : "";
 		const actionHint =
-			this.writeScope === "project" ? rawKeyHint("space", "cycle inherit/+/-") : rawKeyHint("space", "toggle");
-		const hint = switchHint + actionHint + sep + rawKeyHint("esc", "close");
+			this.writeScope === "project" ? rawKeyHint("space", "循环 继承/+/−") : rawKeyHint("space", "切换");
+		const hint = switchHint + actionHint + sep + rawKeyHint("esc", "关闭");
 		const spacing = Math.max(1, width - visibleWidth(title) - visibleWidth(hint));
 		const scopeHint =
 			this.writeScope === "project"

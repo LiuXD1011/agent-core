@@ -52,7 +52,7 @@ export class ModelSelectorComponent extends Container implements Focusable {
 	private onSelectAsDefaultCallback?: (model: Model<any>) => void;
 	private onCancelCallback: () => void;
 	private errorMessage?: string;
-	private refreshStatusMessage = "Refreshing model catalogs…";
+	private refreshStatusMessage = "正在刷新模型目录…";
 	private refreshStatusSuccess = false;
 	private tui: TUI;
 	private defaultModel?: DefaultModelReference;
@@ -84,7 +84,7 @@ export class ModelSelectorComponent extends Container implements Focusable {
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
 
-		const hintText = "Only showing models from configured providers. Use /login to add providers.";
+		const hintText = "仅显示已配置服务商的模型。使用 /login 添加服务商。";
 		this.addChild(new Text(theme.fg("warning", hintText), 0, 0));
 		this.addChild(new Spacer(1));
 
@@ -115,7 +115,7 @@ export class ModelSelectorComponent extends Container implements Focusable {
 				new Text(
 					theme.fg(
 						"dim",
-						`  ${keyDisplayText("tui.select.confirm")} to select · ${keyDisplayText("app.models.save")} to set as default · ${keyDisplayText("tui.select.cancel")} to cancel`,
+						`  ${keyDisplayText("tui.select.confirm")} 选择 · ${keyDisplayText("app.models.save")} 设为默认 · ${keyDisplayText("tui.select.cancel")} 取消`,
 					),
 					0,
 					0,
@@ -159,15 +159,15 @@ export class ModelSelectorComponent extends Container implements Focusable {
 			if (this.closed) return;
 			this.refreshStatusMessage = "";
 			if (result.aborted && timedOut) {
-				this.errorMessage = "Model refresh timed out; showing cached models.";
+				this.errorMessage = "模型刷新超时；显示已缓存的模型。";
 			} else if (result.errors.size === 1) {
-				this.errorMessage = `Could not refresh ${result.errors.keys().next().value}; showing cached models.`;
+				this.errorMessage = `无法刷新 ${result.errors.keys().next().value}；显示已缓存的模型。`;
 			} else if (result.errors.size > 1) {
-				this.errorMessage = `Could not refresh ${result.errors.size} model catalogs (${[...result.errors.keys()].join(", ")}); showing cached models.`;
+				this.errorMessage = `无法刷新 ${result.errors.size} 个模型目录（${[...result.errors.keys()].join("、")}）；显示已缓存的模型。`;
 			} else {
 				this.errorMessage = this.modelRuntime.getError();
 				if (!this.errorMessage) {
-					this.refreshStatusMessage = "Model catalogs refreshed.";
+					this.refreshStatusMessage = "模型目录已刷新。";
 					this.refreshStatusSuccess = true;
 				}
 			}
@@ -178,8 +178,8 @@ export class ModelSelectorComponent extends Container implements Focusable {
 			if (this.closed) return;
 			this.refreshStatusMessage = "";
 			this.errorMessage = timedOut
-				? "Model refresh timed out; showing cached models."
-				: `Could not refresh model catalogs: ${error instanceof Error ? error.message : String(error)}`;
+				? "模型刷新超时；显示已缓存的模型。"
+				: `无法刷新模型目录：${error instanceof Error ? error.message : String(error)}`;
 			this.updateList();
 			this.tui.requestRender();
 		} finally {
@@ -289,7 +289,7 @@ export class ModelSelectorComponent extends Container implements Focusable {
 				this.listContainer.addChild(new Text(theme.fg("error", line), 0, 0));
 			}
 		} else if (this.filteredModels.length === 0) {
-			this.listContainer.addChild(new Text(theme.fg("muted", "  No matching models"), 0, 0));
+			this.listContainer.addChild(new Text(theme.fg("muted", "  没有匹配的模型"), 0, 0));
 		} else {
 			const selected = this.filteredModels[this.selectedIndex];
 			this.listContainer.addChild(new Spacer(1));

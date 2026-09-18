@@ -80,7 +80,7 @@ describe("OAuthSelectorComponent", () => {
 		);
 
 		const output = stripAnsi(selector.render(120).join("\n"));
-		expect(output).toContain("unconfigured");
+		expect(output).toContain("未配置");
 		expect(output).not.toContain("✓ configured");
 	});
 
@@ -93,7 +93,7 @@ describe("OAuthSelectorComponent", () => {
 		);
 
 		const output = stripAnsi(selector.render(120).join("\n"));
-		expect(output).toContain("subscription configured");
+		expect(output).toContain("已配置订阅");
 	});
 
 	it("shows environment API key auth as configured", () => {
@@ -106,7 +106,7 @@ describe("OAuthSelectorComponent", () => {
 
 		const output = stripAnsi(selector.render(120).join("\n"));
 		expect(output).toContain("✓ env: OPENAI_API_KEY");
-		expect(output).not.toContain("unconfigured");
+		expect(output).not.toContain("未配置");
 	});
 
 	it("shows models.json API key auth as configured", () => {

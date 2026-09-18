@@ -24,12 +24,17 @@
 
 ### Added
 
+- 精简终端显示：字符像素字标、可展开的资源摘要、可配置快捷键提示和两行紧凑底栏；无需图片或图形依赖。
+
+- Localized the user-facing interface and getting-started docs to Simplified Chinese: CLI help and command messages, interactive TUI (settings/model/session/tree selectors, status and error messages, keybinding descriptions), the exported session HTML (page chrome, dynamic labels, and accessibility titles), plus root/package READMEs and the usage, settings, models, keybindings, and session-format docs. Command names, config keys, model/tool identifiers, prompts, JSONL/RPC data, and user/model content stay unchanged.
 - Integrated context preparation, tool-result reduction, artifact recall, and mutation validation into the normal session lifecycle. Explicit tool policies and custom tools take precedence.
 - Added UI-independent `/sdk` and `/session/export` package entry points.
 
 - Initial Agent Core release.
 
 ### Fixed
+
+- 补齐启动帮助、资源列表、用量统计、设置值与 HTML 会话树的中文显示，统一使用“推理强度”；移除凭据选择和登录取消对显示文案的逻辑依赖。
 
 - Fixed compaction success detection, event snapshot isolation, rapid credential changes, explicit tool allowlists, and archive-preserving JSONL/HTML export and import.
 - Corrected relocated extension-loading and binary HTML-template paths.

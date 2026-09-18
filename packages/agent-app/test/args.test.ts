@@ -175,7 +175,7 @@ describe("parseArgs", () => {
 
 		test("reports missing value", () => {
 			const result = parseArgs(["--name"]);
-			expect(result.diagnostics).toEqual([{ type: "error", message: "--name requires a value" }]);
+			expect(result.diagnostics).toEqual([{ type: "error", message: "--name 需要一个值" }]);
 		});
 
 		test("works alongside other flags", () => {
@@ -285,7 +285,7 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--use-theme", "--print"]);
 			expect(result.useTheme).toBeUndefined();
 			expect(result.print).toBe(true);
-			expect(result.diagnostics).toEqual([{ type: "error", message: "--use-theme requires a theme name" }]);
+			expect(result.diagnostics).toEqual([{ type: "error", message: "--use-theme 需要主题名称" }]);
 		});
 	});
 
@@ -367,13 +367,13 @@ describe("parseArgs", () => {
 		test("rejects invalid modes", () => {
 			const result = parseArgs(["--tui-mode", "other"]);
 			expect(result.diagnostics).toEqual([
-				{ type: "error", message: 'Invalid TUI mode "other". Valid values: regular, fullscreen' },
+				{ type: "error", message: '无效的 TUI 模式 "other"。可选值：regular、fullscreen' },
 			]);
 		});
 
 		test("requires a mode", () => {
 			const result = parseArgs(["--tui-mode"]);
-			expect(result.diagnostics).toEqual([{ type: "error", message: "--tui-mode requires regular or fullscreen" }]);
+			expect(result.diagnostics).toEqual([{ type: "error", message: "--tui-mode 需要 regular 或 fullscreen" }]);
 		});
 
 		test("does not recognize the old --ui-mode flag", () => {

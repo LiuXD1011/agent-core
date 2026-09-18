@@ -46,9 +46,9 @@ describe("SettingsSelectorComponent", () => {
 			for (let i = 0; i < count; i++) list.handleInput("\r");
 		};
 
-		cycle("Fullscreen exit output", 2);
+		cycle("全屏退出输出", 2);
 		expect(onExitOutputChange.mock.calls.flat()).toEqual(["resume-hint", "transcript"]);
-		cycle("Fullscreen scrollbar", 3);
+		cycle("全屏滚动条", 3);
 		expect(onScrollbarChange.mock.calls.flat()).toEqual(["always", "hidden", "auto"]);
 	});
 
@@ -68,7 +68,7 @@ describe("SettingsSelectorComponent", () => {
 		list.selectItem("theme");
 		list.handleInput("\r");
 		let output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("    Automatic");
+		expect(output).toContain("    自动");
 		expect(output).toContain("→ ✓ dark");
 
 		list.handleInput("\x1b[B");
@@ -122,12 +122,12 @@ describe("SettingsSelectorComponent", () => {
 		list.handleInput("\r");
 
 		let output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("→ ✓ medium");
-		expect(output).toContain("    (clear override)");
+		expect(output).toContain("→ ✓ 中");
+		expect(output).toContain("    （清除覆盖）");
 
 		list.handleInput("\x1b[B");
 		output = stripAnsi(list.render(120).join("\n"));
-		expect(output).toContain("  ✓ medium");
-		expect(output).toContain("→   high");
+		expect(output).toContain("  ✓ 中");
+		expect(output).toContain("→   高");
 	});
 });

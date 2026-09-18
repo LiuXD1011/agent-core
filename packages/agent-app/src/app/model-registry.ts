@@ -67,7 +67,7 @@ export class ModelRegistry {
 			if (!resolution) {
 				const compatibility = this.runtime.getCompatibilityRequestConfig(model);
 				if (compatibility.authHeader) {
-					return { ok: false, error: `No API key found for "${model.provider}"` };
+					return { ok: false, error: `未找到 "${model.provider}" 的 API 密钥` };
 				}
 				return { ok: true, headers: compatibility.headers };
 			}
@@ -86,7 +86,7 @@ export class ModelRegistry {
 				ok: false,
 				error:
 					message === "authHeader requires a resolved API key"
-						? `No API key found for "${model.provider}"`
+						? `未找到 "${model.provider}" 的 API 密钥`
 						: message,
 			};
 		}

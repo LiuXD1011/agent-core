@@ -37,7 +37,7 @@ export class BranchSummaryMessageComponent extends Box {
 		this.addChild(new Spacer(1));
 
 		if (this.expanded) {
-			const header = "**Branch Summary**\n\n";
+			const header = "**分支总结**\n\n";
 			this.addChild(
 				new Markdown(header + this.message.summary, 0, 0, this.markdownTheme, {
 					color: (text: string) => theme.fg("customMessageText", text),
@@ -46,9 +46,9 @@ export class BranchSummaryMessageComponent extends Box {
 		} else {
 			this.addChild(
 				new Text(
-					theme.fg("customMessageText", "Branch summary (") +
+					theme.fg("customMessageText", "分支总结（") +
 						theme.fg("dim", keyText("app.tools.expand")) +
-						theme.fg("customMessageText", " to expand)"),
+						theme.fg("customMessageText", " 展开）"),
 					0,
 					0,
 				),

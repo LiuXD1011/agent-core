@@ -89,8 +89,8 @@ describe("stdout cleanliness in non-interactive modes", () => {
 		const result = await runCli(["--help"]);
 
 		expect(result.code).toBe(0);
-		expect(result.stdout).toContain("Usage:");
-		expect(result.stderr).not.toContain("Usage:");
+		expect(result.stdout).toContain("用法:");
+		expect(result.stderr).not.toContain("用法:");
 		expect(result.stderr).not.toContain("changed 1 package in 471ms");
 		expect(result.stderr).not.toContain("found 0 vulnerabilities");
 	});
@@ -102,6 +102,6 @@ describe("stdout cleanliness in non-interactive modes", () => {
 		expect(result.stdout).toBe("");
 		expect(result.stderr).toContain("changed 1 package in 471ms");
 		expect(result.stderr).toContain("found 0 vulnerabilities");
-		expect(result.stderr).toContain("Usage:");
+		expect(result.stderr).toContain("用法:");
 	});
 });

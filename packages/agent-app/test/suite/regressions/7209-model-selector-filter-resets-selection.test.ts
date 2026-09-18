@@ -58,7 +58,7 @@ describe("model selector filter resets selection to top", () => {
 
 		await vi.waitFor(() => {
 			const rendered = stripAnsi(selector.render(120).join("\n"));
-			expect(rendered).toContain("Model catalogs refreshed.");
+			expect(rendered).toContain("模型目录已刷新。");
 		});
 
 		// Current model (alpha-1) is sorted first, so selection starts on row 0.

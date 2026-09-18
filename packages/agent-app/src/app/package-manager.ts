@@ -1396,9 +1396,9 @@ export class DefaultPackageManager implements PackageManager {
 	private buildNoMatchingPackageMessage(source: string, configuredPackages: PackageSource[]): string {
 		const suggestion = this.findSuggestedConfiguredSource(source, configuredPackages);
 		if (!suggestion) {
-			return `No matching package found for ${source}`;
+			return `没有找到匹配 ${source} 的包`;
 		}
-		return `No matching package found for ${source}. Did you mean ${suggestion}?`;
+		return `没有找到匹配 ${source} 的包。你是想用 ${suggestion} 吗？`;
 	}
 
 	private findSuggestedConfiguredSource(source: string, configuredPackages: PackageSource[]): string | undefined {

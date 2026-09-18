@@ -231,8 +231,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["list"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("No packages installed.");
-			expect(stdout).not.toContain("Project packages:");
+			expect(stdout).toContain("尚未安装任何包。");
+			expect(stdout).not.toContain("项目级包：");
 		} finally {
 			logSpy.mockRestore();
 		}
@@ -251,9 +251,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["list"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("Project packages:");
+			expect(stdout).toContain("项目级包：");
 			expect(stdout).toContain("npm:@project/pkg");
-			expect(stdout).not.toContain("No packages installed.");
+			expect(stdout).not.toContain("尚未安装任何包。");
 			expect(process.exitCode).toBeUndefined();
 		} finally {
 			logSpy.mockRestore();
@@ -273,8 +273,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["list", "--no-approve"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("No packages installed.");
-			expect(stdout).not.toContain("Project packages:");
+			expect(stdout).toContain("尚未安装任何包。");
+			expect(stdout).not.toContain("项目级包：");
 			expect(process.exitCode).toBeUndefined();
 		} finally {
 			logSpy.mockRestore();
@@ -293,9 +293,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["list", "--approve"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("Project packages:");
+			expect(stdout).toContain("项目级包：");
 			expect(stdout).toContain("npm:@project/pkg");
-			expect(stdout).not.toContain("No packages installed.");
+			expect(stdout).not.toContain("尚未安装任何包。");
 			expect(process.exitCode).toBeUndefined();
 		} finally {
 			logSpy.mockRestore();
@@ -315,9 +315,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["list"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("Project packages:");
+			expect(stdout).toContain("项目级包：");
 			expect(stdout).toContain("npm:@project/pkg");
-			expect(stdout).not.toContain("No packages installed.");
+			expect(stdout).not.toContain("尚未安装任何包。");
 			expect(process.exitCode).toBeUndefined();
 		} finally {
 			logSpy.mockRestore();
@@ -344,9 +344,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("Project packages:");
+			expect(stdout).toContain("项目级包：");
 			expect(stdout).toContain("npm:@project/pkg");
-			expect(stdout).not.toContain("No packages installed.");
+			expect(stdout).not.toContain("尚未安装任何包。");
 			expect(process.exitCode).toBeUndefined();
 		} finally {
 			logSpy.mockRestore();
@@ -430,8 +430,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["list"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("No packages installed.");
-			expect(stdout).not.toContain("Project packages:");
+			expect(stdout).toContain("尚未安装任何包。");
+			expect(stdout).not.toContain("项目级包：");
 			expect(process.exitCode).toBeUndefined();
 		} finally {
 			logSpy.mockRestore();
@@ -447,7 +447,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["install", "-l", "./local-package"])).resolves.toBeUndefined();
 
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stderr).toContain("Project is not trusted. Use --approve to modify local package config.");
+			expect(stderr).toContain("项目未被信任。请使用 --approve 修改本地包配置。");
 			expect(process.exitCode).toBe(1);
 		} finally {
 			errorSpy.mockRestore();
@@ -473,7 +473,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["install", "--help"])).resolves.toBeUndefined();
 
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain("Usage:");
+			expect(stdout).toContain("用法:");
 			expect(stdout).toContain("agent-core install <source> [-l]");
 			expect(errorSpy).not.toHaveBeenCalled();
 			expect(process.exitCode).toBeUndefined();
@@ -502,7 +502,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			force: true,
 			signal: expect.any(AbortSignal),
 		});
-		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain("Model catalogs refreshed");
+		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain("模型目录已刷新");
 		expect(errorSpy).not.toHaveBeenCalled();
 		expect(process.exitCode).toBeUndefined();
 	});
@@ -514,9 +514,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		await expect(runPackageCommandDirectly(["update", "--models", "--self"])).resolves.toBeUndefined();
 
 		expect(create).not.toHaveBeenCalled();
-		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
-			"--models cannot be combined with --self",
-		);
+		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain("--models 不能与 --self");
 		expect(process.exitCode).toBe(1);
 	});
 
@@ -558,9 +556,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["install", "--unknown"])).resolves.toBeUndefined();
 
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stderr).toContain('Unknown option --unknown for "install".');
+			expect(stderr).toContain('"install" 存在未知选项 --unknown。');
 			expect(stderr).toContain(
-				'Use "agent-core --help" or "agent-core install <source> [-l] [--approve|--no-approve]".',
+				'使用 "agent-core --help" 或 "agent-core install <source> [-l] [--approve|--no-approve]"。',
 			);
 			expect(process.exitCode).toBe(1);
 		} finally {
@@ -575,8 +573,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			await expect(main(["install"])).resolves.toBeUndefined();
 
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stderr).toContain("Missing install source.");
-			expect(stderr).toContain("Usage: agent-core install <source> [-l]");
+			expect(stderr).toContain("缺少安装源。");
+			expect(stderr).toContain("用法：agent-core install <source> [-l]");
 			expect(stderr).not.toContain("at ");
 			expect(process.exitCode).toBe(1);
 		} finally {
@@ -608,7 +606,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 
 			expect(fetchMock).toHaveBeenCalledOnce();
 			expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
-				`agent-core is already up to date (v${VERSION})`,
+				`agent-core 已是最新版本（v${VERSION}）`,
 			);
 			expect(errorSpy).not.toHaveBeenCalled();
 			expect(process.exitCode).toBeUndefined();
@@ -668,7 +666,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 			expect.arrayContaining(["ci", "--ignore-scripts"]),
 		);
 		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
-			`Updated agent-core from ${VERSION} to ${targetVersion}`,
+			`已将 agent-core 从 ${VERSION} 更新到 ${targetVersion}`,
 		);
 		expect(errorSpy).not.toHaveBeenCalled();
 		expect(process.exitCode).toBeUndefined();
@@ -690,9 +688,9 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 
 		expect(readFileSync(join(managedRoot, "current-version"), "utf8")).toBe(`${VERSION}\n`);
 		expect(existsSync(npmRecordPath)).toBe(false);
-		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).not.toContain("Updated agent-core from");
+		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).not.toContain("已将 agent-core 从");
 		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
-			"Another managed agent-core update is already running.",
+			"另一个 agent-core 托管更新正在进行中。",
 		);
 		expect(process.exitCode).toBe(1);
 	});
@@ -709,7 +707,7 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		expect(fetchMock).not.toHaveBeenCalled();
 		expect(existsSync(npmRecordPath)).toBe(false);
 		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
-			"Managed agent-core installations do not support --force",
+			"托管安装的 agent-core 不支持 --force",
 		);
 		expect(process.exitCode).toBe(1);
 	});
@@ -726,8 +724,8 @@ if (process.platform !== "win32") fs.chmodSync(piPath, 0o755);
 		expect(readFileSync(join(managedRoot, "current-version"), "utf8")).toBe(`${VERSION}\n`);
 		expect(existsSync(join(managedRoot, "releases", targetVersion))).toBe(false);
 		expect(readdirSync(join(managedRoot, "staging"))).toEqual([]);
-		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).not.toContain("Updated agent-core from");
-		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain("exited with code 23");
+		expect(logSpy.mock.calls.map(([message]) => String(message)).join("\n")).not.toContain("已将 agent-core 从");
+		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain("以退出码 23 退出");
 		expect(process.exitCode).toBe(1);
 	});
 
@@ -784,7 +782,7 @@ else fs.writeFileSync(${JSON.stringify(recordPath)},JSON.stringify(args));
 			expect(recordedArgs).toContain(`${PACKAGE_NAME}@${VERSION}`);
 			expect(recordedArgs).not.toContain(PACKAGE_NAME);
 			expect(recordedArgs).not.toContain(projectPrefix);
-			expect(stdout).toContain(`Updated agent-core from ${VERSION} to ${VERSION}`);
+			expect(stdout).toContain(`已将 agent-core 从 ${VERSION} 更新到 ${VERSION}`);
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();
@@ -830,7 +828,7 @@ else fs.writeFileSync(${JSON.stringify(recordPath)},JSON.stringify(args));
 			const recordedArgs = JSON.parse(readFileSync(recordPath, "utf-8")) as string[];
 			expect(recordedArgs).toContain(`${PACKAGE_NAME}@${targetVersion}`);
 			expect(recordedArgs).not.toContain(PACKAGE_NAME);
-			expect(stdout).toContain(`Updated agent-core from ${VERSION} to ${targetVersion}`);
+			expect(stdout).toContain(`已将 agent-core 从 ${VERSION} 更新到 ${targetVersion}`);
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();
@@ -877,7 +875,7 @@ else {
 
 			expect(process.exitCode).toBe(1);
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stderr).toContain("Refusing to install a different product");
+			expect(stderr).toContain("拒绝安装其他产品");
 			// No package-manager write happens for a foreign product.
 			expect(existsSync(recordPath)).toBe(false);
 		} finally {
@@ -920,10 +918,10 @@ else {
 			expect(process.exitCode).toBe(1);
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).not.toContain("Updated pi");
-			expect(stderr).toContain("exited with code 23");
-			expect(stderr).toContain("If pnpm reports missing package versions");
-			expect(stderr).toContain("Run `pnpm store prune` and retry `agent-core update --self`.");
+			expect(stdout).not.toContain("已更新 pi");
+			expect(stderr).toContain("以退出码 23 退出");
+			expect(stderr).toContain("如果 pnpm 报告缺少包版本");
+			expect(stderr).toContain("执行 `pnpm store prune` 后重试 `agent-core update --self`。");
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();
@@ -970,7 +968,7 @@ fs.writeFileSync(${JSON.stringify(recordPath)},JSON.stringify(records));
 
 			expect(process.exitCode).toBeUndefined();
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stdout).toContain(`Updated agent-core from ${VERSION} to 0.73.0`);
+			expect(stdout).toContain(`已将 agent-core 从 ${VERSION} 更新到 0.73.0`);
 			const recordedCalls = JSON.parse(readFileSync(recordPath, "utf-8")) as string[][];
 			// The update target is the installed product itself: install only, no uninstall.
 			expect(recordedCalls).toEqual([expect.arrayContaining(["install", "-g", `${PACKAGE_NAME}@0.73.0`])]);
@@ -992,8 +990,8 @@ fs.writeFileSync(${JSON.stringify(recordPath)},JSON.stringify(records));
 
 			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
 			const stdout = logSpy.mock.calls.map(([message]) => String(message)).join("\n");
-			expect(stderr).toContain("Did you mean npm:pi-formatter?");
-			expect(stdout).not.toContain("Updated pi-formatter");
+			expect(stderr).toContain("你是想用 npm:pi-formatter 吗？");
+			expect(stdout).not.toContain("已更新 pi-formatter");
 			expect(process.exitCode).toBe(1);
 
 			const settings = JSON.parse(readFileSync(settingsPath, "utf-8")) as { packages?: string[] };

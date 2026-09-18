@@ -4,19 +4,19 @@ Agent Core is an AI coding agent CLI, independently maintained as a secondary de
 
 All credit for the original design and implementation goes to the [Pi authors](https://github.com/earendil-works/pi). Agent Core continues as an independent project with its own release identity:
 
-* **CLI command**: `agent-core` (designed to coexist with an existing `pi` installation)
-* **Main npm package**: `@liuxuedeng/agent-core`
+* **CLI 命令**：`agent-core`（可与已有的 `pi` 安装共存）
+* **主 npm 包**：`@liuxuedeng/agent-core`
 
-## Install
+## 安装
 
 ```bash
 npm install -g @liuxuedeng/agent-core
 agent-core
 ```
 
-Requires Node.js 22+. Authenticate with `/login` in the interactive session, or set a provider API key environment variable such as `ANTHROPIC_API_KEY` before starting.
+需要 Node.js 22+。在交互会话中使用 `/login` 完成认证，或在启动前设置服务商 API 密钥环境变量（如 `ANTHROPIC_API_KEY`）。
 
-Or run from source:
+也可以从源码运行：
 
 ```bash
 git clone https://github.com/LiuXD1011/agent-core.git
@@ -26,69 +26,69 @@ npm run build
 ./agent-core-test.sh
 ```
 
-## Upgrade
+## 升级
 
 ```bash
 npm install -g @liuxuedeng/agent-core@latest
 ```
 
-Each Agent Core release records the upstream Pi version it is based on: Agent Core 0.1.x is based on Pi v0.85.1. See [NOTICE.md](NOTICE.md) for the project relationship.
+每个 Agent Core 版本都会记录其基于的上游 Pi 版本：Agent Core 0.1.x 基于 Pi v0.85.1。项目关系参见 [NOTICE.md](NOTICE.md)。
 
-## Packages
+## 包结构
 
-| Package | Description |
+| 包 | 说明 |
 |---------|-------------|
-| **[@liuxuedeng/agent-core-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
-| **[@liuxuedeng/agent-core-agent](packages/agent)** | Agent runtime with tool calling and state management |
-| **[@liuxuedeng/agent-core](packages/agent-app)** | Interactive coding agent CLI |
-| **[@liuxuedeng/agent-core-tui](packages/tui)** | Terminal UI library with differential rendering |
+| **[@liuxuedeng/agent-core-ai](packages/ai)** | 统一的多服务商 LLM API（OpenAI、Anthropic、Google 等） |
+| **[@liuxuedeng/agent-core-agent](packages/agent)** | Agent 运行时：工具调用与状态管理 |
+| **[@liuxuedeng/agent-core](packages/agent-app)** | 交互式编程 Agent CLI |
+| **[@liuxuedeng/agent-core-tui](packages/tui)** | 差分渲染的终端 UI 库 |
 
-The former Chord/Harness/SQLite platform sources have been archived outside the main repository.
+原 Chord/Harness/SQLite 平台源码已归档到主仓库之外。
 
-See [architecture and source map](docs/architecture/README.md). The core teaching path is Agent Loop → model context → tool execution; session persistence and export live in the application.
+参见[架构与源码地图](docs/architecture/README.md)。核心教学路径是 Agent Loop（智能体循环）→ 模型上下文 → 工具执行；会话持久化与导出位于应用层。
 
-## Differences from baseline Pi
+## 与基线 Pi 的差异
 
-Agent Core v0.1.x is based on Pi v0.85.1. Verified differences:
+Agent Core v0.1.x 基于 Pi v0.85.1。已核实的差异：
 
-- **Coexistence:** the CLI is `agent-core` (the `pi` command of an upstream installation is untouched), configuration lives in `~/.agent-core` with the `.agent-core` project directory and `AGENT_CORE_*` environment variables, so an upstream `pi` installation can coexist on the same machine.
-- **Independent releases:** all packages share one version (`0.1.0-alpha.1`); release history starts from the Agent Core changelog boundary, and inherited upstream changelog history is kept for provenance only.
-- **No upstream contacts by default:** no install/update statistics are reported, and no version check request is made unless `AGENT_CORE_VERSION_CHECK_URL` is configured. Self-update goes through npm (`npm install -g @liuxuedeng/agent-core@latest`). Managed installs require an explicitly configured Agent Core release feed (`AGENT_CORE_INSTALLER_API_BASE`).
-- **Request attribution:** the CLI and RPC entry points set `AI_AGENT=agent-core`, the HTTP User-Agent is `agent-core/<version>`, and OpenCode session protocol headers identify the session and client. Optional OpenRouter, Cloudflare, and NVIDIA NIM attribution headers are not injected automatically; explicit custom headers are preserved.
+- **共存**：CLI 命令为 `agent-core`（上游安装的 `pi` 命令不受影响），配置位于 `~/.agent-core`，项目目录为 `.agent-core`，环境变量前缀为 `AGENT_CORE_*`，因此上游 `pi` 安装可与本机共存。
+- **独立发布**：所有包共享同一版本号（`0.1.0-alpha.1`）；发布历史从 Agent Core 变更边界开始，继承的上游变更历史仅作来源留档。
+- **默认不联系上游**：不上报安装/更新统计，除非配置了 `AGENT_CORE_VERSION_CHECK_URL`，否则不发起版本检查请求。自更新通过 npm 进行（`npm install -g @liuxuedeng/agent-core@latest`）。托管安装要求显式配置 Agent Core 发行源（`AGENT_CORE_INSTALLER_API_BASE`）。
+- **请求归属**：CLI 与 RPC 入口设置 `AI_AGENT=agent-core`，HTTP User-Agent 为 `agent-core/<version>`，OpenCode 会话协议头标识会话与客户端。不自动注入 OpenRouter、Cloudflare、NVIDIA NIM 归属头；显式自定义头会被保留。
 
-## Development
+## 开发
 
 ```bash
-npm install --ignore-scripts  # Install dependencies without lifecycle scripts
-npm run build                 # Build all packages
-./test.sh                     # Run non-e2e tests (e2e tests activate with endpoint/auth env vars)
-npm run check                 # Lint, format, and type check
-./agent-core-test.sh          # Run agent-core from sources (can be run from any directory)
+npm install --ignore-scripts  # 安装依赖，不执行生命周期脚本
+npm run build                 # 构建全部包
+./test.sh                     # 运行非 e2e 测试（e2e 测试需配置端点/认证环境变量）
+npm run check                 # Lint、格式化与类型检查
+./agent-core-test.sh          # 从源码运行 agent-core（可在任意目录执行）
 ```
 
-## Permissions & Containerization
+## 权限与容器化
 
-Agent Core does not include a built-in permission system for restricting filesystem, process, network, or credential access. By default, it runs with the permissions of the user and process that launched it.
+Agent Core 不内置限制文件系统、进程、网络或凭据访问的权限系统。默认情况下，它以启动它的用户和进程的权限运行。
 
-If you need stronger boundaries, containerize or sandbox the agent. See [packages/agent-app/docs/containerization.md](packages/agent-app/docs/containerization.md) for these patterns:
+如需更强的边界，请将 Agent 容器化或沙箱化。模式参见 [packages/agent-app/docs/containerization.md](packages/agent-app/docs/containerization.md)：
 
-- **Gondolin extension**: keep the agent and provider auth on the host while routing built-in tools and `!` commands into a local Linux micro-VM.
-- **Plain Docker**: run the whole agent process in a local container for simple isolation.
+- **Gondolin 扩展**：Agent 与服务商认证留在宿主机，把内置工具和 `!` 命令路由进本地 Linux 微虚拟机。
+- **纯 Docker**：将整个 Agent 进程跑在本地容器中，实现简单隔离。
 
-## Supply-chain hardening
+## 供应链加固
 
-npm dependency changes are treated as reviewed code changes (mechanisms inherited from upstream Pi):
+npm 依赖变更按经过评审的代码变更处理（机制继承自上游 Pi）：
 
-- Direct external dependencies are pinned to exact versions. Internal workspace packages remain version-ranged.
-- `.npmrc` sets `save-exact=true` and `min-release-age=2` to avoid same-day dependency releases during npm resolution.
-- `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1` is set.
-- `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap.
-- The published CLI package includes `packages/agent-app/npm-shrinkwrap.json`, generated from the root lockfile, to pin transitive deps for npm users.
+- 直接外部依赖锁定到精确版本。内部 workspace 包保持版本区间。
+- `.npmrc` 设置 `save-exact=true` 与 `min-release-age=2`，避免 npm 解析当天发布的依赖。
+- `package-lock.json` 是依赖的唯一事实来源。除非设置 `AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1`，pre-commit 会阻止意外的锁文件提交。
+- `npm run check` 校验直接依赖锁定、原生 TypeScript 导入兼容性与生成的 coding-agent shrinkwrap。
+- 发布的 CLI 包包含由根锁文件生成的 `packages/agent-app/npm-shrinkwrap.json`，为 npm 用户固定传递依赖。
 
-## Acknowledgments
+## 致谢
 
-Context management and tool-execution work incorporates ideas and MIT-licensed code from [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi). Original copyright and license notices are preserved.
+上下文管理与工具执行的工作吸纳了 [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi) 的思路与 MIT 许可代码。原始版权与许可声明均已保留。
 
-## License
+## 许可证
 
-MIT. Based on Pi by earendil-works — see [LICENSE](LICENSE).
+MIT。基于 earendil-works 的 Pi——参见 [LICENSE](LICENSE)。

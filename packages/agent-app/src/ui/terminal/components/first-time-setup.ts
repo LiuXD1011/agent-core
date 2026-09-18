@@ -17,13 +17,13 @@ export interface FirstTimeSetupOptions {
 }
 
 const THEME_OPTIONS: Array<{ value: TerminalTheme; label: string }> = [
-	{ value: "dark", label: "Dark" },
-	{ value: "light", label: "Light" },
+	{ value: "dark", label: "深色" },
+	{ value: "light", label: "浅色" },
 ];
 
 const ANALYTICS_OPTIONS: Array<{ value: boolean; label: string }> = [
-	{ value: true, label: "Share anonymous usage data" },
-	{ value: false, label: "Don't share" },
+	{ value: true, label: "共享匿名使用数据" },
+	{ value: false, label: "不共享" },
 ];
 
 const SETUP_LOGO_LINES = ["██████", "██  ██", "████  ██", "██    ██"];
@@ -52,26 +52,24 @@ export class FirstTimeSetupComponent extends Container {
 		this.addChild(new Spacer(1));
 		this.addChild(new Text(theme.fg("accent", SETUP_LOGO_LINES.join("\n")), 1, 0));
 		this.addChild(new Spacer(1));
-		this.addChild(
-			new Text(theme.fg("accent", theme.bold(`Welcome to ${APP_NAME}, the minimal coding agent.`)), 1, 0),
-		);
+		this.addChild(new Text(theme.fg("accent", theme.bold(`欢迎使用 ${APP_NAME}——一个极简的编程 Agent。`)), 1, 0));
 		this.addChild(new Spacer(1));
 
 		if (this.step === "theme") {
-			this.addChild(new Text(theme.fg("text", "Pick a theme."), 1, 0));
-			this.addChild(new Text(theme.fg("muted", `Detected system appearance: ${this.options.detectedTheme}`), 1, 0));
+			this.addChild(new Text(theme.fg("text", "选择一个主题。"), 1, 0));
+			this.addChild(new Text(theme.fg("muted", `检测到的系统外观：${this.options.detectedTheme}`), 1, 0));
 			this.addChild(new Spacer(1));
 			this.addOptionList(
 				THEME_OPTIONS.map((option) => option.label),
 				this.themeIndex,
 			);
 		} else {
-			this.addChild(new Text(theme.fg("text", "Opt-in to anonymous usage data sharing?"), 1, 0));
+			this.addChild(new Text(theme.fg("text", "是否共享匿名使用数据？"), 1, 0));
 			this.addChild(
 				new Text(
 					theme.fg(
 						"muted",
-						"Opting in stores a tracking identifier in settings.json and enables anonymous\nusage analytics. This helps us to better debug, reproduce, and resolve issues\nand bugs within Pi. You can observe what is shared using /privacy and make\nchanges anytime in settings.json.",
+						"选择共享后会在 settings.json 中保存一个跟踪标识符，并启用匿名使用\n分析。这有助于我们更好地调试、复现和解决 Pi 中的问题。你可以通过\n/privacy 查看共享的内容，并随时在 settings.json 中更改。",
 					),
 					1,
 					0,
@@ -87,11 +85,11 @@ export class FirstTimeSetupComponent extends Container {
 		this.addChild(new Spacer(1));
 		this.addChild(
 			new Text(
-				rawKeyHint("↑↓", "navigate") +
+				rawKeyHint("↑↓", "选择") +
 					"  " +
-					keyHint("tui.select.confirm", this.step === "theme" ? "continue" : "finish") +
+					keyHint("tui.select.confirm", this.step === "theme" ? "继续" : "完成") +
 					"  " +
-					keyHint("tui.select.cancel", "skip setup"),
+					keyHint("tui.select.cancel", "跳过设置"),
 				1,
 				0,
 			),
