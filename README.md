@@ -62,6 +62,8 @@ npm run check                 # Lint、格式化与类型检查
 ./agent-core-test.sh          # 从源码运行 agent-core（可在任意目录执行）
 ```
 
+普通构建使用仓库中固定的模型目录，不联网刷新模型数据。需要更新模型时，执行 `npm run generate:models`，检查生成差异并通过构建、检查和测试后，再将模型数据与相关源码一起提交。详情参见[模型目录维护](packages/agent-app/docs/development.md#model-catalog-snapshot)。
+
 ## 权限与容器化
 
 Agent Core 不内置限制文件系统、进程、网络或凭据访问的权限系统。默认情况下，它以启动它的用户和进程的权限运行。
@@ -90,4 +92,4 @@ npm 依赖变更按经过评审的代码变更处理：
 
 ## 许可证
 
-[MIT License](LICENSE)。原始代码及贡献者的版权声明予以保留。
+本项目采用 [MIT 许可证](LICENSE)。

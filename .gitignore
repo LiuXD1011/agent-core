@@ -1,9 +1,8 @@
-# Dependencies, builds, and generated model data
+# Dependencies, builds, and temporary generation output
 node_modules/
 dist/
 .npm/
 .artifacts/
-packages/ai/src/providers/data/
 packages/ai/src/providers/.model-generation-*/
 packages/agent-app/binaries/
 *.tsbuildinfo

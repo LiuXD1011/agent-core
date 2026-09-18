@@ -19,6 +19,23 @@ Run from source:
 
 The script can be run from any directory. Agent Core keeps the caller's current working directory. Pass `--no-env` to unset API-key environment variables for the run.
 
+## Model catalog snapshot
+
+Normal builds use the reviewed snapshot in `packages/ai/src/providers/data/`, including its `.manifest.json` integrity file. This data is versioned alongside the generated TypeScript catalogs. Builds validate the snapshot without fetching live model catalogs, so local development and CI use the same inputs.
+
+Updating the catalog is an explicit maintenance task:
+
+```bash
+npm run generate:models   # Fetch current catalogs; network access required
+npm run build
+npm run check
+bash ./test.sh
+```
+
+Review model additions/removals, prices, limits, and compatibility metadata. Update affected tests intentionally, then commit the JSON snapshot, integrity manifest, and generated source changes together. Do not hand-edit generated model files. A fixed catalog makes builds reproducible; it does not guarantee that a provider still serves every listed model.
+
+If snapshot validation fails on an unchanged checkout, restore the snapshot from that revision rather than fetching newer data during a build. The explicit `hydrate:model-data` maintenance command still fetches live data; it is not needed for normal setup or CI.
+
 ## Forking / Rebranding
 
 Agent Core itself is configured via `package.json`:

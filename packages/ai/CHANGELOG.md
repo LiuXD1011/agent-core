@@ -9,6 +9,10 @@
 - Removed the Radius gateway provider, the `radius` known provider ID, the `RADIUS_API_KEY` environment mapping, the Radius OAuth flow, and the `loadRadiusOAuth` loader/bundled registration. The generic `pi-messages` API remains available for custom providers.
 - Removed the retired `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp` model ids from the DeepSeek catalog. The provider serves both through `deepseek-flash`.
 
+### Fixed
+
+- Fixed CI model-catalog drift by versioning the validated JSON snapshot and integrity manifest. Normal builds no longer refresh remote catalogs; maintainers can explicitly update them with `npm run generate:models`.
+
 ### Added
 
 - Added the `deepseek-flash` model to the DeepSeek catalog with image input support.
