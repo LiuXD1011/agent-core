@@ -8,7 +8,7 @@ import test from "node:test";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
-test("ignore local credentials and generated output without hiding source or documentation", () => {
+test("ignore root docs, local credentials and generated output without hiding source or package docs", () => {
 	const ignored = [
 		"node_modules/example/index.js", "packages/agent-app/dist/cli.js", ".env", ".env.production",
 		"packages/agent-app/.env.local", ".agent-core/auth.json", ".agent-core/agent/auth.json",
@@ -16,9 +16,10 @@ test("ignore local credentials and generated output without hiding source or doc
 		"packages/agent-app/agent-core-session-test.html", "session-2026-09-16.jsonl",
 		"packages/agent-app/session-2026-09-16.jsonl", "session-transcripts/run.txt",
 		"docs/architecture/packages.visual-check.receipt.json", "coverage/index.html",
+		"docs/README.md", "docs/architecture/index.html", "docs/architecture/packages.html", "docs/new/nested.md",
 	];
 	const retained = [
-		"docs/README.md", "docs/architecture/index.html", "docs/architecture/packages.html", ".env.example",
+		"README.md", "packages/agent-app/docs/usage.md", "packages/ai/docs/new.md", ".env.example",
 		"packages/agent-app/.env.template", ".agent-core/context.json", ".agent-core/extensions/tps.ts",
 		"packages/agent-app/test/fixtures/session-sample.jsonl", "agent-core-reference.html",
 		"scripts/session-transcripts.ts", "todo.md", "plans/design.md", "collect.sh",
