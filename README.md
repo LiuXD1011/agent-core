@@ -16,6 +16,7 @@ Agent Core 搭配 **DeepSeek-V4.1-Flash**，在本地 Terminal-Bench 2.1 的 **8
 | 运行方式                                          | 结果               | 统计口径 |
 | ------------------------------------------------- | ------------------ | -------- |
 | DeepSeek-V4.1-Flash + DeepSeek Harness（Minimal） | **90.6%**          | Pass@1   |
+| DeepSeek-V4.1-Flash + Pi                          | **86.1%**          | Pass@1   |
 | DeepSeek-V4.1-Flash + Agent Core                  | **93.3%（83/89）** | Pass@1   |
 
 ## 快速开始
