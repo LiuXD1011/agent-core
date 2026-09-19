@@ -44,3 +44,6 @@ session-transcripts/
 *~
 .DS_Store
 Thumbs.db
+
+# Local project documentation
+/docs/
