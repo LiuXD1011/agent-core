@@ -4,13 +4,13 @@ import test from "node:test";
 import { findPackageDirectories } from "./package-workspaces.mjs";
 
 const REPO_URL = "git+https://github.com/LiuXD1011/agent-core.git";
-const LOCKSTEP_VERSION = "0.1.0-alpha.1";
+const LOCKSTEP_VERSION = JSON.parse(readFileSync("package.json", "utf8")).version;
 const ROOT_NAME = "agent-core-monorepo";
 
 test("workspace metadata is unified on the Agent Core repository", () => {
 	const root = JSON.parse(readFileSync("package.json", "utf8"));
 	assert.equal(root.name, ROOT_NAME);
-	assert.equal(root.version, LOCKSTEP_VERSION, "root version must match the workspace lockstep");
+	assert.match(root.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/, "root version must be a release version");
 
 	// Example extensions, doc fixtures, and the generated install-lock are not brand-bearing packages.
 	const directories = findPackageDirectories().filter(
@@ -75,5 +75,17 @@ test("the retired evaluation workspace is absent from scripts and dependency met
 		assert.equal(path.startsWith("benchmarks/"), false, path);
 		assert.notEqual(metadata.resolved, "benchmarks/evals", path);
 		assert.equal(path.endsWith("node_modules/vitest-evals"), false, path);
+	}
+});
+
+test("public packages include the project license and applicable NVIDIA notices", () => {
+	const license = readFileSync("LICENSE", "utf8").trim();
+	for (const directory of ["ai", "agent", "agent-app", "tui"]) {
+		const packageLicense = readFileSync("packages/" + directory + "/LICENSE", "utf8");
+		assert.ok(packageLicense.includes(license), directory + ": project license missing");
+		if (directory === "agent" || directory === "agent-app") {
+			const nvidia = readFileSync("packages/agent-app/src/context/LICENSE", "utf8").trim();
+			assert.ok(packageLicense.includes(nvidia), directory + ": NVIDIA license missing");
+		}
 	}
 });

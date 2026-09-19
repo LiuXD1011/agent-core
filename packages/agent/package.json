@@ -1,60 +1,60 @@
 {
-  "name": "@liuxuedeng/agent-core-agent",
-  "version": "0.1.0-alpha.1",
-  "description": "General-purpose agent with transport abstraction, state management, and attachment support",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "clean": "shx rm -rf dist",
-    "build": "tsgo -p tsconfig.build.json",
-    "test": "vitest --run",
-    "prepublishOnly": "npm run build"
-  },
-  "dependencies": {
-    "@liuxuedeng/agent-core-ai": "^0.1.0-alpha.1",
-    "typebox": "1.3.7"
-  },
-  "keywords": [
-    "ai",
-    "agent",
-    "llm",
-    "transport",
-    "state-management"
-  ],
-  "author": "LiuXD1011",
-  "contributors": [
-    "Mario Zechner"
-  ],
-  "license": "MIT",
-  "homepage": "https://github.com/LiuXD1011/agent-core#readme",
-  "bugs": {
-    "url": "https://github.com/LiuXD1011/agent-core/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/LiuXD1011/agent-core.git",
-    "directory": "packages/agent"
-  },
-  "engines": {
-    "node": ">=22.19.0"
-  },
-  "devDependencies": {
-    "@types/node": "22.19.19",
-    "@vitest/coverage-v8": "4.1.9",
-    "typescript": "5.9.3",
-    "vitest": "4.1.9"
-  }
+	"name": "@liuxuedeng/agent-core-agent",
+	"version": "0.1.0-alpha.2",
+	"description": "General-purpose agent with transport abstraction, state management, and attachment support",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"clean": "shx rm -rf dist",
+		"build": "tsgo -p tsconfig.build.json",
+		"test": "vitest --run",
+		"prepublishOnly": "npm run build"
+	},
+	"dependencies": {
+		"@liuxuedeng/agent-core-ai": "^0.1.0-alpha.2",
+		"typebox": "1.3.7"
+	},
+	"keywords": [
+		"ai",
+		"agent",
+		"llm",
+		"transport",
+		"state-management"
+	],
+	"author": "LiuXD1011",
+	"contributors": [
+		"Mario Zechner"
+	],
+	"license": "MIT",
+	"homepage": "https://github.com/LiuXD1011/agent-core#readme",
+	"bugs": {
+		"url": "https://github.com/LiuXD1011/agent-core/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/LiuXD1011/agent-core.git",
+		"directory": "packages/agent"
+	},
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"devDependencies": {
+		"@types/node": "22.19.19",
+		"@vitest/coverage-v8": "4.1.9",
+		"typescript": "5.9.3",
+		"vitest": "4.1.9"
+	}
 }

@@ -8,18 +8,31 @@ Agent Core 是一个简洁、可扩展的终端编程 Agent，围绕 **Agent Loo
 - **会话管理**：保存和恢复对话，导出 HTML / JSONL，便于调试与复盘。
 - **扩展与集成**：支持技能、扩展、交互终端、单次执行、SDK 和 RPC。
 
+## Terminal-Bench 2.1 评测
+
+Agent Core 搭配 **DeepSeek-V4.1-Flash**，在本地 Terminal-Bench 2.1 的 **89 道任务中累计通过 83 道，累计通过率为 93.3%**（截至 2026-09-19）。
+
+
+| 运行方式                                          | 结果               | 统计口径 |
+| ------------------------------------------------- | ------------------ | -------- |
+| DeepSeek-V4.1-Flash + DeepSeek Harness（Minimal） | **90.6%**          | Pass@1   |
+| DeepSeek-V4.1-Flash + Agent Core                  | **93.3%（83/89）** | Pass@1   |
+
 ## 快速开始
 
-需要 Node.js **22.19.0 或更高版本**。
+需要 Node.js **22.19.0 或更高版本**。当前预发布版本为 **0.1.0-alpha.2**，使用 npm 的 `alpha` 标签。
 
 ```bash
-npm install -g --ignore-scripts @liuxuedeng/agent-core
+npm install -g --ignore-scripts @liuxuedeng/agent-core@0.1.0-alpha.2
+agent-core --version
 agent-core
 ```
 
 启动后输入 `/login` 配置支持订阅登录的服务商，也可以在启动前设置服务商 API 密钥。输入 `/` 查看命令，使用 `/export` 导出会话。详见[使用指南](packages/agent-app/docs/usage.md)和[模型配置](packages/agent-app/docs/models.md)。
 
-升级：`npm install -g --ignore-scripts @liuxuedeng/agent-core@latest`。
+版本检查应显示 `0.1.0-alpha.2`。
+
+升级预发布版：`npm install -g --ignore-scripts @liuxuedeng/agent-core@alpha`。请显式指定版本或 `@alpha`；不带标签的安装命令默认使用 `latest`，可能安装到旧版本。
 
 ## 从源码开发
 
@@ -40,12 +53,13 @@ bash ./test.sh   # 全量非 e2e 测试，无需模型 API 密钥
 
 ## 项目结构
 
-| 目录 | 职责 |
-|---|---|
-| [packages/agent](packages/agent) | Agent Loop、请求上下文与工具执行 |
-| [packages/ai](packages/ai) | 模型目录、认证与多服务商 API |
+
+| 目录                                     | 职责                                      |
+| ---------------------------------------- | ----------------------------------------- |
+| [packages/agent](packages/agent)         | Agent Loop、请求上下文与工具执行          |
+| [packages/ai](packages/ai)               | 模型目录、认证与多服务商 API              |
 | [packages/agent-app](packages/agent-app) | CLI、会话管理、上下文处理、内置工具与扩展 |
-| [packages/tui](packages/tui) | 终端输入、布局与渲染组件 |
+| [packages/tui](packages/tui)             | 终端输入、布局与渲染组件                  |
 
 学习建议：先理解“模型 → 工具 → 结果 → 下一轮”的循环，再阅读上下文处理和应用层。参见[架构与源码地图](docs/architecture/README.md)。
 

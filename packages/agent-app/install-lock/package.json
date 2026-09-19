@@ -1,10 +1,10 @@
 {
 	"name": "@liuxuedeng/agent-core-install",
-	"version": "0.1.0-alpha.1",
+	"version": "0.1.0-alpha.2",
 	"private": true,
 	"description": "Lockfile root used by the Agent Core installer and updater.",
 	"dependencies": {
-		"@liuxuedeng/agent-core": "0.1.0-alpha.1"
+		"@liuxuedeng/agent-core": "0.1.0-alpha.2"
 	},
 	"overrides": {
 		"protobufjs": "7.6.5",

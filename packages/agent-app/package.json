@@ -1,6 +1,6 @@
 {
 	"name": "@liuxuedeng/agent-core",
-	"version": "0.1.0-alpha.1",
+	"version": "0.1.0-alpha.2",
 	"description": "Agent Core - AI coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"agentCoreConfig": {
@@ -48,9 +48,9 @@
 		"prepublishOnly": "npm run clean && npm run build && npm run shrinkwrap"
 	},
 	"dependencies": {
-		"@liuxuedeng/agent-core-agent": "^0.1.0-alpha.1",
-		"@liuxuedeng/agent-core-ai": "^0.1.0-alpha.1",
-		"@liuxuedeng/agent-core-tui": "^0.1.0-alpha.1",
+		"@liuxuedeng/agent-core-agent": "^0.1.0-alpha.2",
+		"@liuxuedeng/agent-core-ai": "^0.1.0-alpha.2",
+		"@liuxuedeng/agent-core-tui": "^0.1.0-alpha.2",
 		"@silvia-odwyer/photon-node": "0.3.4",
 		"chalk": "5.6.2",
 		"cross-spawn": "7.0.6",
