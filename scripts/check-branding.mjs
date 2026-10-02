@@ -310,12 +310,12 @@ function checkSource(files, root) {
 	const retainedServiceLines = [
 		{
 			file: "packages/agent-app/src/utils/version-check.ts",
-			lineIncludes: "upstream pi.dev release feed",
+			allowedLine: /^\s*\/\/ Agent Core (?:does not track the upstream pi\.dev release feed:|不跟踪上游 pi\.dev 发行源：)/,
 			message: "unexpected upstream feed reference outside the decoupling-boundary comment",
 		},
 		{
 			file: "packages/agent-app/src/utils/changelog.ts",
-			lineIncludes: "UPSTREAM_REPO_RE",
+			allowedLine: /UPSTREAM_REPO_RE/,
 			message: "unexpected upstream repository reference outside the link-protection regex",
 		},
 	];
@@ -324,7 +324,7 @@ function checkSource(files, root) {
 		if (!existsSyncSafe(fullPath)) continue;
 		const lines = readFileSync(fullPath, "utf8").split("\n");
 		lines.forEach((line, index) => {
-			if (upstreamLinkPattern.test(line) && !line.includes(entry.lineIncludes)) {
+			if (upstreamLinkPattern.test(line) && !entry.allowedLine.test(line)) {
 				fail(entry.file, index + 1, entry.message);
 			}
 		});

@@ -242,3 +242,42 @@ test("the checker never writes the files it inspects", () => {
 		rmSync(root, { recursive: true, force: true });
 	}
 });
+
+test("Chinese decoupling-boundary comments pass without changing the update configuration", () => {
+	const root = makeFixture({
+		...CORRECT_FILES,
+		"packages/agent-app/src/utils/version-check.ts": CORRECT_VERSION_CHECK_TS.replace(
+			"// Agent Core does not track the upstream pi.dev release feed: following it would",
+			"// Agent Core 不跟踪上游 pi.dev 发行源：跟随它会把上游 Pi 版本误报为 Agent Core 更新。",
+		),
+	});
+	try {
+		const result = runChecker(root);
+		assert.equal(result.status, 0, result.stderr);
+		assert.match(result.stdout, /Branding check passed/);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+test("localized comment allowance does not permit actual upstream update feeds or unrelated comments", () => {
+	const snippets = [
+		'const updateUrl = "https://pi.dev/releases/latest";',
+		"// Use https://pi.dev/releases/latest for updates.",
+		'const comment = "// Agent Core 不跟踪上游 pi.dev 发行源：https://pi.dev/releases/latest";',
+		'const comment = "// Agent Core does not track the upstream pi.dev release feed: https://pi.dev/releases/latest";',
+	];
+	for (const snippet of snippets) {
+		const root = makeFixture({
+			...CORRECT_FILES,
+			"packages/agent-app/src/utils/version-check.ts": CORRECT_VERSION_CHECK_TS + snippet + "\n",
+		});
+		try {
+			const result = runChecker(root);
+			assert.equal(result.status, 1, snippet);
+			assert.match(result.stderr, /unexpected upstream feed reference outside the decoupling-boundary comment/);
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	}
+});
