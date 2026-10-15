@@ -559,6 +559,13 @@ struct QueueHooks {
 }
 
 impl LoopHooks for QueueHooks {
+    fn has_pending_messages(&self) -> bool {
+        self.steering
+            .iter()
+            .chain(&self.follow_up)
+            .any(|batch| !batch.is_empty())
+    }
+
     fn get_steering_messages(&mut self) -> Vec<Message> {
         self.steering.pop_front().unwrap_or_default()
     }
@@ -783,6 +790,142 @@ fn zero_turn_limit_never_calls_provider_and_still_ends_lifecycle() {
     assert_eq!(result, Err(LoopError::MaxTurnsExceeded { max_turns: 0 }));
     assert!(provider.requests.is_empty());
     assert!(matches!(events.last(), Some(Event::AgentEnd { messages }) if messages.len() == 1));
+}
+
+#[test]
+fn zero_budget_or_pre_cancelled_run_preserves_both_queues() {
+    for cancelled in [false, true] {
+        let signal = CancellationToken::new();
+        if cancelled {
+            signal.cancel();
+        }
+        let mut hooks = QueueHooks {
+            steering: VecDeque::from([vec![Message::user("steer later")]]),
+            follow_up: VecDeque::from([vec![Message::user("follow later")]]),
+        };
+        let mut provider = FauxProvider::new(Vec::new());
+        let mut events = Vec::new();
+        let result = run_agent_loop(
+            vec![Message::user("start")],
+            &Context::default(),
+            LoopConfig {
+                max_turns: usize::from(cancelled),
+                ..Default::default()
+            },
+            &mut provider,
+            &[],
+            &mut hooks,
+            &NoopToolHooks,
+            &signal,
+            &mut |event| events.push(event),
+        );
+        assert_eq!(result.is_ok(), cancelled);
+        assert!(provider.requests.is_empty());
+        assert_eq!(hooks.steering.len(), 1);
+        assert_eq!(hooks.follow_up.len(), 1);
+        assert!(!events.iter().any(|event| matches!(event, Event::MessageEnd { message } if message.text().ends_with("later"))));
+    }
+}
+
+#[test]
+fn exhausted_budget_retains_queues_for_natural_stop_and_tool_continuation() {
+    for tool_continuation in [false, true] {
+        let response = if tool_continuation {
+            tool_response(&["first"], StopReason::ToolUse)
+        } else {
+            AssistantMessage::text("done")
+        };
+        let mut provider = FauxProvider::new(vec![response]);
+        let (tools, _) = echo_tools(false);
+        let mut hooks = QueueHooks {
+            steering: VecDeque::from([Vec::new(), vec![Message::user("steer later")]]),
+            follow_up: VecDeque::from([vec![Message::user("follow later")]]),
+        };
+        let result = run_agent_loop(
+            vec![Message::user("start")],
+            &Context::default(),
+            LoopConfig {
+                max_turns: 1,
+                ..Default::default()
+            },
+            &mut provider,
+            &tools,
+            &mut hooks,
+            &NoopToolHooks,
+            &CancellationToken::new(),
+            &mut |_| {},
+        );
+        assert_eq!(result, Err(LoopError::MaxTurnsExceeded { max_turns: 1 }));
+        assert_eq!(provider.requests.len(), 1);
+        assert_eq!(hooks.steering.len(), 1);
+        assert_eq!(hooks.follow_up.len(), 1);
+    }
+}
+
+#[test]
+fn exhausted_budget_without_eligible_queue_finishes_successfully() {
+    let mut hooks = QueueHooks {
+        steering: VecDeque::new(),
+        follow_up: VecDeque::new(),
+    };
+    let mut provider = FauxProvider::new(vec![AssistantMessage::text("done")]);
+    let messages = run_agent_loop(
+        vec![Message::user("start")],
+        &Context::default(),
+        LoopConfig {
+            max_turns: 1,
+            ..Default::default()
+        },
+        &mut provider,
+        &[],
+        &mut hooks,
+        &NoopToolHooks,
+        &CancellationToken::new(),
+        &mut |_| {},
+    )
+    .unwrap();
+    assert_eq!(roles(&messages), ["user", "assistant"]);
+    assert_eq!(provider.requests.len(), 1);
+}
+
+#[test]
+fn cancellation_at_turn_end_preserves_unadmitted_queue_items() {
+    for tool_continuation in [false, true] {
+        let response = if tool_continuation {
+            tool_response(&["first"], StopReason::ToolUse)
+        } else {
+            AssistantMessage::text("done")
+        };
+        let mut provider = FauxProvider::new(vec![response]);
+        let (tools, _) = echo_tools(false);
+        let signal = CancellationToken::new();
+        let mut hooks = QueueHooks {
+            steering: VecDeque::from([Vec::new(), vec![Message::user("steer later")]]),
+            follow_up: VecDeque::from([vec![Message::user("follow later")]]),
+        };
+        let messages = run_agent_loop(
+            vec![Message::user("start")],
+            &Context::default(),
+            LoopConfig::default(),
+            &mut provider,
+            &tools,
+            &mut hooks,
+            &NoopToolHooks,
+            &signal,
+            &mut |event| {
+                if matches!(event, Event::TurnEnd { .. }) {
+                    signal.cancel();
+                }
+            },
+        )
+        .unwrap();
+        assert_eq!(provider.requests.len(), 1);
+        assert_eq!(hooks.steering.len(), 1);
+        assert_eq!(hooks.follow_up.len(), 1);
+        assert!(!messages
+            .iter()
+            .any(|message| message.text().ends_with("later")));
+    }
 }
 
 #[test]

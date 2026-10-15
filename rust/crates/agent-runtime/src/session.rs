@@ -5,8 +5,10 @@ use agent_core::types::{timestamp, Context};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, OnceLock, Weak};
 
 static SESSION_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -135,6 +137,9 @@ impl SessionStore {
             directory: directory.into(),
         }
     }
+    pub fn task_store(&self) -> crate::task_store::TaskStore {
+        crate::task_store::TaskStore::new(self.directory.clone())
+    }
     pub fn default_directory() -> PathBuf {
         std::env::var_os("LOCALAPPDATA")
             .map(PathBuf::from)
@@ -152,12 +157,35 @@ impl SessionStore {
     pub fn save(&self, session: &Session) -> Result<(), String> {
         let mut snapshot = session.clone();
         snapshot.ensure_tree()?;
-        fs::create_dir_all(&self.directory).map_err(|e| e.to_string())?;
         let path = self.path(&session.id)?;
-        let temporary = path.with_extension("json.tmp");
         let bytes = serde_json::to_vec_pretty(&snapshot).map_err(|e| e.to_string())?;
-        fs::write(&temporary, bytes).map_err(|e| e.to_string())?;
-        fs::rename(&temporary, &path).map_err(|e| e.to_string())
+        fs::create_dir_all(&self.directory).map_err(|_| "Session directory cannot be created")?;
+        let lock = session_save_lock(&path)?;
+        let _writer = lock.lock().map_err(|_| "Session writer lock failed")?;
+        let mut nonce = [0u8; 16];
+        getrandom::fill(&mut nonce).map_err(|_| "Session temporary identity unavailable")?;
+        let nonce: String = nonce.iter().map(|byte| format!("{byte:02x}")).collect();
+        let temporary = path.with_extension(format!("json.{nonce}.tmp"));
+        let mut options = fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options
+            .open(&temporary)
+            .map_err(|_| "Session temporary file cannot be created")?;
+        let _cleanup = SessionTemporary(temporary.clone());
+        let written = file.write_all(&bytes).and_then(|_| file.sync_all());
+        drop(file);
+        written.map_err(|_| "Session temporary file cannot be flushed")?;
+        publish_session(&temporary, &path)?;
+        #[cfg(unix)]
+        fs::File::open(&self.directory)
+            .and_then(|directory| directory.sync_all())
+            .map_err(|_| "Session published; directory flush failed")?;
+        Ok(())
     }
     pub fn list(&self) -> Result<Vec<Session>, String> {
         self.load_with_diagnostics().map(|loaded| loaded.sessions)
@@ -222,6 +250,63 @@ impl SessionStore {
         let html = crate::html_export::generate_session_html(session)?;
         fs::write(path, html).map_err(|error| error.to_string())
     }
+}
+
+fn session_save_lock(path: &Path) -> Result<Arc<Mutex<()>>, String> {
+    type Locks = std::collections::BTreeMap<PathBuf, Weak<Mutex<()>>>;
+    static LOCKS: OnceLock<Mutex<Locks>> = OnceLock::new();
+    let parent = path.parent().ok_or("Session path has no directory")?;
+    let key = fs::canonicalize(parent)
+        .map_err(|_| "Session directory cannot be resolved")?
+        .join(path.file_name().ok_or("Session path has no filename")?);
+    // Canonical directory and ASCII casing collapse local Win32 path aliases.
+    #[cfg(windows)]
+    let key = PathBuf::from(key.to_string_lossy().to_ascii_lowercase());
+    let mut locks = LOCKS
+        .get_or_init(Default::default)
+        .lock()
+        .map_err(|_| "Session writer registry failed")?;
+    locks.retain(|_, lock| lock.strong_count() > 0);
+    if let Some(lock) = locks.get(&key).and_then(Weak::upgrade) {
+        return Ok(lock);
+    }
+    let lock = Arc::new(Mutex::new(()));
+    locks.insert(key, Arc::downgrade(&lock));
+    Ok(lock)
+}
+
+struct SessionTemporary(PathBuf);
+impl Drop for SessionTemporary {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.0);
+    }
+}
+
+#[cfg(windows)]
+fn publish_session(temporary: &Path, path: &Path) -> Result<(), String> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::{
+        MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH,
+    };
+    let source: Vec<u16> = temporary.as_os_str().encode_wide().chain(Some(0)).collect();
+    let target: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    if unsafe {
+        MoveFileExW(
+            source.as_ptr(),
+            target.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    } == 0
+    {
+        Err("Session atomic replacement failed".into())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(windows))]
+fn publish_session(temporary: &Path, path: &Path) -> Result<(), String> {
+    fs::rename(temporary, path).map_err(|_| "Session atomic replacement failed".into())
 }
 
 #[cfg(test)]
@@ -371,5 +456,74 @@ mod tests {
         assert_eq!(loaded.context, original.context);
         assert!(loaded.imported.is_none());
         assert!(loaded.compactions.is_empty());
+    }
+
+    #[test]
+    fn concurrent_session_publication_never_shares_a_temporary_file() {
+        let dir =
+            std::env::temp_dir().join(format!("agent-session-atomic-{}", Session::default().id));
+        let store = SessionStore::new(&dir);
+        let session = Session::default();
+        store.save(&session).unwrap();
+        let writers: Vec<_> = (0..8)
+            .map(|index| {
+                let store = store.clone();
+                let mut candidate = session.clone();
+                candidate.name = format!("writer-{index}");
+                candidate
+                    .append_message(Message::user(format!("payload-{index}")))
+                    .unwrap();
+                std::thread::spawn(move || store.save(&candidate))
+            })
+            .collect();
+        for writer in writers {
+            writer.join().unwrap().unwrap();
+        }
+        let restored = store.list().unwrap();
+        assert_eq!(restored.len(), 1);
+        let index = restored[0].name.strip_prefix("writer-").unwrap();
+        assert_eq!(
+            restored[0].context.messages[0].text(),
+            format!("payload-{index}")
+        );
+        assert_eq!(fs::read_dir(&dir).unwrap().count(), 1);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn failed_session_publication_cleans_only_its_own_temporary_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "agent-session-publish-fail-{}",
+            Session::default().id
+        ));
+        let store = SessionStore::new(&dir);
+        let session = Session::default();
+        fs::create_dir_all(store.path(&session.id).unwrap()).unwrap();
+        let unrelated = dir.join("unrelated.json.tmp");
+        fs::write(&unrelated, b"retain").unwrap();
+        assert!(store.save(&session).is_err());
+        assert!(store.path(&session.id).unwrap().is_dir());
+        assert_eq!(fs::read(&unrelated).unwrap(), b"retain");
+        assert_eq!(fs::read_dir(&dir).unwrap().count(), 2);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn invalid_session_replacement_preserves_committed_bytes() {
+        let dir = std::env::temp_dir().join(format!(
+            "agent-session-invalid-save-{}",
+            Session::default().id
+        ));
+        let store = SessionStore::new(&dir);
+        let mut session = Session::default();
+        session.append_message(Message::user("committed")).unwrap();
+        store.save(&session).unwrap();
+        let path = store.path(&session.id).unwrap();
+        let before = fs::read(&path).unwrap();
+        session.leaf_id = Some("missing".into());
+        assert!(store.save(&session).is_err());
+        assert_eq!(fs::read(path).unwrap(), before);
+        assert_eq!(fs::read_dir(&dir).unwrap().count(), 1);
+        fs::remove_dir_all(dir).unwrap();
     }
 }

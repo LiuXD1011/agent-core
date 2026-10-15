@@ -101,6 +101,12 @@ pub trait LoopHooks {
         Vec::new()
     }
 
+    /// Reports eligible queued work without consuming it. Paused or held items
+    /// should not require another turn. Used only at an exhausted turn budget.
+    fn has_pending_messages(&self) -> bool {
+        false
+    }
+
     /// Called only when another turn is needed. `None` preserves the runtime context.
     fn prepare_next_turn(&mut self, _turn: &CompletedTurn<'_>) -> Option<Context> {
         None
@@ -220,7 +226,12 @@ fn run_loop(
     signal: &CancellationToken,
     emit: &mut dyn FnMut(Event),
 ) -> Result<Vec<Message>, LoopError> {
-    let mut pending_messages = hooks.get_steering_messages();
+    // Queue hooks consume entries. Never dequeue work that this run cannot admit.
+    let mut pending_messages = if config.max_turns > 0 && !signal.is_cancelled() {
+        hooks.get_steering_messages()
+    } else {
+        Vec::new()
+    };
     let mut completed_turn: Option<(AssistantMessage, Vec<ToolResultMessage>)> = None;
     let mut turns = 0;
 
@@ -248,7 +259,7 @@ fn run_loop(
                 }
                 // Preparation may itself queue steering. Poll again only when
                 // nothing was already drained (preserves one-at-a-time hooks).
-                if pending_messages.is_empty() {
+                if pending_messages.is_empty() && !signal.is_cancelled() {
                     pending_messages = hooks.get_steering_messages();
                 }
                 emit(Event::TurnStart);
@@ -342,9 +353,24 @@ fn run_loop(
                 return finish(new_messages, emit);
             }
             completed_turn = Some((message, tool_results));
-            pending_messages = hooks.get_steering_messages();
+            if turns < config.max_turns && !signal.is_cancelled() {
+                pending_messages = hooks.get_steering_messages();
+            }
         }
 
+        // Inspect without consuming: eligible queued work still requires a turn,
+        // while a naturally completed answer with no eligible work succeeds.
+        if turns >= config.max_turns && !signal.is_cancelled() && hooks.has_pending_messages() {
+            emit(Event::AgentEnd {
+                messages: new_messages,
+            });
+            return Err(LoopError::MaxTurnsExceeded {
+                max_turns: config.max_turns,
+            });
+        }
+        if turns >= config.max_turns || signal.is_cancelled() {
+            return finish(new_messages, emit);
+        }
         pending_messages = hooks.get_follow_up_messages();
         if pending_messages.is_empty() {
             return finish(new_messages, emit);

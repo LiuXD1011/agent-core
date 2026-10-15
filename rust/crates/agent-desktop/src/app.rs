@@ -1,3 +1,4 @@
+use crate::shell;
 use crate::ui_dialog::DesktopDialogs;
 use agent_core::agent_loop::{run_agent_loop, LoopConfig, NoopLoopHooks, Provider};
 use agent_core::tools::NoopToolHooks;
@@ -34,11 +35,11 @@ use agent_runtime::resources::{
     format_skills_for_prompt, load_resources, prepare_prompt, ResourceLoad, ResourceOptions,
 };
 use agent_runtime::retry::{RetryOptions, RetryingProvider};
-use agent_runtime::runtime::{run_prompt, MessageQueues, RunOptions};
+use agent_runtime::runtime::{run_prompt, MessageQueues, QueueItemId, QueueLane, RunOptions};
 use agent_runtime::session::{Session, SessionStore};
 use agent_runtime::thinking::{notify_thinking_level_select, restore_thinking_settings};
 use base64::{engine::general_purpose::STANDARD, Engine};
-use eframe::egui::{self, Color32, FontFamily, RichText};
+use eframe::egui::{self, FontFamily, RichText};
 use std::collections::BTreeMap;
 use std::io::Cursor;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -47,9 +48,17 @@ use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-const ACCENT: Color32 = Color32::from_rgb(104, 219, 194);
-const BACKGROUND: Color32 = Color32::from_rgb(19, 23, 30);
-const SURFACE: Color32 = Color32::from_rgb(29, 35, 44);
+#[path = "app_connections.rs"]
+mod connections_ui;
+use connections_ui::ConnectionsState;
+
+#[path = "app_workbench.rs"]
+mod workbench_ui;
+use workbench_ui::{WorkbenchPage, WorkbenchState};
+
+#[path = "app_task_management.rs"]
+mod task_management_ui;
+use task_management_ui::TaskManagement;
 
 #[cfg(test)]
 #[path = "app_auth_tests.rs"]
@@ -84,7 +93,10 @@ enum WorkerMessage {
 
 struct QueueInputResult {
     session_id: String,
+    lane: QueueLane,
     result: Result<Option<Message>, String>,
+    persisted_id: Option<QueueItemId>,
+    workspace: Option<PathBuf>,
 }
 
 #[derive(Clone)]
@@ -139,6 +151,9 @@ pub struct DesktopApp {
     workspace: String,
     session_name_draft: String,
     input: String,
+    input_images: Vec<Content>,
+    pending_images: Vec<Content>,
+    queue_images: Vec<Content>,
     status: String,
     running: bool,
     compacting: bool,
@@ -150,6 +165,7 @@ pub struct DesktopApp {
     partial: Option<AssistantMessage>,
     tool_activity: Vec<String>,
     queues: MessageQueues,
+    queue_halted: bool,
     import_path: String,
     import_leaf: String,
     model_filter: String,
@@ -180,8 +196,9 @@ pub struct DesktopApp {
     extension_display: Vec<String>,
     extension_statuses: BTreeMap<String, String>,
     pending_draft: Option<String>,
+    pending_queue_id: Option<QueueItemId>,
     queue_draft: Option<String>,
-    queued_drafts: Vec<(Message, String)>,
+    queued_drafts: Vec<(QueueItemId, Message, String)>,
     queue_worker: Option<JoinHandle<()>>,
     queue_receiver: Option<Receiver<QueueInputResult>>,
     queue_signal: CancellationToken,
@@ -191,24 +208,14 @@ pub struct DesktopApp {
     model_before: Option<(Session, ModelConfiguration)>,
     model_committed: bool,
     ui_dialogs: DesktopDialogs,
+    settings_open: bool,
+    connections: ConnectionsState,
+    workbench: WorkbenchState,
+    tasks: TaskManagement,
 }
 
 fn configure_ui(ctx: &egui::Context) {
-    ctx.set_theme(egui::ThemePreference::Dark);
-    let mut visuals = egui::Visuals::dark();
-    visuals.panel_fill = BACKGROUND;
-    visuals.window_fill = SURFACE;
-    visuals.extreme_bg_color = Color32::from_rgb(14, 18, 24);
-    visuals.selection.bg_fill = Color32::from_rgb(35, 86, 77);
-    visuals.widgets.active.bg_fill = Color32::from_rgb(42, 94, 85);
-    ctx.set_visuals(visuals);
-    let mut style = (*ctx.style()).clone();
-    style.spacing.item_spacing = egui::vec2(10.0, 10.0);
-    style.spacing.button_padding = egui::vec2(12.0, 8.0);
-    style
-        .text_styles
-        .insert(egui::TextStyle::Body, egui::FontId::proportional(16.0));
-    ctx.set_style(style);
+    shell::configure(ctx);
     let mut fonts = egui::FontDefinitions::default();
     if let Some(directory) = std::env::var_os("WINDIR") {
         for name in ["msyh.ttc", "simhei.ttf"] {
@@ -240,7 +247,10 @@ impl DesktopApp {
                 .map(PathBuf::from)
                 .unwrap_or_else(SessionStore::default_directory),
         );
-        Self::with_store(ctx, store)
+        let mut app = Self::with_store(ctx, store);
+        app.enable_task_management(ctx);
+        app.enable_durable_queues(ctx);
+        app
     }
     fn with_store(ctx: &egui::Context, store: SessionStore) -> Self {
         configure_ui(ctx);
@@ -284,6 +294,9 @@ impl DesktopApp {
             workspace,
             session_name_draft,
             input: String::new(),
+            input_images: Vec::new(),
+            pending_images: Vec::new(),
+            queue_images: Vec::new(),
             status,
             running: false,
             compacting: false,
@@ -295,6 +308,7 @@ impl DesktopApp {
             partial: None,
             tool_activity: vec![],
             queues: MessageQueues::default(),
+            queue_halted: false,
             import_path: String::new(),
             import_leaf: String::new(),
             model_filter: String::new(),
@@ -325,6 +339,7 @@ impl DesktopApp {
             extension_display: Vec::new(),
             extension_statuses: BTreeMap::new(),
             pending_draft: None,
+            pending_queue_id: None,
             queue_draft: None,
             queued_drafts: Vec::new(),
             queue_worker: None,
@@ -336,15 +351,22 @@ impl DesktopApp {
             model_before: None,
             model_committed: false,
             ui_dialogs: DesktopDialogs::default(),
+            settings_open: false,
+            connections: ConnectionsState::default(),
+            workbench: WorkbenchState::default(),
+            tasks: TaskManagement::default(),
         };
         if let Err(error) = app.extensions.bind_ui(app.ui_dialogs.broker().handle()) {
             app.status = error;
         }
         app.start_model_restore(ctx);
+        app.sync_queue_session();
         app
     }
     fn busy(&self) -> bool {
-        self.running
+        self.queue_io_busy()
+            || self.connections.busy()
+            || self.running
             || self.ui_dialogs.has_pending()
             || self.auth_receiver.is_some()
             || self.queue_receiver.is_some()
@@ -473,6 +495,25 @@ impl DesktopApp {
                 }
                 // Selection validates local configuration only. STS/ADC exchanges and
                 // paid provider calls belong to the later cancellable request worker.
+                if source == ModelSelectSource::Restore && configuration.context_window == 0 {
+                    if let (Some(service), Some(path)) = (
+                        agent_runtime::connections::Service::from_id(
+                            configuration.settings.provider_id(),
+                        ),
+                        configuration.settings.options.auth_storage_path.as_ref(),
+                    ) {
+                        if let Ok(connection) = agent_runtime::connections::load_connection(
+                            &AuthStorage::new(path),
+                            service,
+                            &signal,
+                        ) {
+                            (
+                                configuration.context_window,
+                                configuration.max_output_tokens,
+                            ) = connection.budget(&configuration.settings.model);
+                        }
+                    }
+                }
                 if source == ModelSelectSource::Restore {
                     restore_thinking_settings(&candidate, &mut configuration.settings)?;
                 }
@@ -673,8 +714,7 @@ impl DesktopApp {
     fn reset_view(&mut self) {
         self.partial = None;
         self.tool_activity.clear();
-        self.queues.clear();
-        self.queued_drafts.clear();
+        self.sync_queue_session();
         self.images.clear();
         self.tree_target.clear();
         self.automation = AutomationHandle::default();
@@ -846,6 +886,7 @@ impl DesktopApp {
                 }
                 AuthMessage::DeviceCode(code) => self.auth_device_code = Some(code),
                 AuthMessage::Finished(provider, result) => {
+                    self.connections.loaded = false;
                     self.auth_receiver = None;
                     self.login_url = None;
                     self.auth_manual_sender = None;
@@ -891,6 +932,9 @@ impl DesktopApp {
                     self.settings.options.auth_storage_path = Some(self.auth_path.clone());
                     if let Some(draft) = &mut self.settings_draft {
                         draft.settings.options.auth_storage_path = Some(self.auth_path.clone());
+                    }
+                    if self.connections.open && !self.closing {
+                        self.start_connection_job(ctx, connections_ui::ConnectionJob::Load);
                     }
                 }
             }
@@ -1168,11 +1212,16 @@ impl DesktopApp {
         });
     }
     fn stop_workers(&mut self) -> bool {
+        self.stop_task_management();
+        self.cancel_queue_io();
+        self.connections.stop();
         self.ui_dialogs.close();
         self.signal.cancel();
         self.queue_signal.cancel();
         self.auth_signal.cancel();
-        self.queues.clear();
+        if !self.workbench.durable {
+            self.queues.clear();
+        }
         let running =
             self.worker.is_some() || self.queue_worker.is_some() || self.model_worker.is_some();
         self.receiver = None;
@@ -1189,6 +1238,7 @@ impl DesktopApp {
         if let Some(worker) = self.queue_worker.take() {
             let _ = worker.join();
         }
+
         if let Some(worker) = self.model_worker.take() {
             let _ = worker.join();
         }
@@ -1236,7 +1286,12 @@ impl DesktopApp {
         }
     }
     fn start(&mut self, ctx: &egui::Context) {
-        if self.busy() || self.closing || self.input.trim().is_empty() {
+        if self.busy()
+            || self.closing
+            || !self.task_execution_allowed()
+            || !self.queue_available()
+            || self.input.trim().is_empty()
+        {
             return;
         }
         if let Some(command) = self.input.trim().strip_prefix('/') {
@@ -1259,7 +1314,8 @@ impl DesktopApp {
                 return;
             }
         }
-        let prompt = Message::user(self.input.trim());
+        let prompt = self.composer_message();
+        self.pending_images = std::mem::take(&mut self.input_images);
         self.pending_draft = Some(self.input.clone());
         self.input.clear();
         self.start_prompt_worker(ctx, prompt, false);
@@ -1270,6 +1326,13 @@ impl DesktopApp {
         prompt: Message,
         already_prepared: bool,
     ) {
+        if !self.task_execution_allowed() {
+            self.restore_pending_draft();
+            return;
+        }
+        if self.workbench.durable && !self.queue_workspace_matches() {
+            self.halt_queue();
+        }
         let mut session = self.session.clone();
         let workspace = self.workspace.clone();
         let registry = self.extensions.clone();
@@ -1278,6 +1341,8 @@ impl DesktopApp {
         let settings = self.settings.clone();
         let store = self.store.clone();
         let queues = self.queues.clone();
+        let initial_queue_id = self.pending_queue_id;
+        let durable = self.workbench.durable;
         self.signal = CancellationToken::new();
         let signal = self.signal.clone();
         let (sender, receiver) = mpsc::sync_channel(64);
@@ -1325,6 +1390,12 @@ impl DesktopApp {
                     expand_user_prompt(prompt, &resources)?
                 };
                 let mut options = options?;
+                options.queued_prompt_id = initial_queue_id;
+                if durable {
+                    queues
+                        .bind_workspace(&session.workspace)
+                        .map_err(|e| e.to_string())?;
+                }
                 settings.validate()?;
                 options.system_prompt_suffix = load_context_files(&session.workspace).text;
                 options
@@ -1370,6 +1441,8 @@ impl DesktopApp {
             .unwrap_or_else(|_| Err("Agent worker panicked".into()));
             if let Err(error) = store.save(&session) {
                 result = Err(format!("保存会话失败：{error}"));
+            } else if let Err(error) = queues.confirm_saved_session(&session) {
+                result = Err(format!("会话已保存，队列确认未提交：{error}"));
             }
             let _ = sender.send(WorkerMessage::Finished(Box::new(session), result));
             repaint.request_repaint();
@@ -1385,9 +1458,18 @@ impl DesktopApp {
         }
     }
     fn start_steering_input(&mut self, ctx: &egui::Context) {
-        if !self.running
+        self.start_queued_input(ctx, QueueLane::Steering);
+    }
+    fn start_queued_input(&mut self, ctx: &egui::Context, lane: QueueLane) {
+        if self.closing
+            || !self.task_execution_allowed()
+            || self.queue_io_busy()
+            || !self.queue_available()
             || self.compacting
             || self.extension_operation
+            || self.model_receiver.is_some()
+            || self.auth_receiver.is_some()
+            || self.connections.busy()
             || self.queue_receiver.is_some()
             || self.input.trim().is_empty()
         {
@@ -1406,7 +1488,19 @@ impl DesktopApp {
         let workspace = self.workspace.clone();
         let registry = self.extensions.clone();
         let model = self.model_identity();
-        let prompt = Message::user(self.input.trim());
+        let prompt = self.composer_message();
+        let mut original_prompt = prompt.clone();
+        if let Message::User(user) = &mut original_prompt {
+            user.content[0] = Content::text(self.input.clone());
+        }
+        let queues = self.queues.clone();
+        let durable = self.workbench.durable;
+        let idle = !self.running;
+        let store = self.store.clone();
+        if !self.running {
+            self.signal = CancellationToken::new();
+        }
+        self.queue_images = std::mem::take(&mut self.input_images);
         self.queue_draft = Some(std::mem::take(&mut self.input));
         self.queue_signal = CancellationToken::new();
         let signal = self.queue_signal.clone();
@@ -1427,7 +1521,11 @@ impl DesktopApp {
                     InputSource::Interactive,
                     &context,
                     &signal,
-                    Some(InputStreamingBehavior::Steer),
+                    Some(if lane == QueueLane::FollowUp {
+                        InputStreamingBehavior::FollowUp
+                    } else {
+                        InputStreamingBehavior::Steer
+                    }),
                 )?;
                 if signal.is_cancelled() {
                     return Err("Input operation aborted".into());
@@ -1443,9 +1541,31 @@ impl DesktopApp {
                     .transpose()
             }))
             .unwrap_or_else(|_| Err("Queued input worker panicked".into()));
+            let mut persisted_id = None;
+            let result = result.and_then(|prepared| {
+                if durable {
+                    if let Some(prompt) = &prepared {
+                        queues
+                            .bind_workspace(&session.workspace)
+                            .map_err(|e| e.to_string())?;
+                        if idle {
+                            store.save(&session)?;
+                        }
+                        persisted_id = Some(
+                            queues
+                                .try_enqueue(prompt.clone(), lane, Some(original_prompt))
+                                .map_err(|e| e.to_string())?,
+                        );
+                    }
+                }
+                Ok(prepared)
+            });
             let _ = sender.send(QueueInputResult {
                 session_id: session.id,
+                lane,
                 result,
+                persisted_id,
+                workspace: (durable && idle).then_some(session.workspace),
             });
             repaint.request_repaint();
         }));
@@ -1463,39 +1583,91 @@ impl DesktopApp {
             Err(TryRecvError::Empty) => return,
             Err(TryRecvError::Disconnected) => QueueInputResult {
                 session_id: self.session.id.clone(),
+                lane: QueueLane::Steering,
                 result: Err("Queued input worker disconnected".into()),
+                persisted_id: None,
+                workspace: None,
             },
         };
         self.queue_receiver = None;
         if let Some(worker) = self.queue_worker.take() {
             let _ = worker.join();
         }
-        if result.session_id != self.session.id
-            || self.queue_signal.is_cancelled()
-            || self.signal.is_cancelled()
-            || self.closing
+        if result.session_id != self.session.id {
+            // A completed durable write belongs to its original session. Never
+            // inject another session's draft or workspace into the current one.
+            self.queue_draft = None;
+            self.queue_images.clear();
+            self.status = "其他会话的排队操作已结束；当前会话保持不变".into();
+            return;
+        }
+        if self.workbench.durable {
+            if let Some(error) = self.queues.storage_error() {
+                let draft = self.queue_draft.take();
+                if result.persisted_id.is_none() {
+                    self.input_images.append(&mut self.queue_images);
+                    self.restore_draft(draft);
+                } else {
+                    self.queue_images.clear();
+                }
+                self.queue_store_failed(error.to_string());
+                return;
+            }
+        }
+        if result.persisted_id.is_none()
+            && (self.queue_signal.is_cancelled() || self.signal.is_cancelled() || self.closing)
         {
             let draft = self.queue_draft.take();
+            self.input_images.append(&mut self.queue_images);
             self.restore_draft(draft);
             self.status = "插入指令已取消，草稿已保留".into();
             return;
         }
         match result.result {
             Ok(Some(prompt)) => {
-                if let Some(draft) = self.queue_draft.take() {
-                    self.queued_drafts.push((prompt.clone(), draft));
+                if let Some(workspace) = result.workspace {
+                    self.session.workspace = workspace;
                 }
-                self.queues.steer(prompt);
-                self.status = "指令已排队，将在当前工具批次后处理".into();
+                self.queue_images.clear();
+                let id = result
+                    .persisted_id
+                    .unwrap_or_else(|| self.queues.enqueue(prompt.clone(), result.lane));
+                if let Some(draft) = self.queue_draft.take() {
+                    if !self.workbench.durable {
+                        self.queued_drafts.push((id, prompt, draft));
+                    }
+                }
+                self.status = if result.lane == QueueLane::FollowUp {
+                    "消息已排队，当前任务结束后处理"
+                } else {
+                    "指令已排队，将在当前工具批次后处理"
+                }
+                .into();
+                if result.persisted_id.is_some()
+                    && (self.queue_signal.is_cancelled()
+                        || self.signal.is_cancelled()
+                        || self.closing)
+                {
+                    self.halt_queue();
+                    self.queue_halted = true;
+                    self.status =
+                        "消息已在取消前保存到队列；已停止自动派发，没有重复放回输入框。".into();
+                }
             }
             Ok(None) => {
+                self.queue_images.clear();
                 self.queue_draft = None;
                 self.status = "插入输入已由扩展处理，未添加模型消息".into();
             }
             Err(error) => {
                 let draft = self.queue_draft.take();
+                self.input_images.append(&mut self.queue_images);
                 self.restore_draft(draft);
-                self.status = error;
+                if self.workbench.durable && self.queues.storage_error().is_some() {
+                    self.queue_store_failed(error);
+                } else {
+                    self.status = error;
+                }
             }
         }
     }
@@ -2554,6 +2726,10 @@ impl DesktopApp {
         }
     }
     fn poll(&mut self, ctx: &egui::Context) {
+        self.poll_task_management(ctx);
+        self.sync_queue_session();
+        self.poll_queue_io(ctx);
+        self.poll_connections(ctx);
         self.poll_auth(ctx);
         self.poll_model_selection();
         self.poll_steering_input();
@@ -2584,22 +2760,16 @@ impl DesktopApp {
                         message: Message::Assistant(message),
                     } => self.partial = Some(message),
                     AgentEvent::MessageEnd { message } => {
-                        if matches!(&message, Message::User(_)) {
-                            self.pending_draft = None;
-                            if let Some(index) = self
-                                .queued_drafts
-                                .iter()
-                                .position(|(queued, _)| queued == &message)
-                            {
-                                self.queued_drafts.remove(index);
-                            }
-                        }
+                        let user = matches!(&message, Message::User(_));
                         if matches!(&message, Message::Assistant(_)) {
                             self.partial = None;
                         }
                         if let Err(error) = self.session.append_message(message) {
                             self.status = error;
                             self.signal.cancel();
+                        } else if user {
+                            self.pending_draft = None;
+                            self.pending_images.clear();
                         }
                     }
                     AgentEvent::ToolExecutionStart { tool_name, .. } => {
@@ -2616,12 +2786,37 @@ impl DesktopApp {
                     _ => {}
                 },
                 WorkerMessage::Finished(session, result) => {
+                    let durable_attempt =
+                        self.workbench.durable && self.pending_queue_id.take().is_some();
                     self.session = *session;
+                    if self
+                        .session
+                        .context
+                        .messages
+                        .iter()
+                        .rev()
+                        .find_map(|message| match message {
+                            Message::Assistant(assistant) => {
+                                Some(assistant.error_message.is_some())
+                            }
+                            _ => None,
+                        })
+                        .unwrap_or(false)
+                    {
+                        self.halt_queue();
+                        self.queue_halted = true;
+                    }
                     self.running = false;
                     self.partial = None;
                     if result.is_err() {
-                        let draft = self.pending_draft.take();
-                        self.restore_draft(draft);
+                        self.halt_queue();
+                        self.queue_halted = true;
+                        if durable_attempt {
+                            self.pending_draft = None;
+                            self.pending_images.clear();
+                        } else {
+                            self.restore_pending_draft();
+                        }
                     } else {
                         self.pending_draft = None;
                     }
@@ -2654,6 +2849,7 @@ impl DesktopApp {
                     }
                 }
                 WorkerMessage::InputHandled => {
+                    self.pending_images.clear();
                     self.running = false;
                     self.partial = None;
                     self.tool_activity.clear();
@@ -2665,13 +2861,24 @@ impl DesktopApp {
                     }
                 }
                 WorkerMessage::InputFailed(error) => {
+                    self.halt_queue();
+                    self.queue_halted = true;
                     self.running = false;
                     self.partial = None;
                     self.receiver = None;
-                    let draft = self.pending_draft.take();
-                    self.restore_draft(draft);
-                    self.status = if self.signal.is_cancelled() {
-                        "输入处理已取消，草稿已保留".into()
+                    let retained = self.workbench.durable && self.pending_queue_id.take().is_some();
+                    if retained {
+                        self.pending_draft = None;
+                        self.pending_images.clear();
+                    } else {
+                        self.restore_pending_draft();
+                    }
+                    self.status = if retained {
+                        format!(
+                            "输入未开始执行：{error}。消息保留在队列恢复记录中，请检查后明确重试。"
+                        )
+                    } else if self.signal.is_cancelled() {
+                        "输入处理已取消，未接收输入已保留".into()
                     } else {
                         error
                     };
@@ -2743,8 +2950,7 @@ impl DesktopApp {
                             format!("原生扩展已就绪 · {} 个扩展", self.extensions.ids().len())
                         }
                         Err(error) => {
-                            let draft = self.pending_draft.take();
-                            self.restore_draft(draft);
+                            self.restore_pending_draft();
                             if self.signal.is_cancelled() {
                                 "扩展操作已取消".into()
                             } else {
@@ -2776,13 +2982,14 @@ impl DesktopApp {
                 .drain(..self.extension_display.len() - 128);
         }
         if disconnected && self.running {
+            self.halt_queue();
+            self.queue_halted = true;
             self.signal.cancel();
             self.running = false;
             self.compacting = false;
             self.extension_operation = false;
             self.partial = None;
-            let draft = self.pending_draft.take();
-            self.restore_draft(draft);
+            self.restore_pending_draft();
             self.receiver = None;
             self.status = "Agent 工作线程意外结束，已保存完成的消息".into();
             self.save();
@@ -2790,168 +2997,275 @@ impl DesktopApp {
                 let _ = worker.join();
             }
         }
-        if !self.busy() && !self.closing && !self.signal.is_cancelled() {
-            if let Some(message) = self.queues.pop_next() {
-                self.pending_draft = self
+        if self.workbench.durable && self.queue_available() {
+            if let Some(error) = self.queues.storage_error() {
+                self.queue_store_failed(error.to_string());
+            }
+        }
+        if !self.workbench.durable {
+            let admitted = self.queues.take_admitted_ids();
+            self.queued_drafts
+                .retain(|(id, _, _)| !admitted.contains(id));
+        }
+        if !self.busy()
+            && !self.closing
+            && self.task_execution_allowed()
+            && !self.signal.is_cancelled()
+            && !self.queue_halted
+        {
+            if self.workbench.durable {
+                self.dispatch_durable_queue(ctx);
+            } else if let Some(item) = self.queues.take_next() {
+                let message = item.message.clone();
+                let raw = self
                     .queued_drafts
                     .iter()
-                    .position(|(queued, _)| queued == &message)
-                    .map(|index| self.queued_drafts.remove(index).1);
+                    .position(|(id, _, _)| *id == item.id)
+                    .map(|index| self.queued_drafts.remove(index));
+                self.pending_draft = Some(
+                    raw.as_ref()
+                        .map_or_else(|| message.text(), |(_, _, raw)| raw.clone()),
+                );
+                if let Message::User(user) = &message {
+                    self.pending_images = user
+                        .content
+                        .iter()
+                        .filter(|part| matches!(part, Content::Image { .. }))
+                        .cloned()
+                        .collect();
+                }
                 self.start_prompt_worker(ctx, message.clone(), true);
                 if !self.running {
-                    self.queues.steer(message);
+                    if let Some(raw) = raw {
+                        self.queued_drafts.push(raw);
+                    }
+                    let _ = self.queues.restore(item);
+                    self.pending_draft = None;
+                    self.pending_images.clear();
                 }
             }
         }
-        if !self.running && self.signal.is_cancelled() {
+        if !self.workbench.durable && !self.running && self.signal.is_cancelled() {
             let drafts = std::mem::take(&mut self.queued_drafts);
-            for (_, draft) in drafts.into_iter().rev() {
-                self.restore_draft(Some(draft));
+            let pending = self.queues.snapshot();
+            for (id, message, draft) in drafts.into_iter().rev() {
+                // Pending messages remain manageable after stopping the current run.
+                // Only drafts explicitly removed from the queue need restoration.
+                if pending.items.iter().any(|item| item.id == id) {
+                    self.queued_drafts.insert(0, (id, message, draft));
+                } else {
+                    self.restore_draft(Some(draft));
+                }
             }
         }
     }
-    pub fn show(&mut self, ctx: &egui::Context) {
-        self.poll(ctx);
-        if ctx.input(|input| input.viewport().close_requested())
-            && (self.busy() || !self.extensions.ids().is_empty())
-        {
-            self.closing = true;
-            self.ui_dialogs.close();
-            self.signal.cancel();
-            self.queue_signal.cancel();
-            self.auth_signal.cancel();
-            self.status = "正在停止并保存会话…".into();
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-        }
-        if self.closing && !self.busy() {
-            if self.extensions.ids().is_empty() {
-                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-            } else {
-                self.start_extension_action(ctx, ExtensionAction::Quit);
-            }
-        }
+    fn new_session(&mut self, ctx: &egui::Context) {
+        self.workbench.page = WorkbenchPage::Conversation;
+        let session = Session {
+            workspace: PathBuf::from(&self.workspace),
+            ..Default::default()
+        };
+        self.start_extension_action(
+            ctx,
+            ExtensionAction::Replace(Box::new(session), SessionStartReason::New),
+        );
+    }
+
+    fn sidebar_ui(&mut self, ctx: &egui::Context) {
+        let palette = shell::palette(ctx);
         egui::SidePanel::left("sidebar")
-            .exact_width(270.0)
+            .exact_width(shell::SIDEBAR_WIDTH)
             .resizable(false)
-            .frame(
-                egui::Frame::new()
-                    .fill(Color32::from_rgb(15, 19, 25))
-                    .inner_margin(20),
-            )
+            .frame(egui::Frame::new().fill(palette.sidebar).inner_margin(14))
             .show(ctx, |ui| {
+                ui.add_space(6.0);
+                ui.horizontal(|ui| {
+                    shell::mark(ui, 27.0);
+                    ui.label(RichText::new("Agent Core").size(16.0).strong());
+                });
+                ui.add_space(22.0);
+                if ui
+                    .add_enabled(
+                        !self.busy(),
+                        egui::Button::new("＋   新会话")
+                            .min_size(egui::vec2(ui.available_width(), 38.0))
+                            .frame(false),
+                    )
+                    .on_hover_text("在当前工作区创建新会话")
+                    .clicked()
+                {
+                    self.new_session(ctx);
+                }
+                ui.add_space(20.0);
+                self.workbench_navigation(ui);
+                ui.add_space(8.0);
+                ui.label(RichText::new("最近会话").size(11.0).color(palette.muted));
+                ui.add_space(4.0);
                 egui::ScrollArea::vertical()
-                    .id_salt("sidebar-scroll")
+                    .id_salt("sessions")
+                    .max_height((ui.available_height() - 228.0).max(40.0))
+                    .auto_shrink([false, true])
                     .show(ui, |ui| {
-                        ui.add_space(8.0);
-                        ui.label(
-                            RichText::new("AGENT CORE")
-                                .size(22.0)
-                                .strong()
-                                .color(Color32::WHITE),
-                        );
-                        ui.label(
-                            RichText::new("RUST / WINDOWS DESKTOP")
-                                .size(11.0)
-                                .color(ACCENT),
-                        );
-                        ui.add_space(20.0);
-                        if ui
-                            .add_enabled(
-                                !self.busy(),
-                                egui::Button::new("+  新建会话").min_size(egui::vec2(230.0, 40.0)),
-                            )
-                            .clicked()
-                        {
-                            let session = Session {
-                                workspace: PathBuf::from(&self.workspace),
-                                ..Default::default()
-                            };
+                        if self.sessions.is_empty() {
+                            ui.add_space(8.0);
+                            ui.label(
+                                RichText::new(
+                                    "还没有会话
+开始一个任务，记录会保存在本地。",
+                                )
+                                .size(12.0)
+                                .color(palette.muted),
+                            );
+                        }
+                        let mut selected = None;
+                        let mut visible: Vec<_> = self
+                            .sessions
+                            .iter()
+                            .filter(|s| self.task_state(&s.id).is_some_and(|state| !state.archived))
+                            .collect();
+                        visible.sort_by_key(|s| self.task_sort_key(s));
+                        for session in visible {
+                            if ui
+                                .add_enabled(
+                                    !self.busy(),
+                                    egui::Button::new(&session.name)
+                                        .selected(session.id == self.session.id)
+                                        .truncate()
+                                        .min_size(egui::vec2(ui.available_width(), 34.0)),
+                                )
+                                .on_hover_text(&session.name)
+                                .clicked()
+                            {
+                                selected = Some(session.clone());
+                            }
+                        }
+                        if let Some(session) = selected {
+                            self.workbench.page = WorkbenchPage::Conversation;
                             self.start_extension_action(
                                 ctx,
                                 ExtensionAction::Replace(
                                     Box::new(session),
-                                    SessionStartReason::New,
+                                    SessionStartReason::Resume,
                                 ),
                             );
                         }
-                        ui.add_space(14.0);
-                        ui.add_enabled_ui(!self.busy(), |ui| {
-                            ui.add(
-                                egui::TextEdit::singleline(&mut self.session_name_draft)
-                                    .hint_text("会话名称（空值清除）")
-                                    .desired_width(230.0),
-                            );
-                            ui.horizontal(|ui| {
-                                if ui.button("应用名称").clicked() {
-                                    self.start_extension_action(
-                                        ctx,
-                                        ExtensionAction::Name(self.session_name_draft.clone()),
-                                    );
-                                }
-                                if ui.button("清除名称").clicked() {
-                                    self.start_extension_action(
-                                        ctx,
-                                        ExtensionAction::Name(String::new()),
-                                    );
-                                }
-                            });
+                    });
+                ui.add_space((ui.available_height() - 196.0).max(0.0));
+                ui.separator();
+                ui.add_space(4.0);
+                shell::theme_controls(ui);
+                if ui
+                    .add(
+                        egui::Button::new("模型服务 · 添加 / 快速切换")
+                            .frame(false)
+                            .min_size(egui::vec2(ui.available_width(), 30.0)),
+                    )
+                    .clicked()
+                {
+                    self.open_connections(ctx);
+                }
+                let workspace = PathBuf::from(&self.workspace);
+                let label = workspace
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("本地工作区");
+                if ui
+                    .add(
+                        egui::Button::new(format!("工作区 · {label}"))
+                            .frame(false)
+                            .truncate()
+                            .min_size(egui::vec2(ui.available_width(), 30.0)),
+                    )
+                    .on_hover_text(&self.workspace)
+                    .clicked()
+                {
+                    self.settings_open = true;
+                }
+                if ui
+                    .add(
+                        egui::Button::new("设置与工具")
+                            .frame(false)
+                            .min_size(egui::vec2(ui.available_width(), 32.0)),
+                    )
+                    .on_hover_text("模型、权限、登录、会话树与原生扩展")
+                    .clicked()
+                {
+                    self.settings_open = true;
+                }
+                ui.label(
+                    RichText::new("本地会话  ·  Rust 原生桌面")
+                        .size(10.0)
+                        .color(palette.muted),
+                );
+            });
+    }
+
+    fn settings_ui(&mut self, ctx: &egui::Context) {
+        let palette = shell::palette(ctx);
+        if !self.settings_open {
+            return;
+        }
+        let mut open = self.settings_open;
+        egui::Window::new("设置与工具")
+            .id(egui::Id::new("desktop-settings"))
+            .open(&mut open)
+            .default_width(480.0)
+            .max_width(600.0)
+            .max_height((ctx.screen_rect().height() - 96.0).max(240.0))
+            .vscroll(true)
+            .show(ctx, |ui| {
+                shell::theme_controls(ui);
+                ui.label(
+                    RichText::new("配置只在点击应用后生效，打开此窗口不会发起模型请求。")
+                        .size(12.0)
+                        .color(palette.muted),
+                );
+                ui.add_space(8.0);
+                egui::CollapsingHeader::new("会话名称").show(ui, |ui| {
+                    ui.add_enabled_ui(!self.busy(), |ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.session_name_draft)
+                                .hint_text("会话名称（空值清除）")
+                                .desired_width(230.0),
+                        );
+                        ui.horizontal(|ui| {
+                            if ui.button("应用名称").clicked() {
+                                self.start_extension_action(
+                                    ctx,
+                                    ExtensionAction::Name(self.session_name_draft.clone()),
+                                );
+                            }
+                            if ui.button("清除名称").clicked() {
+                                self.start_extension_action(
+                                    ctx,
+                                    ExtensionAction::Name(String::new()),
+                                );
+                            }
                         });
-                        ui.label(RichText::new("会话").size(12.0).color(Color32::GRAY));
-                        egui::ScrollArea::vertical()
-                            .id_salt("sessions")
-                            .max_height(180.0)
-                            .show(ui, |ui| {
-                                let mut selected = None;
-                                for session in &self.sessions {
-                                    if ui
-                                        .add_enabled(
-                                            !self.busy(),
-                                            egui::Button::new(&session.name)
-                                                .selected(session.id == self.session.id),
-                                        )
-                                        .clicked()
-                                    {
-                                        selected = Some(session.clone());
-                                    }
-                                }
-                                if let Some(session) = selected {
-                                    self.start_extension_action(
-                                        ctx,
-                                        ExtensionAction::Replace(
-                                            Box::new(session),
-                                            SessionStartReason::Resume,
-                                        ),
-                                    );
-                                }
-                            });
-                        ui.add_space(16.0);
-                        ui.separator();
-                        ui.add_enabled_ui(!self.busy(), |ui| {
-                            ui.label(RichText::new("工作区").size(12.0).color(Color32::GRAY));
-                            ui.add(
-                                egui::TextEdit::singleline(&mut self.workspace)
-                                    .desired_width(230.0),
-                            );
-                            ui.add_space(6.0);
-                            ui.checkbox(&mut self.allow_changes, "允许写入 / 编辑文件");
-                            ui.checkbox(&mut self.allow_commands, "允许运行系统命令");
-                            ui.add_space(12.0);
-                            self.model_configuration_ui(ui, ctx);
-                            egui::CollapsingHeader::new("导入旧版会话树").show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::singleline(&mut self.import_path)
-                                        .hint_text("旧版 .jsonl 路径")
-                                        .desired_width(230.0),
-                                );
-                                ui.add(
-                                    egui::TextEdit::singleline(&mut self.import_leaf)
-                                        .hint_text("分支 entry ID（空=最新）")
-                                        .desired_width(230.0),
-                                );
-                                if ui.button("导入分支（保留原件）").clicked() {
-                                    let result = load_legacy_session(std::path::Path::new(
-                                        self.import_path.trim(),
-                                    ))
+                    });
+                });
+                ui.add_enabled_ui(!self.busy(), |ui| {
+                    ui.label(RichText::new("工作区").size(12.0).color(palette.muted));
+                    ui.add(egui::TextEdit::singleline(&mut self.workspace).desired_width(230.0));
+                    ui.add_space(6.0);
+                    ui.checkbox(&mut self.allow_changes, "允许写入 / 编辑文件");
+                    ui.checkbox(&mut self.allow_commands, "允许运行系统命令");
+                    ui.add_space(12.0);
+                    self.model_configuration_ui(ui, ctx);
+                    egui::CollapsingHeader::new("导入旧版会话树").show(ui, |ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.import_path)
+                                .hint_text("旧版 .jsonl 路径")
+                                .desired_width(230.0),
+                        );
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.import_leaf)
+                                .hint_text("分支 entry ID（空=最新）")
+                                .desired_width(230.0),
+                        );
+                        if ui.button("导入分支（保留原件）").clicked() {
+                            let result =
+                                load_legacy_session(std::path::Path::new(self.import_path.trim()))
                                     .and_then(|legacy| {
                                         legacy.import(if self.import_leaf.trim().is_empty() {
                                             LeafSelection::Latest
@@ -2959,328 +3273,456 @@ impl DesktopApp {
                                             LeafSelection::Entry(self.import_leaf.trim().into())
                                         })
                                     });
-                                    match result {
-                                        Ok(session) => self.start_extension_action(
-                                            ctx,
-                                            ExtensionAction::Replace(
-                                                Box::new(session),
-                                                SessionStartReason::Resume,
-                                            ),
-                                        ),
-                                        Err(error) => self.status = error,
-                                    }
-                                }
-                            });
-                        });
-                        egui::CollapsingHeader::new("登录 / 凭据")
-                            .show(ui, |ui| self.auth_ui(ui, ctx));
-                        self.tree_ui(ui);
-                        self.extensions_ui(ui, ctx);
-                        ui.add_space(14.0);
-                        ui.label(
-                            RichText::new("原生 Rust 核心\n无需 Node.js / 浏览器运行时")
-                                .size(12.0)
-                                .color(Color32::GRAY),
-                        );
+                            match result {
+                                Ok(session) => self.start_extension_action(
+                                    ctx,
+                                    ExtensionAction::Replace(
+                                        Box::new(session),
+                                        SessionStartReason::Resume,
+                                    ),
+                                ),
+                                Err(error) => self.status = error,
+                            }
+                        }
                     });
+                });
+
+                egui::CollapsingHeader::new("登录 / 凭据").show(ui, |ui| self.auth_ui(ui, ctx));
+                self.tree_ui(ui);
+                self.extensions_ui(ui, ctx);
             });
+        self.settings_open = open;
+    }
+
+    fn header_ui(&mut self, ctx: &egui::Context) {
+        let palette = shell::palette(ctx);
         egui::TopBottomPanel::top("header")
-            .frame(egui::Frame::new().fill(BACKGROUND).inner_margin(18))
+            .exact_height(56.0)
+            .frame(
+                egui::Frame::new()
+                    .fill(palette.background)
+                    .inner_margin(egui::Margin::symmetric(24, 12)),
+            )
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(&self.session.name).size(20.0).strong());
+                    let title_width = (ui.available_width() - 330.0).max(40.0);
+                    ui.add_sized(
+                        [title_width, 24.0],
+                        egui::Label::new(RichText::new(&self.session.name).size(14.0).strong())
+                            .truncate(),
+                    )
+                    .on_hover_text(&self.session.name);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui
-                            .add_enabled(
-                                !self.busy()
-                                    && self
-                                        .session
-                                        .context
-                                        .messages
-                                        .iter()
-                                        .filter(|message| matches!(message, Message::User(_)))
-                                        .count()
-                                        > 2,
-                                egui::Button::new("压缩上下文"),
-                            )
-                            .clicked()
-                        {
-                            self.compact(ctx);
-                        }
-                        if ui
-                            .add_enabled(!self.busy(), egui::Button::new("导出 HTML"))
-                            .clicked()
-                        {
-                            let path = PathBuf::from(&self.workspace)
-                                .join(format!("agent-core-session-{}.html", self.session.id));
-                            self.status = match SessionStore::export_html(&self.session, &path) {
-                                Ok(()) => format!("完整会话树已导出 {}", path.display()),
-                                Err(error) => format!("导出失败：{error}"),
-                            };
-                        }
-                        if ui
-                            .add_enabled(
-                                !self.busy() && !self.session.context.messages.is_empty(),
-                                egui::Button::new("导出 JSONL"),
-                            )
-                            .clicked()
-                        {
-                            let path = PathBuf::from(&self.workspace)
-                                .join(format!("agent-core-session-{}.jsonl", self.session.id));
-                            self.status =
-                                match SessionStore::export_branch_jsonl(&self.session, &path) {
-                                    Ok(()) => format!("已导出 {}", path.display()),
+                        self.workbench_header(ui);
+                        ui.menu_button("···", |ui| {
+                            if ui
+                                .add_enabled(
+                                    !self.busy()
+                                        && self
+                                            .session
+                                            .context
+                                            .messages
+                                            .iter()
+                                            .filter(|message| matches!(message, Message::User(_)))
+                                            .count()
+                                            > 2,
+                                    egui::Button::new("压缩上下文"),
+                                )
+                                .clicked()
+                            {
+                                self.compact(ctx);
+                            }
+                            if ui
+                                .add_enabled(!self.busy(), egui::Button::new("导出 HTML"))
+                                .clicked()
+                            {
+                                let path = PathBuf::from(&self.workspace)
+                                    .join(format!("agent-core-session-{}.html", self.session.id));
+                                self.status = match SessionStore::export_html(&self.session, &path)
+                                {
+                                    Ok(()) => format!("完整会话树已导出 {}", path.display()),
                                     Err(error) => format!("导出失败：{error}"),
                                 };
-                        }
+                            }
+                            if ui
+                                .add_enabled(
+                                    !self.busy() && !self.session.context.messages.is_empty(),
+                                    egui::Button::new("导出 JSONL"),
+                                )
+                                .clicked()
+                            {
+                                let path = PathBuf::from(&self.workspace)
+                                    .join(format!("agent-core-session-{}.jsonl", self.session.id));
+                                self.status =
+                                    match SessionStore::export_branch_jsonl(&self.session, &path) {
+                                        Ok(()) => format!("已导出 {}", path.display()),
+                                        Err(error) => format!("导出失败：{error}"),
+                                    };
+                            }
+                        });
                         ui.label(
                             RichText::new(if self.settings.mode == ProviderMode::Demo {
-                                "OFFLINE"
+                                "离线演示"
                             } else {
-                                "MODEL MODE"
+                                "模型已配置"
                             })
                             .size(11.0)
-                            .color(ACCENT),
+                            .color(palette.muted),
                         );
                     });
                 });
             });
+    }
+
+    fn composer_ui(&mut self, ctx: &egui::Context) {
+        let palette = shell::palette(ctx);
         egui::TopBottomPanel::bottom("composer")
-            .min_height(220.0)
-            .frame(egui::Frame::new().fill(BACKGROUND).inner_margin(20))
+            .min_height(184.0)
+            .frame(
+                egui::Frame::new()
+                    .fill(palette.background)
+                    .inner_margin(egui::Margin::symmetric(24, 12)),
+            )
             .show(ctx, |ui| {
-                ui.add(
-                    egui::Label::new(
-                        RichText::new(&self.status)
-                            .size(12.0)
-                            .color(if self.running { ACCENT } else { Color32::GRAY }),
-                    )
-                    .truncate(),
-                )
-                .on_hover_text(&self.status);
-                ui.add_space(4.0);
-                let response = egui::ScrollArea::vertical()
-                    .id_salt("composer-scroll")
-                    .max_height(92.0)
-                    .show(ui, |ui| {
-                        ui.add_enabled(
-                            !self.closing,
-                            egui::TextEdit::multiline(&mut self.input)
-                                .hint_text("描述任务，或提问项目中的代码…")
-                                .desired_rows(3)
-                                .desired_width(f32::INFINITY),
-                        )
-                    })
-                    .inner;
-                let shortcut = !self.ui_dialogs.has_pending()
-                    && response.has_focus()
-                    && ctx.input_mut(|input| input.consume_shortcut(&self.keybindings.send));
-                ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new(format!(
-                            "{} 发送 · 密钥不写入会话",
-                            ctx.format_shortcut(&self.keybindings.send)
-                        ))
-                        .size(11.0)
-                        .color(Color32::GRAY),
-                    );
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if self.running
-                            || self.queue_receiver.is_some()
-                            || self.model_receiver.is_some()
-                        {
-                            if ui.button("停止").clicked() {
-                                self.signal.cancel();
-                                self.queue_signal.cancel();
-                                self.queues.clear();
-                                self.status = "正在停止…".into();
+                shell::column(ui, |ui| {
+                    self.task_execution_banner(ui);
+                    egui::Frame::new()
+                        .fill(palette.surface)
+                        .corner_radius(20)
+                        .stroke(egui::Stroke::new(1.0, palette.border))
+                        .inner_margin(14)
+                        .show(ui, |ui| {
+                            if !self.input_images.is_empty() {
+                                ui.horizontal(|ui| {
+                                    ui.label(format!(
+                                        "{} 个保留的图片附件",
+                                        self.input_images.len()
+                                    ));
+                                    if ui.small_button("移除附件").clicked() {
+                                        self.input_images.clear();
+                                    }
+                                });
                             }
-                            ui.spinner();
-                            if !self.compacting
-                                && !self.extension_operation
-                                && self.model_receiver.is_none()
-                                && self.queue_receiver.is_none()
-                                && !self.input.trim().is_empty()
-                                && ui.button("插入指令").clicked()
-                            {
-                                self.start_steering_input(ctx);
-                            }
-                        } else if ui
-                            .add_enabled(
-                                !self.input.trim().is_empty() && !self.busy(),
-                                egui::Button::new(
-                                    RichText::new("发送任务").color(Color32::from_rgb(13, 28, 25)),
-                                )
-                                .fill(ACCENT),
+                            let response = egui::ScrollArea::vertical()
+                                .id_salt("composer-scroll")
+                                .max_height(80.0)
+                                .show(ui, |ui| {
+                                    ui.add_enabled(
+                                        !self.closing,
+                                        egui::TextEdit::multiline(&mut self.input)
+                                            .hint_text("描述任务，或提问项目中的代码…")
+                                            .id_salt("message-input")
+                                            .frame(false)
+                                            .desired_rows(2)
+                                            .desired_width(f32::INFINITY),
+                                    )
+                                })
+                                .inner;
+                            let shortcut = !self.ui_dialogs.has_pending()
+                                && response.has_focus()
+                                && ctx.input_mut(|input| {
+                                    input.consume_shortcut(&self.keybindings.send)
+                                });
+                            ui.horizontal(|ui| {
+                                let model_label = if self.settings.mode == ProviderMode::Demo {
+                                    "离线演示".to_owned()
+                                } else {
+                                    self.settings.model.clone()
+                                };
+                                let model_width = (ui.available_width() * 0.5).min(220.0);
+                                if ui
+                                    .add_sized(
+                                        [model_width, 34.0],
+                                        egui::Button::new(format!("模型 · {model_label}"))
+                                            .frame(false)
+                                            .truncate(),
+                                    )
+                                    .on_hover_text(
+                                        "添加模型服务 / 快速切换；高级设置内配置 Thinking",
+                                    )
+                                    .clicked()
+                                {
+                                    self.open_connections(ctx);
+                                }
+                                let permission = if self.allow_commands {
+                                    "允许命令"
+                                } else if self.allow_changes {
+                                    "允许编辑"
+                                } else {
+                                    "只读工作区"
+                                };
+                                if ui
+                                    .add(
+                                        egui::Button::new(
+                                            RichText::new(permission)
+                                                .size(11.0)
+                                                .color(palette.muted),
+                                        )
+                                        .frame(false),
+                                    )
+                                    .on_hover_text("查看工作区与执行权限")
+                                    .clicked()
+                                {
+                                    self.settings_open = true;
+                                }
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Center),
+                                    |ui| {
+                                        if self.running
+                                            || self.queue_receiver.is_some()
+                                            || self.model_receiver.is_some()
+                                        {
+                                            if ui.button("停止").clicked() {
+                                                self.signal.cancel();
+                                                self.queue_signal.cancel();
+                                                self.cancel_queue_io();
+                                                self.halt_queue();
+                                                self.status = "正在停止…".into();
+                                            }
+                                            ui.spinner();
+                                            if !self.compacting
+                                                && !self.extension_operation
+                                                && self.model_receiver.is_none()
+                                                && self.queue_receiver.is_none()
+                                                && self.task_execution_allowed()
+                                                && !self.input.trim().is_empty()
+                                                && ui.button("插入指令").clicked()
+                                            {
+                                                self.start_steering_input(ctx);
+                                            }
+                                        } else if ui
+                                            .add_enabled(
+                                                !self.input.trim().is_empty()
+                                                    && !self.busy()
+                                                    && self.task_execution_allowed(),
+                                                egui::Button::new(
+                                                    RichText::new("↑")
+                                                        .size(22.0)
+                                                        .color(palette.sidebar),
+                                                )
+                                                .fill(palette.text)
+                                                .corner_radius(16)
+                                                .min_size(egui::vec2(34.0, 34.0)),
+                                            )
+                                            .on_hover_text("发送任务")
+                                            .clicked()
+                                            || shortcut
+                                        {
+                                            self.start(ctx);
+                                        }
+                                    },
+                                );
+                            });
+                        });
+                    ui.add_space(2.0);
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::Label::new(
+                                RichText::new(&self.status).size(11.0).color(palette.muted),
                             )
-                            .clicked()
-                            || shortcut
-                        {
-                            self.start(ctx);
-                        }
+                            .truncate(),
+                        )
+                        .on_hover_text(&self.status);
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.label(
+                                RichText::new(format!(
+                                    "{} 发送",
+                                    ctx.format_shortcut(&self.keybindings.send)
+                                ))
+                                .size(10.0)
+                                .color(palette.muted),
+                            );
+                        });
                     });
                 });
             });
+    }
+
+    fn transcript_ui(&mut self, ctx: &egui::Context) {
+        let palette = shell::palette(ctx);
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(BACKGROUND).inner_margin(26))
+            .frame(
+                egui::Frame::new()
+                    .fill(palette.background)
+                    .inner_margin(egui::Margin::symmetric(24, 8)),
+            )
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical()
                     .id_salt("transcript")
                     .stick_to_bottom(true)
                     .show(ui, |ui| {
-                        for text in &self.extension_display {
-                            egui::Frame::new()
-                                .fill(SURFACE)
-                                .corner_radius(8)
-                                .inner_margin(12)
-                                .show(ui, |ui| {
-                                    ui.label(
-                                        RichText::new("EXTENSION · 展示输出")
-                                            .size(11.0)
-                                            .color(ACCENT),
-                                    );
-                                    ui.label(text);
-                                });
-                        }
-                        if self.session.context.messages.is_empty() {
-                            ui.add_space(55.0);
-                            ui.label(
-                                RichText::new("从一个问题开始。\n让 Agent 进入你的工作区。")
-                                    .size(32.0)
-                                    .strong()
-                                    .color(Color32::WHITE),
-                            );
-                            ui.add_space(12.0);
-                            ui.label(
-                                RichText::new("Rust 原生桌面 · 流式对话 · 工具调用 · 本地会话")
-                                    .color(ACCENT),
-                            );
-                            ui.add_space(24.0);
-                            for (title, prompt) in [
-                                ("理解项目", "阅读 README.md，解释这个项目的架构。"),
-                                ("查找问题", "检查项目中的 TODO，并给出处理建议。"),
-                                ("实现功能", "先理解项目，再帮我实现一个最小功能。"),
-                            ] {
-                                if ui
-                                    .add_sized(
-                                        [ui.available_width().min(600.0), 44.0],
-                                        egui::Button::new(title),
-                                    )
-                                    .clicked()
-                                {
+                        shell::column(ui, |ui| {
+                            for text in &self.extension_display {
+                                egui::Frame::new()
+                                    .fill(palette.surface)
+                                    .corner_radius(8)
+                                    .inner_margin(12)
+                                    .show(ui, |ui| {
+                                        ui.label(
+                                            RichText::new("EXTENSION · 展示输出")
+                                                .size(11.0)
+                                                .color(palette.text),
+                                        );
+                                        ui.label(text);
+                                    });
+                            }
+                            if self.session.context.messages.is_empty() {
+                                ui.add_space(
+                                    (ctx.screen_rect().height() * 0.16).clamp(32.0, 140.0),
+                                );
+                                if let Some(prompt) = shell::welcome(ui) {
                                     self.input = prompt.into();
                                 }
                             }
-                            ui.add_space(20.0);
-                            ui.label(
-                                RichText::new("首次启动默认离线演示。真实模型连接在左侧配置。")
-                                    .size(13.0)
-                                    .color(Color32::GRAY),
-                            );
-                        }
-                        for (index, message) in self.session.context.messages.iter().enumerate() {
-                            if let Message::ToolResult(result) = message {
-                                egui::CollapsingHeader::new(format!(
-                                    "{} · {}",
-                                    result.tool_name,
-                                    if result.is_error { "错误" } else { "结果" }
-                                ))
-                                .id_salt(index)
-                                .show(ui, |ui| {
-                                    ui.label(RichText::new(message.text()).monospace().size(13.0));
-                                    if let Some(diff) = result.details["diff"].as_str() {
-                                        ui.collapsing("代码差异", |ui| {
-                                            ui.label(RichText::new(diff).monospace().size(13.0));
-                                        });
-                                    }
-                                    show_images(
-                                        ui,
-                                        &mut self.images,
-                                        &format!(
-                                            "{}-{index}-{}",
-                                            self.session.id, result.timestamp
-                                        ),
-                                        &result.content,
-                                    );
-                                });
-                                continue;
-                            }
-                            egui::Frame::new()
-                                .fill(if matches!(message, Message::User(_)) {
-                                    SURFACE
-                                } else {
-                                    BACKGROUND
-                                })
-                                .corner_radius(10)
-                                .inner_margin(16)
-                                .show(ui, |ui| {
-                                    ui.set_min_width((ui.available_width() - 8.0).max(0.0));
-                                    ui.label(
-                                        RichText::new(if matches!(message, Message::User(_)) {
-                                            "YOU"
-                                        } else {
-                                            "AGENT CORE"
-                                        })
-                                        .size(11.0)
-                                        .strong()
-                                        .color(ACCENT),
-                                    );
-                                    ui.label(message.text());
-                                    let content = match message {
-                                        Message::User(message) => &message.content,
-                                        Message::Assistant(message) => &message.content,
-                                        _ => return,
-                                    };
-                                    show_images(
-                                        ui,
-                                        &mut self.images,
-                                        &format!("{}-{index}", self.session.id),
-                                        content,
-                                    );
-                                    if let Message::Assistant(assistant) = message {
-                                        for block in &assistant.content {
-                                            if let Content::Thinking { thinking } = block {
-                                                ui.collapsing("思考", |ui| {
-                                                    ui.label(thinking);
-                                                });
+                            for (index, message) in self.session.context.messages.iter().enumerate()
+                            {
+                                if let Message::ToolResult(result) = message {
+                                    egui::CollapsingHeader::new(format!(
+                                        "{} · {}",
+                                        result.tool_name,
+                                        if result.is_error { "错误" } else { "结果" }
+                                    ))
+                                    .id_salt(index)
+                                    .show(ui, |ui| {
+                                        ui.label(
+                                            RichText::new(message.text()).monospace().size(13.0),
+                                        );
+                                        if let Some(diff) = result.details["diff"].as_str() {
+                                            ui.collapsing("代码差异", |ui| {
+                                                ui.label(
+                                                    RichText::new(diff).monospace().size(13.0),
+                                                );
+                                            });
+                                        }
+                                        show_images(
+                                            ui,
+                                            &mut self.images,
+                                            &format!(
+                                                "{}-{index}-{}",
+                                                self.session.id, result.timestamp
+                                            ),
+                                            &result.content,
+                                        );
+                                    });
+                                    continue;
+                                }
+                                egui::Frame::new()
+                                    .fill(if matches!(message, Message::User(_)) {
+                                        palette.surface
+                                    } else {
+                                        palette.background
+                                    })
+                                    .corner_radius(16)
+                                    .inner_margin(16)
+                                    .show(ui, |ui| {
+                                        ui.set_min_width((ui.available_width() - 8.0).max(0.0));
+                                        ui.label(
+                                            RichText::new(if matches!(message, Message::User(_)) {
+                                                "你"
+                                            } else {
+                                                "Agent Core"
+                                            })
+                                            .size(11.0)
+                                            .strong()
+                                            .color(palette.text),
+                                        );
+                                        ui.label(message.text());
+                                        let content = match message {
+                                            Message::User(message) => &message.content,
+                                            Message::Assistant(message) => &message.content,
+                                            _ => return,
+                                        };
+                                        show_images(
+                                            ui,
+                                            &mut self.images,
+                                            &format!("{}-{index}", self.session.id),
+                                            content,
+                                        );
+                                        if let Message::Assistant(assistant) = message {
+                                            for block in &assistant.content {
+                                                if let Content::Thinking { thinking } = block {
+                                                    ui.collapsing("思考", |ui| {
+                                                        ui.label(thinking);
+                                                    });
+                                                }
+                                            }
+                                            if let Some(error) = &assistant.error_message {
+                                                ui.colored_label(
+                                                    ui.visuals().error_fg_color,
+                                                    error,
+                                                );
+                                            }
+                                            for call in assistant.tool_calls() {
+                                                ui.label(
+                                                    RichText::new(format!(
+                                                        "调用 {}  {}",
+                                                        call.name, call.arguments
+                                                    ))
+                                                    .monospace()
+                                                    .size(12.0)
+                                                    .color(palette.muted),
+                                                );
                                             }
                                         }
-                                        if let Some(error) = &assistant.error_message {
-                                            ui.colored_label(
-                                                Color32::from_rgb(247, 134, 128),
-                                                error,
-                                            );
-                                        }
-                                        for call in assistant.tool_calls() {
-                                            ui.label(
-                                                RichText::new(format!(
-                                                    "调用 {}  {}",
-                                                    call.name, call.arguments
-                                                ))
-                                                .monospace()
-                                                .size(12.0)
-                                                .color(Color32::GRAY),
-                                            );
-                                        }
-                                    }
-                                });
-                            ui.add_space(12.0);
-                        }
-                        if let Some(partial) = &self.partial {
-                            ui.label(
-                                RichText::new("AGENT CORE · 正在生成")
-                                    .size(11.0)
-                                    .color(ACCENT),
-                            );
-                            ui.label(Message::Assistant(partial.clone()).text());
-                        }
-                        if self.running {
-                            if let Some(activity) = self.tool_activity.last() {
-                                ui.label(RichText::new(activity).size(12.0).color(ACCENT));
+                                    });
+                                ui.add_space(12.0);
                             }
-                        }
+                            if let Some(partial) = &self.partial {
+                                ui.label(
+                                    RichText::new("AGENT CORE · 正在生成")
+                                        .size(11.0)
+                                        .color(palette.text),
+                                );
+                                ui.label(Message::Assistant(partial.clone()).text());
+                            }
+                            if self.running {
+                                if let Some(activity) = self.tool_activity.last() {
+                                    ui.label(
+                                        RichText::new(activity).size(12.0).color(palette.text),
+                                    );
+                                }
+                            }
+                        });
                     });
             });
+    }
+
+    pub fn show(&mut self, ctx: &egui::Context) {
+        self.poll(ctx);
+        if ctx.input(|input| input.viewport().close_requested())
+            && (self.busy() || self.task_management_busy() || !self.extensions.ids().is_empty())
+        {
+            self.closing = true;
+            self.cancel_task_management();
+            self.ui_dialogs.close();
+            self.signal.cancel();
+            self.queue_signal.cancel();
+            self.auth_signal.cancel();
+            self.connections.cancel();
+            self.cancel_queue_io();
+            self.status = "正在停止并保存会话…".into();
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        }
+        if self.closing && !self.busy() && !self.task_management_busy() {
+            if self.extensions.ids().is_empty() {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            } else {
+                self.start_extension_action(ctx, ExtensionAction::Quit);
+            }
+        }
+        self.sidebar_ui(ctx);
+        self.header_ui(ctx);
+        if self.workbench.page == WorkbenchPage::Tasks {
+            self.tasks_ui(ctx);
+        } else {
+            self.inspector_panel(ctx);
+            self.composer_ui(ctx);
+            self.transcript_ui(ctx);
+            self.inspector_window(ctx);
+        }
+        self.settings_ui(ctx);
+        self.queue_window(ctx);
+        self.connections_ui(ctx);
         if let Err(error) = self.ui_dialogs.show(ctx, self.keybindings.send) {
             self.status = error;
         }
@@ -3442,6 +3884,10 @@ fn configuration_for_identity(
         configuration.settings.options.api_key_explicit = false;
         let mode = agent_runtime::catalog::find(&identity.provider, &identity.model)
             .and_then(|model| model.mode())
+            .or_else(|| {
+                agent_runtime::connections::Service::from_id(&identity.provider)
+                    .map(|service| service.mode())
+            })
             .or(match identity.provider.as_str() {
                 "demo" => Some(ProviderMode::Demo),
                 "openai-compatible" => Some(ProviderMode::OpenAiCompatible),
@@ -3469,7 +3915,14 @@ fn configuration_for_identity(
                     )
                 })
                 .map_or_else(
-                    || configuration.settings.mode.default_base_url().into(),
+                    || {
+                        agent_runtime::connections::Service::from_id(&identity.provider)
+                            .map_or_else(
+                                || configuration.settings.mode.default_base_url(),
+                                |service| service.base_url(),
+                            )
+                            .into()
+                    },
                     |record| record.base_url.clone(),
                 );
         configuration.settings.api_key = if configuration.settings.mode == ProviderMode::OpenAiCodex
@@ -3726,6 +4179,114 @@ mod tests {
             Ok(())
         }
     }
+    #[test]
+    fn refreshed_shell_keeps_long_labels_and_composer_inside_small_windows() {
+        let fixture = Fixture::new();
+        for size in [egui::vec2(900.0, 640.0), egui::vec2(1280.0, 840.0)] {
+            let ctx = egui::Context::default();
+            let mut app = fixture_app(&ctx, &fixture);
+            app.session.name = "a very long session name ".repeat(20);
+            app.settings.model = "a-long-model-name-".repeat(30);
+            app.settings.mode = ProviderMode::OpenAiCompatible;
+            app.input = "long draft\n".repeat(100);
+            for _ in 0..2 {
+                let _ = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                        ..Default::default()
+                    },
+                    |ctx| app.show(ctx),
+                );
+            }
+            let composer =
+                egui::containers::panel::PanelState::load(&ctx, egui::Id::new("composer")).unwrap();
+            assert!(composer.rect.height() < 240.0, "{:?}", composer.rect);
+            assert!(composer.rect.max.y <= size.y);
+            assert!(composer.rect.min.x >= shell::SIDEBAR_WIDTH);
+            assert!(!app.settings_open);
+            assert!(!app.allow_changes && !app.allow_commands);
+            assert!(app.auth_worker.is_none());
+        }
+    }
+
+    #[test]
+    fn switching_theme_repaints_all_panels_without_changing_the_session_or_draft() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let mut app = fixture_app(&ctx, &fixture);
+        app.input = "keep this unsent draft".into();
+        app.settings_open = true;
+        let session = serde_json::to_value(&app.session).unwrap();
+        for theme in [egui::Theme::Light, egui::Theme::Dark] {
+            ctx.set_theme(theme);
+            let palette = shell::Palette::for_theme(theme);
+            for _ in 0..2 {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            egui::vec2(900.0, 640.0),
+                        )),
+                        ..Default::default()
+                    },
+                    |ctx| app.show(ctx),
+                );
+                let fills: Vec<_> = output
+                    .shapes
+                    .iter()
+                    .filter_map(|shape| {
+                        if let egui::Shape::Rect(rect) = &shape.shape {
+                            Some(rect.fill)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                for color in [palette.background, palette.sidebar, palette.surface] {
+                    assert!(
+                        fills.contains(&color),
+                        "panel did not use {theme:?} palette: {color:?}"
+                    );
+                }
+            }
+            assert_eq!(ctx.theme(), theme);
+            assert_eq!(app.input, "keep this unsent draft");
+            assert_eq!(serde_json::to_value(&app.session).unwrap(), session);
+            assert!(!app.allow_changes && !app.allow_commands);
+            assert!(app.worker.is_none() && app.auth_worker.is_none());
+        }
+    }
+
+    #[test]
+    fn opening_settings_preserves_session_permissions_and_model_without_requests() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let mut app = fixture_app(&ctx, &fixture);
+        let session = serde_json::to_value(&app.session).unwrap();
+        let mode = app.settings.mode.clone();
+        let model = app.settings.model.clone();
+        app.settings_open = true;
+        for _ in 0..2 {
+            let _ = ctx.run(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(900.0, 640.0),
+                    )),
+                    ..Default::default()
+                },
+                |ctx| app.show(ctx),
+            );
+        }
+        assert_eq!(serde_json::to_value(&app.session).unwrap(), session);
+        assert_eq!(app.settings.mode, mode);
+        assert_eq!(app.settings.model, model);
+        assert!(!app.allow_changes && !app.allow_commands);
+        assert!(!app.running);
+        assert!(app.auth_worker.is_none());
+        assert!(app.worker.is_none());
+    }
+
     #[test]
     fn desktop_thinking_draft_only_commits_on_worker_apply_and_deduplicates() {
         let fixture = Fixture::new();
@@ -5669,6 +6230,7 @@ mod tests {
         app.settings.options.bedrock.max_tokens = Some(512);
         app.settings.options.bedrock.temperature = Some(0.1);
         app.settings.options.bedrock.cache_retention = BedrockCacheRetention::Long;
+        app.settings_open = true;
         for _ in 0..2 {
             let output = ctx.run(
                 egui::RawInput {
