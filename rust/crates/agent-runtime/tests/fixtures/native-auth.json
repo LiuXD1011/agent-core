@@ -1,0 +1,119 @@
+{
+  "oracle": "original TypeScript OAuth refresh handlers",
+  "now": 2000000000000,
+  "cases": [
+    {
+      "provider": "anthropic",
+      "requests": [
+        {
+          "url": "https://platform.claude.com/v1/oauth/token",
+          "method": "POST",
+          "headers": {
+            "accept": "application/json",
+            "content-type": "application/json"
+          },
+          "body": "{\"grant_type\":\"refresh_token\",\"client_id\":\"9d1c250a-e61b-44d9-88ed-5944d1962f5e\",\"refresh_token\":\"fixture-refresh\"}"
+        }
+      ],
+      "result": {
+        "type": "oauth",
+        "refresh": "fixture-rotated",
+        "access": "fixture-access",
+        "expires": 2000003300000
+      }
+    },
+    {
+      "provider": "github-copilot",
+      "requests": [
+        {
+          "url": "https://api.github.com/copilot_internal/v2/token",
+          "method": "GET",
+          "headers": {
+            "accept": "application/json",
+            "authorization": "Bearer fixture-refresh",
+            "copilot-integration-id": "vscode-chat",
+            "editor-plugin-version": "copilot-chat/0.35.0",
+            "editor-version": "vscode/1.107.0",
+            "user-agent": "GitHubCopilotChat/0.35.0"
+          },
+          "body": null
+        },
+        {
+          "url": "https://api.individual.githubcopilot.com/models",
+          "method": "GET",
+          "headers": {
+            "accept": "application/json",
+            "authorization": "Bearer fixture-copilot-token",
+            "copilot-integration-id": "vscode-chat",
+            "editor-plugin-version": "copilot-chat/0.35.0",
+            "editor-version": "vscode/1.107.0",
+            "user-agent": "GitHubCopilotChat/0.35.0",
+            "x-github-api-version": "2026-06-01"
+          },
+          "body": null
+        }
+      ],
+      "result": {
+        "type": "oauth",
+        "refresh": "fixture-refresh",
+        "access": "fixture-copilot-token",
+        "expires": 2000003300000,
+        "availableModelIds": [
+          "gpt-5.5"
+        ]
+      }
+    },
+    {
+      "provider": "kimi-coding",
+      "requests": [
+        {
+          "url": "https://auth.kimi.com/api/oauth/token",
+          "method": "POST",
+          "headers": {
+            "accept": "application/json",
+            "content-type": "application/x-www-form-urlencoded"
+          },
+          "body": "client_id=17e5f671-d194-4dfb-9706-5516cb48c098&grant_type=refresh_token&refresh_token=fixture-refresh"
+        }
+      ],
+      "result": {
+        "type": "oauth",
+        "access": "fixture-access",
+        "refresh": "fixture-rotated",
+        "expires": 2000003600000
+      }
+    },
+    {
+      "provider": "xai",
+      "requests": [
+        {
+          "url": "https://auth.x.ai/oauth2/token",
+          "method": "POST",
+          "headers": {
+            "accept": "application/json",
+            "content-type": "application/x-www-form-urlencoded"
+          },
+          "body": "grant_type=refresh_token&client_id=b1a00492-073a-47ea-816f-4c329264a828&refresh_token=fixture-refresh"
+        }
+      ],
+      "result": {
+        "type": "oauth",
+        "access": "fixture-access",
+        "refresh": "fixture-refresh",
+        "expires": 2000003300000
+      }
+    },
+    {
+      "provider": "openrouter",
+      "requests": [],
+      "result": {
+        "type": "oauth",
+        "access": "fixture-old-access",
+        "refresh": "",
+        "expires": 9007199254740991
+      }
+    }
+  ],
+  "fetchCalls": 5,
+  "httpSockets": 0
+}

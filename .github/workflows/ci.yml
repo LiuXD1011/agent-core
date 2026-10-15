@@ -1,43 +1,54 @@
-name: CI
-
+name: Rust CI
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
+permissions:
+  contents: read
 jobs:
-  build-check-test:
-    runs-on: ubuntu-latest
+  native-check-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install system dependencies
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt --component clippy
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev fd-find ripgrep
-          sudo ln -s $(which fdfind) /usr/local/bin/fd
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      # Build the reviewed catalog snapshot; model refreshes are explicit source changes.
-      - name: Build
-        run: npm run build
-
-      - name: Check
-        run: npm run check
-
-      - name: Test
+          sudo apt-get install -y build-essential pkg-config libxkbcommon-dev libwayland-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev
+      - name: Check (Linux)
+        if: runner.os == 'Linux'
+        run: bash ./check.sh
+      - name: Check (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./check.ps1
+      - name: Test isolated native fixtures (Linux)
+        if: runner.os == 'Linux'
         run: bash ./test.sh
+      - name: Test isolated native fixtures (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./test.ps1
+      - name: Build Windows native package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./rust/build-windows.ps1 -Action Package -Offline
+      - name: Test native installer file operations
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./rust/tests/install-windows.tests.ps1
+      - name: Test six-file package selection and archive bytes
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./rust/tests/build-windows.tests.ps1

@@ -10,7 +10,7 @@ body:
 
         Keep this short. If it doesn't fit on one screen, it's too long. Write in your own voice.
 
-        **Important:** before reporting an issue in core, please validate first with `agent-core --no-extensions` that this is not caused by an extension you loaded.
+        **Important:** before reporting an issue in core, run without any `--extension` arguments to check whether a native extension caused it.
 
   - type: textarea
     id: description

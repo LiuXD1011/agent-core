@@ -1,0 +1,45 @@
+{
+  "oracle": "@aws-sdk/nested-clients",
+  "version": "3.997.9",
+  "source": [
+    "dist-es/submodules/sso/schemas/schemas_0.js",
+    "dist-es/submodules/sso-oidc/schemas/schemas_0.js",
+    "@smithy/core getSSOTokenFilepath"
+  ],
+  "hashes": {
+    "https://fixture.awsapps.com/start": "c83e2706c2a608c995b8cb4e1237c2105057afa5.json",
+    "native-fixture-session": "54e0325f09d71b2b584396d137287c60169e7323.json"
+  },
+  "cases": [
+    {
+      "action": "GetRoleCredentials",
+      "method": "GET",
+      "path": "/federation/credentials",
+      "query": {
+        "role_name": "Developer+Read Only",
+        "account_id": "123456789012"
+      },
+      "token_header": "old-access-fixture",
+      "has_authorization": false,
+      "content_type": null,
+      "body": null
+    },
+    {
+      "action": "CreateToken",
+      "method": "POST",
+      "path": "/token",
+      "query": {},
+      "token_header": null,
+      "has_authorization": false,
+      "content_type": "application/json",
+      "body": {
+        "clientId": "client-id-fixture",
+        "clientSecret": "client-secret-fixture",
+        "grantType": "refresh_token",
+        "refreshToken": "old-refresh-fixture"
+      }
+    }
+  ],
+  "parsed_role_expiration_ms": 1893456000123,
+  "parsed_token_type": "Bearer"
+}

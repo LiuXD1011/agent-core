@@ -1,14 +1,10 @@
-# Dependencies, builds, and temporary generation output
-node_modules/
+# Builds and verified local evidence
+/target/
+/rust/target/
 dist/
-.npm/
 .artifacts/
-packages/ai/src/providers/.model-generation-*/
-packages/agent-app/binaries/
-*.tsbuildinfo
-*.tgz
 
-# Local credentials; keep shareable environment templates
+# Local credentials; shareable templates remain tracked
 .env
 .env.*
 !.env.example
@@ -21,14 +17,12 @@ packages/agent-app/binaries/
 /.agent-core/bin/
 /.agent-core/trust.json
 
-# Test, profiling, and session output (not source fixtures)
+# Tests, profiles and exported sessions
 coverage/
-.nyc_output/
 *.log
 *.cpuprofile
 agent-core-session-*.html
 /session-*.jsonl
-/packages/agent-app/session-*.jsonl
 session-transcripts/
 .eval/
 /docs/**/*.visual-check.*

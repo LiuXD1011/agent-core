@@ -1,0 +1,132 @@
+{
+  "model": {
+    "id": "image-fixture",
+    "name": "Offline image model",
+    "provider": "openrouter",
+    "api": "openrouter-images",
+    "baseUrl": "https://offline.invalid/v1",
+    "input": [
+      "text",
+      "image"
+    ],
+    "output": [
+      "image",
+      "text"
+    ],
+    "cost": {
+      "input": 2,
+      "output": 4,
+      "cacheRead": 1,
+      "cacheWrite": 3
+    },
+    "headers": {
+      "X-Model": "retained"
+    }
+  },
+  "context": {
+    "input": [
+      {
+        "type": "text",
+        "text": "中文原生图片"
+      },
+      {
+        "type": "image",
+        "mimeType": "image/png",
+        "data": "aW1hZ2U="
+      }
+    ]
+  },
+  "payload": {
+    "model": "image-fixture",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "中文原生图片"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "data:image/png;base64,aW1hZ2U="
+            }
+          }
+        ]
+      }
+    ],
+    "stream": false,
+    "modalities": [
+      "image",
+      "text"
+    ]
+  },
+  "response": {
+    "id": "image-response-fixture",
+    "choices": [
+      {
+        "message": {
+          "content": "生成完成",
+          "images": [
+            {
+              "image_url": {
+                "url": "data:image/png;base64,aW1hZ2U="
+              }
+            },
+            {
+              "image_url": "https://must-not-download.invalid/image.png"
+            },
+            {
+              "image_url": "data:image/webp;base64,d2VicA=="
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 20,
+      "completion_tokens": 5,
+      "prompt_tokens_details": {
+        "cached_tokens": 8,
+        "cache_write_tokens": 3
+      }
+    }
+  },
+  "result": {
+    "api": "openrouter-images",
+    "provider": "openrouter",
+    "model": "image-fixture",
+    "output": [
+      {
+        "type": "text",
+        "text": "生成完成"
+      },
+      {
+        "type": "image",
+        "mimeType": "image/png",
+        "data": "aW1hZ2U="
+      },
+      {
+        "type": "image",
+        "mimeType": "image/webp",
+        "data": "d2VicA=="
+      }
+    ],
+    "stopReason": "stop",
+    "responseId": "image-response-fixture",
+    "usage": {
+      "input": 12,
+      "output": 5,
+      "cacheRead": 5,
+      "cacheWrite": 3,
+      "totalTokens": 25,
+      "cost": {
+        "input": 0.000024,
+        "output": 0.000019999999999999998,
+        "cacheRead": 0.0000049999999999999996,
+        "cacheWrite": 0.000009,
+        "total": 0.000058
+      }
+    }
+  }
+}

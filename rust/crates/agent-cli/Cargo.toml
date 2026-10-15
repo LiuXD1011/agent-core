@@ -1,0 +1,21 @@
+[package]
+name = "agent-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Native command-line and JSONL RPC client for Agent Core"
+
+[dependencies]
+agent-core = { path = "../agent-core" }
+agent-runtime = { path = "../agent-runtime" }
+agent-tui = { path = "../agent-tui" }
+ratatui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ctrlc.workspace = true
+crossterm.workspace = true
+
+[[bin]]
+name = "agent-core"
+path = "src/main.rs"

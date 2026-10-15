@@ -1,0 +1,40 @@
+[workspace]
+members = ["rust/crates/agent-core", "rust/crates/agent-runtime", "rust/crates/agent-cli", "rust/crates/agent-desktop", "rust/crates/agent-tui", "rust/crates/agent-extensions"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0-alpha.2"
+edition = "2021"
+rust-version = "1.90"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "=1.0.219", features = ["derive"] }
+serde_json = { version = "=1.0.140", features = ["float_roundtrip"] }
+eframe = { version = "=0.31.1", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
+reqwest = { version = "=0.12.15", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "=1.53.3", default-features = false, features = ["rt", "time", "macros"] }
+serde_yaml = "=0.9.34"
+regex = "=1.11.1"
+globset = "=0.4.16"
+ignore = "=0.4.23"
+similar = "=2.7.0"
+unicode-normalization = "=0.1.24"
+base64 = "=0.22.1"
+ctrlc = "=3.5.0"
+ratatui = { version = "=0.29.0", default-features = false, features = ["crossterm", "unstable-rendered-line-info"] }
+crossterm = "=0.28.1"
+arboard = { version = "=3.6.1", default-features = false }
+unicode-segmentation = "=1.12.0"
+unicode-width = "=0.2.0"
+sha2 = "=0.10.9"
+getrandom = "=0.3.4"
+ring = "=0.17.14"
+crc32fast = "=1.5.2"
+quick-xml = "=0.41.0"
+image = { version = "=0.25.10", default-features = false, features = ["bmp", "gif", "jpeg", "png", "webp"] }
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+strip = true

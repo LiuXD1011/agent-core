@@ -1,0 +1,17 @@
+[package]
+name = "agent-tui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Native terminal editor, rendering and application state for Rust clients"
+
+[dependencies]
+agent-core = { path = "../agent-core" }
+ratatui.workspace = true
+crossterm.workspace = true
+arboard.workspace = true
+unicode-segmentation.workspace = true
+unicode-width.workspace = true
+serde.workspace = true
+serde_json.workspace = true

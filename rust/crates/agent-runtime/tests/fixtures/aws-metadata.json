@@ -1,0 +1,72 @@
+{
+  "oracle": "installed original AWS SDK providers",
+  "awsSdkVersion": "3.972.39",
+  "smithyVersion": "4.3.3",
+  "cases": {
+    "ecs": {
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/ecs?fixture=1",
+          "authorization": "fixture-auth",
+          "imdsToken": null,
+          "ttl": null
+        }
+      ],
+      "credentials": {
+        "accessKeyId": "SDKFIXTURE",
+        "secretAccessKey": "fixture-secret",
+        "sessionToken": "fixture-session",
+        "expiration": "2030-01-01T00:00:00.000Z",
+        "$source": {
+          "CREDENTIALS_HTTP": "z"
+        }
+      }
+    },
+    "ec2": {
+      "requests": [
+        {
+          "method": "PUT",
+          "path": "/latest/api/token",
+          "authorization": null,
+          "imdsToken": null,
+          "ttl": "21600"
+        },
+        {
+          "method": "GET",
+          "path": "/latest/meta-data/iam/security-credentials/",
+          "authorization": null,
+          "imdsToken": "fixture-imds-token",
+          "ttl": null
+        },
+        {
+          "method": "GET",
+          "path": "/latest/meta-data/iam/security-credentials/FixtureRole",
+          "authorization": null,
+          "imdsToken": "fixture-imds-token",
+          "ttl": null
+        }
+      ],
+      "credentials": {
+        "accessKeyId": "SDKFIXTURE",
+        "secretAccessKey": "fixture-secret",
+        "sessionToken": "fixture-session",
+        "expiration": "2030-01-01T00:00:00.000Z"
+      }
+    },
+    "roleEnvironment": {
+      "source": {
+        "accessKeyId": "SDKENVKEY",
+        "secretAccessKey": "fixture-env-secret",
+        "sessionToken": "fixture-env-token"
+      },
+      "params": {
+        "RoleArn": "arn:aws:iam::123456789012:role/fixture",
+        "RoleSessionName": "fixture-session",
+        "DurationSeconds": 3600
+      }
+    }
+  },
+  "httpSockets": 4,
+  "realCloudCalls": 0
+}

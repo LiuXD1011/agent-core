@@ -1,0 +1,37 @@
+{
+  "oracle": "@aws-sdk/nested-clients@3.997.9 / STS AwsQueryProtocol / custom offline requestHandler",
+  "cases": [
+    {
+      "action": "AssumeRole",
+      "method": "POST",
+      "path": "/",
+      "content_type": "application/x-www-form-urlencoded",
+      "has_authorization": true,
+      "fields": {
+        "Action": "AssumeRole",
+        "Version": "2011-06-15",
+        "RoleArn": "arn:aws:iam::123456789012:role/native-fixture",
+        "RoleSessionName": "fixture-session",
+        "DurationSeconds": "1800",
+        "ExternalId": "fixture-external"
+      },
+      "expiration": "2030-01-01T00:00:00.000Z"
+    },
+    {
+      "action": "AssumeRoleWithWebIdentity",
+      "method": "POST",
+      "path": "/",
+      "content_type": "application/x-www-form-urlencoded",
+      "has_authorization": false,
+      "fields": {
+        "Action": "AssumeRoleWithWebIdentity",
+        "Version": "2011-06-15",
+        "RoleArn": "arn:aws:iam::123456789012:role/native-fixture",
+        "RoleSessionName": "web-fixture",
+        "WebIdentityToken": "offline.jwt.fixture-token",
+        "DurationSeconds": "3600"
+      },
+      "expiration": "2030-01-01T00:00:00.000Z"
+    }
+  ]
+}

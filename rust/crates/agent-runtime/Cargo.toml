@@ -1,0 +1,31 @@
+[package]
+name = "agent-runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Shared model, tool, resource and session runtime for Rust clients"
+
+[dependencies]
+agent-core = { path = "../agent-core" }
+agent-extensions = { path = "../agent-extensions" }
+serde.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
+serde_yaml.workspace = true
+regex.workspace = true
+globset.workspace = true
+ignore.workspace = true
+similar.workspace = true
+unicode-normalization.workspace = true
+base64.workspace = true
+image.workspace = true
+sha2.workspace = true
+getrandom.workspace = true
+ring.workspace = true
+crc32fast.workspace = true
+quick-xml.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_System_Diagnostics_ToolHelp", "Win32_Security_Cryptography", "Win32_System_Memory", "Win32_Storage_FileSystem", "Win32_Security_Authorization"] }

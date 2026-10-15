@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+root="$(git rev-parse --show-toplevel)"
+if git diff --cached --name-only --diff-filter=ACDMRTUXB -- Cargo.lock | grep -q .; then
+  if [ "${AGENT_CORE_ALLOW_LOCKFILE_CHANGE:-}" != '1' ]; then
+    printf 'Intentional staged Cargo.lock changes require AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1.\n' >&2
+    exit 1
+  fi
+fi
+printf 'Running native Rust formatting and strict Clippy checks...\n'
+bash "$root/check.sh" --offline
+# Never modify or restage the caller's files.
+printf 'Native Rust pre-commit checks passed.\n'

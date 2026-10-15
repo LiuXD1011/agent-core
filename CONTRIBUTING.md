@@ -1,50 +1,28 @@
 # Contributing to Agent Core
 
-Contributions to Agent Core are welcome. Keep the core simple and changes focused.
-Source and copyright information is recorded in [NOTICE.md](NOTICE.md).
+Keep the core simple and changes focused. Preserve the notices in [NOTICE.md](NOTICE.md).
 
-## Development setup
+## Development
 
-```bash
-npm install --ignore-scripts  # Install dependencies without lifecycle scripts
-npm run build                 # Build all packages
-./test.sh                     # Run non-e2e tests (no API keys needed)
-npm run check                 # Lint, format, and type check (also runs in pre-commit)
+Use Rust **1.90.0** from the pinned toolchain. Windows builds require x64 MSVC C++ Build Tools and the Windows SDK. Run commands at the repository root:
+
+```powershell
+pwsh -File check.ps1 -Offline
+pwsh -File test.ps1 -Offline
+cargo test -p agent-runtime --test images --locked --offline
 ```
 
-See [packages/agent-app/docs/development.md](packages/agent-app/docs/development.md) for the full development manual.
+Unix equivalents are `./check.sh --offline` and `./test.sh --offline`. Checks run formatting verification and strict Clippy, not tests. Test scripts isolate home, credentials and session directories and clear model keys. Fixtures must remain offline, without real credentials or paid model calls. See [Rust usage](rust/README.md) and [migration differences](rust/MIGRATION.md).
 
-Set `AGENT_CORE_NO_LOCAL_LLM=1` to skip local-LLM integration tests on machines
-with Ollama installed:
+## Changes and validation
 
-```bash
-AGENT_CORE_NO_LOCAL_LLM=1 ./test.sh
-```
+- Read affected files in full and inspect installed APIs before editing.
+- Run every added or changed test file and the root check. Review complete diagnostics.
+- Pin direct external Cargo dependencies to exact versions, review `Cargo.lock`, and keep model snapshots offline and provenance-preserving.
+- Install the native hook explicitly with `git config core.hooksPath .githooks`; validation never rewrites or stages files.
+- Intentional staged `Cargo.lock` changes require `AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1` at commit time.
+- Preserve unrelated changes, released changelog history and license notices. Commit, tag and publish only when explicitly requested.
 
-## Pull requests
+## Issue reports
 
-- Keep the core minimal. Prefer extensions for features that are not core.
-- Every commit must pass the pre-commit gate: formatting, lint, type check,
-  dependency pinning, shrinkwrap, and install-lock checks.
-- Lockfile changes are blocked unless intentional; commit with
-  `AGENT_CORE_ALLOW_LOCKFILE_CHANGE=1` when dependency changes are deliberate.
-- Do not edit `CHANGELOG.md` files; entries are added by maintainers.
-
-## Known test environment issues
-
-The following upstream tests are environment-sensitive and may fail outside
-native Linux:
-
-- `test/clipboard-image.test.ts` — assumes a non-Wayland session; WSLg exposes
-  Wayland, so the two assertions about `wl-paste` fail on WSL2.
-- `test/auth-storage.test.ts` and `test/agent-session-concurrent.test.ts` —
-  timing-sensitive; may time out under WSL2 load. They pass in isolation and on
-  GitHub Actions runners.
-
-## Issue reporting
-
-Open issues on the GitHub issue tracker. Include:
-
-- Agent Core version (`agent-core --version`) and how it was installed
-- OS, Node.js version (`node --version`)
-- Minimal reproduction steps and expected vs. actual behavior
+Include Agent Core version, installation method, OS/architecture, Rust toolchain for source builds, minimal reproduction and expected versus actual behavior. Remove credentials from logs.

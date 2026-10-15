@@ -1,84 +1,63 @@
 # Agent Core
 
-Agent Core 是一个简洁、可扩展的终端编程 Agent，围绕 **Agent Loop、上下文管理和工具调用** 构建，面向日常开发与 Agent 学习。
+Rust 原生编程 Agent，提供 Windows 桌面、CLI、TUI、JSONL RPC 和库入口。六个 crate 共用模型协议、工具和会话运行时；启动、构建与测试均使用 Cargo，不运行 Node.js、TypeScript 或 WebView。
 
-## 主要功能
+## Windows 快速开始
 
-- **编程协作**：连接多家模型服务，读取、编辑文件并执行命令。
-- **会话管理**：保存和恢复对话，导出 HTML / JSONL，便于调试与复盘。
-- **扩展与集成**：支持技能、扩展、交互终端、单次执行、SDK 和 RPC。
+需要 Rust **1.90.0**、Windows x64 MSVC C++ Build Tools 和 Windows SDK。
 
-## Terminal-Bench 2.1 评测
-
-Agent Core **v0.1.0-alpha.2** 搭配 **DeepSeek-V4.1-Flash**，在本地 Terminal-Bench 2.1 的 **89 道任务中累计通过 83 道，累计通过率为 93.3%**（截至 2026-09-19）。
-
-
-| 运行方式                                          | 结果               | 统计口径 |
-| ------------------------------------------------- | ------------------ | -------- |
-| DeepSeek-V4.1-Flash + DeepSeek Harness（Minimal） | **90.6%**          | Pass@1   |
-| DeepSeek-V4.1-Flash + Pi                          | **86.1%**          | Pass@1   |
-| DeepSeek-V4.1-Flash + Agent Core v0.1.0-alpha.2    | **93.3%（83/89）** | Pass@1   |
-
-## 快速开始
-
-需要 Node.js **22.19.0 或更高版本**。当前预发布版本为 **0.1.0-alpha.2**，使用 npm 的 `alpha` 标签。
-
-```bash
-npm install -g --ignore-scripts @liuxuedeng/agent-core@0.1.0-alpha.2
-agent-core --version
-agent-core
+```powershell
+pwsh -File check.ps1 -Offline
+pwsh -File test.ps1 -Offline
+pwsh -File rust/build-windows.ps1 -Action Package -Offline
+.\dist\agent-core-desktop-windows-x64\agent-core-desktop.exe
+.\dist\agent-core-desktop-windows-x64\agent-core.exe --help
 ```
 
-启动后输入 `/login` 配置支持订阅登录的服务商，也可以在启动前设置服务商 API 密钥。输入 `/` 查看命令，使用 `/export` 导出会话。详见[使用指南](packages/agent-app/docs/usage.md)和[模型配置](packages/agent-app/docs/models.md)。
+首次获取固定依赖时省略 `-Offline`。本地工具链缓存存在时脚本优先使用它，否则使用 PATH 中的 Cargo。ZIP 含两个 EXE、使用说明、迁移对照与许可证；静态 CRT 构建无需另装 Visual C++ 运行库。
 
-版本检查应显示 `0.1.0-alpha.2`。
-
-升级预发布版：`npm install -g --ignore-scripts @liuxuedeng/agent-core@alpha`。请显式指定版本或 `@alpha`；不带标签的安装命令默认使用 `latest`，可能安装到旧版本。
-
-## 从源码开发
-
-```bash
-git clone https://github.com/LiuXD1011/agent-core.git
-cd agent-core
-npm install --ignore-scripts
-npm run build
-./agent-core-test.sh
+```powershell
+# SHA256 为已下载包的实际哈希
+pwsh -File rust/install-windows.ps1 -Action Install -Package C:\downloads\agent-core.zip -Sha256 SHA256 -InstallDirectory C:\apps\AgentCore
+pwsh -File rust/install-windows.ps1 -Action Update -Package C:\downloads\agent-core.zip -Sha256 SHA256 -InstallDirectory C:\apps\AgentCore
+pwsh -File rust/install-windows.ps1 -Action Uninstall -InstallDirectory C:\apps\AgentCore
 ```
 
-```bash
-npm run check    # 格式、类型及项目检查
-bash ./test.sh   # 全量非 e2e 测试，无需模型 API 密钥
+安装器仅管理安装清单中的文件，更新替换托管文件，失败恢复原件；非托管文件与用户配置保留。卸载另外保留用户修改过的托管文件。可选签名校验与签名构建参数见 [Rust 使用说明](rust/README.md)。
+
+## 使用
+
+```powershell
+$cli = '.\dist\agent-core-desktop-windows-x64\agent-core.exe'
+& $cli -p '你好，Rust' --no-session
+& $cli --list-models anthropic
+& $cli --provider openai-compatible --base-url http://localhost:8000/v1 --model local-model -p '解释项目'
+& $cli auth login openai-codex
+& $cli auth status
+& $cli --continue
+& $cli --mode rpc
 ```
 
-构建使用仓库内的固定模型快照。开发约定见 [CONTRIBUTING.md](CONTRIBUTING.md)，模型更新与构建说明见[开发文档](packages/agent-app/docs/development.md)。
+默认 Demo 为明确的离线演示。桌面端采用模型配置草稿与应用事务；认证、模型请求与扩展在工作线程执行。`Ctrl+Enter` 发送；停止或关闭窗口会取消并保存。CLI 无参数进入原生 TUI，`--line` 使用逐行界面。API 密钥不写入会话，Windows 持久凭据使用当前账户 DPAPI 加密。
+
+完整命令、协议、云配置、资源、扩展与会话导出见 [Rust 使用说明](rust/README.md)。[迁移对照](rust/MIGRATION.md) 区分已实现功能和仍未对等的旧接口；原有 TypeScript 扩展不是 Rust 可执行扩展。旧源码与依赖的可核验回滚快照保存在本次工作区的 `.artifacts/rust-refactor-08`，不属于运行入口。
 
 ## 项目结构
 
+| 路径 | 职责 |
+| --- | --- |
+| [agent-core](rust/crates/agent-core) | Agent Loop、工具调度、上下文预算、消息与事件 |
+| [agent-runtime](rust/crates/agent-runtime) | 模型协议、认证、工具、会话树、资源、摘要与重试 |
+| [agent-extensions](rust/crates/agent-extensions) | Rust trait SDK、注册表、hooks 与交互 broker |
+| [agent-tui](rust/crates/agent-tui) | 原生编辑器、终端渲染、输入、剪贴板与恢复 |
+| [agent-cli](rust/crates/agent-cli) | CLI/TUI host、JSONL RPC、认证与会话命令 |
+| [agent-desktop](rust/crates/agent-desktop) | egui Windows 原生桌面端 |
 
-| 目录                                     | 职责                                      |
-| ---------------------------------------- | ----------------------------------------- |
-| [packages/agent](packages/agent)         | Agent Loop、请求上下文与工具执行          |
-| [packages/ai](packages/ai)               | 模型目录、认证与多服务商 API              |
-| [packages/agent-app](packages/agent-app) | CLI、会话管理、上下文处理、内置工具与扩展 |
-| [packages/tui](packages/tui)             | 终端输入、布局与渲染组件                  |
+根 `Cargo.toml` 与 `Cargo.lock` 是唯一工作区及依赖锁入口。开发约定见 [AGENTS.md](AGENTS.md) 和 [CONTRIBUTING.md](CONTRIBUTING.md)，执行边界见 [SECURITY.md](SECURITY.md)。
 
-学习建议：先理解“模型 → 工具 → 结果 → 下一轮”的循环，再阅读上下文处理和应用层。参见[架构与源码地图](docs/architecture/README.md)。
+## 来源与许可证
 
-## 文档
+- 感谢 [Pi](https://github.com/earendil-works/pi) 的作者与贡献者提供基础代码。
+- 感谢 [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi) 提供的上下文管理与工具执行代码。
 
-- [使用指南](packages/agent-app/docs/usage.md) · [设置](packages/agent-app/docs/settings.md) · [快捷键](packages/agent-app/docs/keybindings.md)
-- [扩展](packages/agent-app/docs/extensions.md) · [技能](packages/agent-app/docs/skills.md) · [SDK](packages/agent-app/docs/sdk.md) · [RPC](packages/agent-app/docs/rpc.md)
-- [完整文档](packages/agent-app/docs/index.md) · [版本变更](packages/agent-app/CHANGELOG.md)
-
-Agent 会以当前用户权限操作文件和执行命令；需要隔离时，请使用沙箱或容器。参见[安全说明](SECURITY.md)与[容器化指南](packages/agent-app/docs/containerization.md)。
-
-## 致谢
-
-- 感谢 [Pi](https://github.com/earendil-works/pi) 的作者与贡献者提供的基础代码。
-- 感谢 [NVIDIA SoL-Pi](https://github.com/NVlabs/SoL-Pi) 提供的上下文管理与工具执行思路及代码。
-
-来源与版权说明参见 [NOTICE.md](NOTICE.md)。
-
-## 许可证
-
-本项目采用 [MIT 许可证](LICENSE)。
+保留原来源与版权声明，见 [NOTICE.md](NOTICE.md) 和 [MIT 许可证](LICENSE)。

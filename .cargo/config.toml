@@ -1,0 +1,8 @@
+[build]
+target-dir = "rust/target"
+
+[resolver]
+incompatible-rust-versions = "fallback"
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

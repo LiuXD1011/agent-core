@@ -1,0 +1,268 @@
+{
+  "source": "Actual original TypeScript adapters",
+  "cases": [
+    {
+      "model": {
+        "id": "fixture-model",
+        "name": "Fixture",
+        "api": "mistral-conversations",
+        "provider": "mistral",
+        "baseUrl": "https://offline.invalid",
+        "input": [
+          "text",
+          "image"
+        ],
+        "reasoning": true,
+        "contextWindow": 65536,
+        "maxTokens": 4096,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        }
+      },
+      "context": {
+        "systemPrompt": "offline system",
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "你好"
+              }
+            ],
+            "timestamp": 1
+          }
+        ],
+        "tools": [
+          {
+            "name": "read",
+            "description": "read",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "url": "https://offline.invalid/v1/chat/completions",
+        "method": "POST",
+        "headers": {
+          "accept": "text/event-stream",
+          "authorization": "Bearer offline-key",
+          "content-type": "application/json",
+          "user-agent": "agent-core (win32 10.0.26200; x64)",
+          "x-affinity": "session-fixture"
+        },
+        "payload": {
+          "model": "fixture-model",
+          "stream": true,
+          "messages": [
+            {
+              "role": "system",
+              "content": "offline system"
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "你好"
+                }
+              ]
+            }
+          ],
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "read",
+                "description": "read",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "strict": false
+              }
+            }
+          ],
+          "temperature": 0.2,
+          "max_tokens": 100,
+          "prompt_cache_key": "session-fixture"
+        }
+      },
+      "sse": "data: {\"id\":\"fixture-response\",\"choices\":[{\"delta\":{\"content\":[{\"type\":\"thinking\",\"thinking\":[{\"type\":\"text\",\"text\":\"思考\"}]}]},\"finish_reason\":null}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"中文回答\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":24,\"completion_tokens\":3,\"total_tokens\":27,\"num_cached_tokens\":8}}\n\ndata: [DONE]\n\n",
+      "result": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "思考"
+          },
+          {
+            "type": "text",
+            "text": "中文回答"
+          }
+        ],
+        "api": "mistral-conversations",
+        "provider": "mistral",
+        "model": "fixture-model",
+        "usage": {
+          "input": 16,
+          "output": 3,
+          "cacheRead": 8,
+          "cacheWrite": 0,
+          "totalTokens": 27,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0
+          }
+        },
+        "stopReason": "stop",
+        "responseId": "fixture-response",
+        "rawStopReason": "stop"
+      }
+    },
+    {
+      "model": {
+        "id": "fixture-model",
+        "name": "Fixture",
+        "api": "pi-messages",
+        "provider": "pi-fixture",
+        "baseUrl": "https://offline.invalid",
+        "input": [
+          "text",
+          "image"
+        ],
+        "reasoning": true,
+        "contextWindow": 65536,
+        "maxTokens": 4096,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        }
+      },
+      "context": {
+        "systemPrompt": "offline system",
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "你好"
+              }
+            ],
+            "timestamp": 1
+          }
+        ],
+        "tools": [
+          {
+            "name": "read",
+            "description": "read",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "url": "https://offline.invalid/messages",
+        "method": "POST",
+        "headers": {
+          "accept": "text/event-stream",
+          "authorization": "Bearer offline-key",
+          "content-type": "application/json"
+        },
+        "payload": {
+          "model": "fixture-model",
+          "context": {
+            "systemPrompt": "offline system",
+            "messages": [
+              {
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "你好"
+                  }
+                ],
+                "timestamp": 1
+              }
+            ],
+            "tools": [
+              {
+                "name": "read",
+                "description": "read",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "options": {
+            "temperature": 0.2,
+            "maxTokens": 100,
+            "cacheRetention": "short",
+            "sessionId": "session-fixture"
+          }
+        }
+      },
+      "sse": "data: {\"type\":\"start\"}\n\ndata: {\"type\":\"text_start\",\"contentIndex\":0}\n\ndata: {\"type\":\"text_delta\",\"contentIndex\":0,\"delta\":\"中文回答\"}\n\ndata: {\"type\":\"text_end\",\"contentIndex\":0,\"content\":\"中文回答\",\"contentSignature\":\"signature-fixture\"}\n\ndata: {\"type\":\"done\",\"reason\":\"stop\",\"usage\":{\"input\":16,\"output\":3,\"cacheRead\":8,\"cacheWrite\":0,\"totalTokens\":27,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}}}\n\n",
+      "result": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "中文回答",
+            "textSignature": "signature-fixture"
+          }
+        ],
+        "api": "pi-messages",
+        "provider": "pi-fixture",
+        "model": "fixture-model",
+        "usage": {
+          "input": 16,
+          "output": 3,
+          "cacheRead": 8,
+          "cacheWrite": 0,
+          "totalTokens": 27,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0
+          }
+        },
+        "stopReason": "stop"
+      }
+    }
+  ]
+}
