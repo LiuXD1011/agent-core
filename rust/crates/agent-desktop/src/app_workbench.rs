@@ -7,6 +7,17 @@ use agent_runtime::workbench::TaskProjection;
 use agent_runtime::workbench::{
     matches_query, BranchSnapshot, HistoryError, StepOutcome, TaskFilter, TaskPhase,
 };
+use task_management_ui::GroupCounts;
+
+/// One task row, owned so the list can be drawn while interface state changes.
+struct TaskRow {
+    id: String,
+    name: String,
+    workspace: String,
+    phase: TaskPhase,
+    group: Option<String>,
+    archived: bool,
+}
 
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 pub(super) enum WorkbenchPage {
@@ -765,8 +776,9 @@ impl DesktopApp {
         }
     }
 
-    pub(super) fn task_matches_filters(&self, session: &Session) -> bool {
-        self.task_list_matches(&session.id)
+    /// Scope, search text and phase — everything except the project filter.
+    pub(super) fn task_matches_scope_and_query(&self, session: &Session) -> bool {
+        self.task_scope_matches(&session.id)
             && matches_query(session, &self.workbench.query)
             && self.workbench.filter.matches(TaskPhase::from_messages(
                 &session.context.messages,
@@ -777,8 +789,61 @@ impl DesktopApp {
             ))
     }
 
+    pub(super) fn task_matches_filters(&self, session: &Session) -> bool {
+        self.task_matches_scope_and_query(session) && self.task_group_matches(&session.id)
+    }
+
+    /// Per-project counts under the current scope, search and phase filters, so a
+    /// chip never promises rows the list would hide.
+    pub(super) fn task_group_counts(&self) -> GroupCounts {
+        let mut counts = GroupCounts::default();
+        for session in std::iter::once(&self.session)
+            .chain(self.sessions.iter().filter(|s| s.id != self.session.id))
+        {
+            if !self.task_matches_scope_and_query(session) {
+                continue;
+            }
+            match self.task_state(&session.id).and_then(|state| state.group) {
+                Some(id) => *counts.by_group.entry(id).or_default() += 1,
+                None => counts.ungrouped += 1,
+            }
+        }
+        counts
+    }
+
+    /// Snapshot of the rows to draw. The live session replaces its disk snapshot
+    /// without modifying either.
+    fn task_rows(&self) -> Vec<TaskRow> {
+        let mut sessions: Vec<&Session> = std::iter::once(&self.session)
+            .chain(self.sessions.iter().filter(|s| s.id != self.session.id))
+            .collect();
+        sessions.sort_by_key(|s| self.task_sort_key(s));
+        sessions
+            .into_iter()
+            .filter(|s| self.task_matches_filters(s))
+            .map(|s| TaskRow {
+                id: s.id.clone(),
+                name: s.name.clone(),
+                workspace: s.workspace.to_string_lossy().into_owned(),
+                phase: TaskPhase::from_messages(
+                    &s.context.messages,
+                    self.running
+                        && !self.extension_operation
+                        && !self.compacting
+                        && s.id == self.session.id,
+                ),
+                group: self.task_state(&s.id).and_then(|state| state.group),
+                archived: self.task_state(&s.id).is_some_and(|state| state.archived),
+            })
+            .collect()
+    }
+
     pub(super) fn tasks_ui(&mut self, ctx: &egui::Context) {
         let palette = shell::palette(ctx);
+        let mut selected = None;
+        let mut management_action = None;
+        let mut toggle: Option<String> = None;
+        let mut shown = 0;
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(palette.background).inner_margin(24))
             .show(ctx, |ui| {
@@ -803,31 +868,18 @@ impl DesktopApp {
                     }
                 });
                 self.task_management_toolbar(ui);
+                if let Some(action) = self.task_batch_bar(ui) {
+                    management_action = Some(action);
+                }
                 ui.add_space(12.0);
-                let mut selected = None;
-                let mut management_action = None;
-                let mut shown = 0;
+                let selection = self.tasks.selection.clone();
+                let rows = self.task_rows();
                 egui::ScrollArea::vertical()
                     .id_salt("task-center")
                     .show(ui, |ui| {
-                        // The live session replaces its disk snapshot without modifying either.
-                        let mut sessions: Vec<_> = std::iter::once(&self.session)
-                            .chain(self.sessions.iter().filter(|s| s.id != self.session.id))
-                            .collect();
-                        sessions.sort_by_key(|s| self.task_sort_key(s));
-                        for session in sessions {
-                            let phase = TaskPhase::from_messages(
-                                &session.context.messages,
-                                self.running
-                                    && !self.extension_operation
-                                    && !self.compacting
-                                    && session.id == self.session.id,
-                            );
-                            if !self.task_matches_filters(session) {
-                                continue;
-                            }
+                        for row in &rows {
                             shown += 1;
-                            ui.push_id(&session.id, |ui| {
+                            ui.push_id(&row.id, |ui| {
                                 egui::Frame::new()
                                     .fill(palette.surface)
                                     .corner_radius(12)
@@ -835,42 +887,68 @@ impl DesktopApp {
                                     .show(ui, |ui| {
                                         ui.set_min_width((ui.available_width() - 1.0).max(0.0));
                                         ui.horizontal(|ui| {
+                                            let mut checked = selection.contains(&row.id);
+                                            if ui
+                                                .add(egui::Checkbox::without_text(&mut checked))
+                                                .on_hover_text("选择此任务以进行批量操作")
+                                                .changed()
+                                            {
+                                                toggle = Some(row.id.clone());
+                                            }
                                             let width = (ui.available_width() - 100.0).max(40.0);
                                             if ui
                                                 .add_enabled_ui(
-                                                    !self.busy() || session.id == self.session.id,
+                                                    !self.busy() || row.id == self.session.id,
                                                     |ui| {
                                                         ui.add_sized(
                                                             [width, 28.0],
-                                                            egui::Button::new(&session.name)
+                                                            egui::Button::new(&row.name)
                                                                 .frame(false)
                                                                 .truncate(),
                                                         )
                                                     },
                                                 )
                                                 .inner
-                                                .on_hover_text(&session.name)
+                                                .on_hover_text(&row.name)
                                                 .clicked()
                                             {
-                                                selected = Some(session.id.clone());
+                                                selected = Some(row.id.clone());
                                             }
                                             ui.label(
-                                                RichText::new(phase.label())
+                                                RichText::new(row.phase.label())
                                                     .size(11.0)
                                                     .color(palette.muted),
                                             );
+                                            if row.archived {
+                                                ui.label(
+                                                    RichText::new("已归档")
+                                                        .size(11.0)
+                                                        .color(palette.muted),
+                                                );
+                                            }
                                         });
-                                        ui.add(
-                                            egui::Label::new(
-                                                RichText::new(session.workspace.to_string_lossy())
-                                                    .size(12.0)
-                                                    .color(palette.muted),
-                                            )
-                                            .truncate(),
-                                        );
-                                        if let Some(action) =
-                                            self.task_row_controls(ui, &session.id)
-                                        {
+                                        ui.horizontal(|ui| {
+                                            ui.add(
+                                                egui::Label::new(
+                                                    RichText::new(&row.workspace)
+                                                        .size(12.0)
+                                                        .color(palette.muted),
+                                                )
+                                                .truncate(),
+                                            );
+                                            if let Some(name) = row
+                                                .group
+                                                .as_deref()
+                                                .and_then(|id| self.task_group_name(id))
+                                            {
+                                                ui.label(
+                                                    RichText::new(format!("· {name}"))
+                                                        .size(11.0)
+                                                        .color(palette.accent),
+                                                );
+                                            }
+                                        });
+                                        if let Some(action) = self.task_row_controls(ui, &row.id) {
                                             management_action = Some(action);
                                         }
                                     });
@@ -879,16 +957,19 @@ impl DesktopApp {
                         }
                         if shown == 0 {
                             ui.add_space(32.0);
-                            ui.label("没有匹配的任务。试试其他名称、工作区或筛选条件。");
+                            ui.label("没有匹配的任务。试试其他名称、工作区、状态或分组筛选。");
                         }
                     });
-                if let Some(id) = selected {
-                    self.resume_workbench_task(ctx, &id);
-                }
-                if let Some(action) = management_action {
-                    self.start_task_action(ctx, action);
-                }
             });
+        if let Some(id) = selected {
+            self.resume_workbench_task(ctx, &id);
+        }
+        if let Some(id) = toggle {
+            self.toggle_task_selection(&id);
+        }
+        if let Some(action) = management_action {
+            self.start_task_action(ctx, action);
+        }
     }
 
     fn resume_workbench_task(&mut self, ctx: &egui::Context, id: &str) {

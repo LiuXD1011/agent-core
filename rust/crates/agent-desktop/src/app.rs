@@ -3722,6 +3722,7 @@ impl DesktopApp {
         }
         self.settings_ui(ctx);
         self.queue_window(ctx);
+        self.task_group_window(ctx);
         self.connections_ui(ctx);
         if let Err(error) = self.ui_dialogs.show(ctx, self.keybindings.send) {
             self.status = error;

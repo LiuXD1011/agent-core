@@ -94,6 +94,10 @@ fn change(app: &mut DesktopApp, ctx: &egui::Context, id: &str, change: TaskChang
     app.start_task_action(ctx, TaskAction::Change(id.into(), change));
     settle(app, ctx);
 }
+/// One-element id list, so a single-task store call reads as clearly as a batch.
+fn one(id: &str) -> Vec<String> {
+    vec![id.to_string()]
+}
 
 #[test]
 fn task_pin_click_persists_new_session_and_unpin_survives_reopen() {
@@ -459,6 +463,7 @@ fn task_pin_worker_does_not_interrupt_reserved_durable_message_handoff() {
         signal: worker.signal,
         target: worker.target,
         block_dispatch: worker.block_dispatch,
+        committed: worker.committed,
         handle: std::thread::spawn(move || {
             let result = worker.handle.join().unwrap();
             let _ = wait.recv();
@@ -497,4 +502,222 @@ fn task_pin_worker_does_not_interrupt_reserved_durable_message_handoff() {
     settle(&mut app, &ctx);
     assert!(app.task_state(&id).unwrap().pinned);
     assert!(app.queues.is_empty());
+}
+
+#[test]
+fn batch_bar_changes_every_selected_task_in_one_transaction() {
+    let f = Fixture::new();
+    let ctx = egui::Context::default();
+    let mut app = f.app(&ctx);
+    let current = app.session.id.clone();
+    let other = saved_other(&mut app, "另一个任务");
+    click(&mut app, &ctx, "任务中心");
+    app.tasks.selection.insert(current.clone());
+    app.tasks.selection.insert(other.id.clone());
+    let revision = app.tasks.catalog.as_ref().unwrap().revision;
+    click(&mut app, &ctx, "批量归档");
+    settle(&mut app, &ctx);
+    let catalog = app.tasks.catalog.as_ref().unwrap();
+    assert_eq!(catalog.revision, revision + 1);
+    assert!(catalog.states[&current].archived);
+    assert!(catalog.states[&other.id].archived);
+    assert!(app.tasks.selection.is_empty());
+    assert!(app.status.contains("已归档 2 项任务"), "{}", app.status);
+    assert!(app.store.path(&current).unwrap().is_file());
+    // The archived current task keeps its execution allowed only after restore.
+    assert!(!app.task_execution_allowed());
+    app.tasks.selection.insert(current.clone());
+    app.tasks.selection.insert(other.id.clone());
+    click(&mut app, &ctx, "批量恢复");
+    settle(&mut app, &ctx);
+    assert!(app.task_execution_allowed());
+    let catalog = app.tasks.catalog.as_ref().unwrap();
+    assert!(!catalog.states[&current].archived);
+    assert!(!catalog.states[&other.id].archived);
+}
+
+#[test]
+fn selection_toggle_and_group_filters_follow_the_stored_project() {
+    let f = Fixture::new();
+    let ctx = egui::Context::default();
+    let mut app = f.app(&ctx);
+    let filed = saved_other(&mut app, "发布任务");
+    let loose = saved_other(&mut app, "散任务");
+    let signal = CancellationToken::new();
+    let tasks = app.store.task_store();
+    let created = tasks.create_group(0, "发布计划", &signal).unwrap();
+    let group = created.groups[0].id.clone();
+    tasks
+        .apply_batch(
+            created.revision,
+            &one(&filed.id),
+            BatchAction::MoveToGroup(group.clone()),
+            &signal,
+        )
+        .unwrap();
+    click(&mut app, &ctx, "任务中心");
+    click(&mut app, &ctx, "刷新任务状态");
+    settle(&mut app, &ctx);
+
+    app.toggle_task_selection(&filed.id);
+    assert!(app.tasks.selection.contains(&filed.id));
+    app.toggle_task_selection(&filed.id);
+    assert!(app.tasks.selection.is_empty());
+
+    assert_eq!(
+        app.task_group_name(&group).as_deref(),
+        Some("发布计划"),
+        "the row should be able to name its project"
+    );
+    let counts = app.task_group_counts();
+    assert_eq!(counts.by_group.get(&group).copied(), Some(1));
+    assert_eq!(counts.ungrouped, 2, "current session plus the loose task");
+
+    click(&mut app, &ctx, "发布计划 (1)");
+    assert_eq!(app.tasks.group_filter, GroupFilter::Group(group.clone()));
+    assert!(app.task_matches_filters(&filed));
+    assert!(!app.task_matches_filters(&loose));
+    click(&mut app, &ctx, "未分组 (2)");
+    assert_eq!(app.tasks.group_filter, GroupFilter::Ungrouped);
+    assert!(!app.task_matches_filters(&filed));
+    assert!(app.task_matches_filters(&loose));
+    // Scope and project filters compose instead of overriding each other.
+    click(&mut app, &ctx, "已归档");
+    assert!(!app.task_matches_filters(&loose));
+}
+
+#[test]
+fn group_window_creates_files_and_deletes_without_touching_tasks() {
+    let f = Fixture::new();
+    let ctx = egui::Context::default();
+    let mut app = f.app(&ctx);
+    let filed = saved_other(&mut app, "发布任务");
+    let loose = saved_other(&mut app, "散任务");
+    click(&mut app, &ctx, "任务中心");
+    app.start_task_action(
+        &ctx,
+        TaskAction::Change(filed.id.clone(), TaskChange::SetPinned(true)),
+    );
+    settle(&mut app, &ctx);
+
+    app.tasks.selection.insert(filed.id.clone());
+    app.tasks.selection.insert(loose.id.clone());
+    click(&mut app, &ctx, "新建分组并移入…");
+    app.tasks.group_name = "  发布计划  ".into();
+    click(&mut app, &ctx, "创建分组");
+    settle(&mut app, &ctx);
+    let catalog = app.tasks.catalog.as_ref().unwrap().clone();
+    assert_eq!(catalog.groups.len(), 1);
+    assert_eq!(catalog.groups[0].name, "发布计划");
+    let group = catalog.groups[0].id.clone();
+    assert_eq!(
+        catalog.states[&filed.id].group.as_deref(),
+        Some(group.as_str())
+    );
+    assert_eq!(
+        catalog.states[&loose.id].group.as_deref(),
+        Some(group.as_str())
+    );
+    assert!(app.tasks.selection.is_empty());
+    assert!(
+        app.status.contains("已创建分组「发布计划」并移入 2 项任务"),
+        "{}",
+        app.status
+    );
+
+    // Deleting the project keeps both tasks, their pin and their history, and
+    // drops a filter that pointed at the removed project.
+    app.tasks.group_filter = GroupFilter::Group(group.clone());
+    click(&mut app, &ctx, "分组管理…");
+    click(&mut app, &ctx, "删除分组");
+    settle(&mut app, &ctx);
+    let catalog = app.tasks.catalog.as_ref().unwrap();
+    assert!(catalog.groups.is_empty());
+    assert_eq!(catalog.states[&filed.id].group, None);
+    assert_eq!(catalog.states[&loose.id].group, None);
+    assert!(
+        catalog.states[&filed.id].pinned,
+        "the pin survives deletion"
+    );
+    assert_eq!(app.tasks.group_filter, GroupFilter::All);
+    assert!(app.store.path(&filed.id).unwrap().is_file());
+    assert!(app.store.path(&loose.id).unwrap().is_file());
+}
+
+#[test]
+fn group_rename_and_reorder_keep_names_unique_and_order_explicit() {
+    let f = Fixture::new();
+    let ctx = egui::Context::default();
+    let mut app = f.app(&ctx);
+    click(&mut app, &ctx, "任务中心");
+    click(&mut app, &ctx, "分组管理…");
+    app.tasks.group_name = "甲".into();
+    click(&mut app, &ctx, "创建分组");
+    settle(&mut app, &ctx);
+    app.tasks.group_name = "乙".into();
+    click(&mut app, &ctx, "创建分组");
+    settle(&mut app, &ctx);
+    assert!(
+        app.tasks.catalog.is_some(),
+        "status={} error={:?}",
+        app.status,
+        app.tasks.error
+    );
+    let catalog = app.tasks.catalog.as_ref().unwrap();
+    assert_eq!(
+        catalog
+            .groups
+            .iter()
+            .map(|group| group.name.as_str())
+            .collect::<Vec<_>>(),
+        vec!["甲", "乙"]
+    );
+    let revision = catalog.revision;
+    click(&mut app, &ctx, "下移");
+    settle(&mut app, &ctx);
+    let catalog = app.tasks.catalog.as_ref().unwrap();
+    assert_eq!(catalog.revision, revision + 1);
+    assert_eq!(
+        catalog
+            .groups
+            .iter()
+            .map(|group| group.name.as_str())
+            .collect::<Vec<_>>(),
+        vec!["乙", "甲"]
+    );
+    // A rename cannot take a name another project already uses. The failed
+    // transaction leaves the catalog unread in the interface and unchanged on disk.
+    let revision = catalog.revision;
+    let expected = catalog
+        .groups
+        .iter()
+        .map(|group| group.name.clone())
+        .collect::<Vec<_>>();
+    click(&mut app, &ctx, "重命名");
+    app.tasks.group_name = "甲".into();
+    click(&mut app, &ctx, "保存名称");
+    settle(&mut app, &ctx);
+    assert!(app.tasks.catalog.is_none());
+    assert!(app.status.contains("同名分组已存在"), "{}", app.status);
+    let stored = app.store.task_store().load_catalog().unwrap();
+    assert_eq!(stored.revision, revision);
+    assert_eq!(
+        stored
+            .groups
+            .iter()
+            .map(|group| group.name.clone())
+            .collect::<Vec<_>>(),
+        expected
+    );
+    // The management window is on top while it is open, so close it before
+    // clicking a toolbar control behind it.
+    app.tasks.group_open = false;
+    click(&mut app, &ctx, "刷新任务状态");
+    settle(&mut app, &ctx);
+    assert!(
+        app.tasks.catalog.is_some(),
+        "status={} error={:?}",
+        app.status,
+        app.tasks.error
+    );
 }

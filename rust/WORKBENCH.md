@@ -32,7 +32,21 @@
 - 状态损坏或保存未确认时保留文件并显示错误，不将任务默认为未归档继续派发。任务整理操作在工作线程执行；取消发生在提交前才中止写入，已经提交的结果仍按真实状态显示。
 - 其他实例的修改通过「刷新任务状态」读取；写入时的 revision 冲突会拒绝旧操作。当前没有跨窗口实时事件同步，进程锁也不代表跨窗口执行调度已实现。
 
-这些行为参考 WorkBuddy 5.8.2 的本地 conversations facade 与有序置顶存储；原厂未读标记、分组和云端同步不由本节提供。具体静态证据与未知项见 `.artifacts/workbench-task-management-20261015/REFERENCE.md`。
+这些行为参考 WorkBuddy 5.8.2 的本地 conversations facade 与有序置顶存储；原厂未读标记和云端同步不由本节提供。具体静态证据与未知项见 `.artifacts/workbench-task-management-20261015/REFERENCE.md`。
+
+## 分组与批量操作
+
+分组是任务的组织状态，与会话、产物和消息队列分开保存：新建分组不修改任何会话文件，删除分组也不删除任务。
+
+- 任务行左侧的复选框用于多选；出现「已选 N 项」操作栏后可批量归档、恢复、置顶、取消置顶、移入分组、移出分组。一次批量操作是一个事务：任一项被拒绝、revision 过期或取消时文件保持逐字节不变，不会只写一半。
+- 批量置顶按列表当前的可见顺序确定置顶次序，已置顶项不会被重复前移；批量归档/恢复命中当前任务时，在提交完成前暂停新的发送与空闲派发。
+- 分组筛选与状态筛选、搜索是叠加关系：「全部分组 / 未分组 / 某个分组」只显示同时满足状态与搜索条件的任务；标签上的计数也只统计这些可见任务，不承诺列表会隐藏的行。
+- 「新建分组并移入…」在同一次事务里创建分组并把已选任务移入；「分组管理」窗口负责创建、重命名、上移/下移和删除分组。
+- 分组名称去掉首尾空白、最多 80 个字符、不允许控制字符；同一时间不允许两个同名分组（把自己重命名成当前名字不算冲突）。
+- 删除分组只移除分组本身：组内任务的置顶位置、归档状态、历史消息和待发送队列全部保留，它们回到「未分组」；若正在筛选被删除的分组，筛选自动回到「全部分组」。
+- 选择是界面状态，不写入会话或任务文件；提交成功后清空，并剔除已不存在的任务。
+- 分组与批量操作和置顶、归档共用 `task-catalog.state` 的同一套 revision、进程锁与原子发布（新增可选字段 `groups` 与记录上的 `group`）。没有这些字段的旧文件按空分组读取；旧版本二进制会把不认识的字段原样保留，不会丢失分组信息。
+- 会话目录尚不存在时也能新建分组：首次操作创建目录并原子发布任务状态，不伪造会话文件，也不因此让「忙碌」错误挡住新建项目。
 
 ## 可管理消息队列
 
@@ -102,6 +116,7 @@ Renderer 派发补充 REA parent：`ev_7a4af2757075eea887066ff7832626db378db7246
 ## 后续差距（本轮未实现）
 
 - 真实并行任务调度、定时自动化、插件市场、办公文档/浏览器预览、云同步不由本轮工作台提供。
+- 分组的拖放排序、任务在分组间拖动、未读标记和跨窗口实时同步仍待实现；分组顺序通过「上移/下移」显式调整，其他窗口的修改需要「刷新任务状态」。
 - 当前产物投影不是全磁盘索引；只有显式读取才验证当时的文件状态。压缩前产物已可在详情查看，但完整历史原文仍通过会话树/导出查看。文件定位/系统打开、其他格式预览仍待实现。
 - 原厂的账号权限、完整数据库迁移、云端模型调度和 native addon 内部行为未恢复。
 - 当前工作台仍是分阶段实现；完整产品功能与像素级对齐尚未完成。
@@ -118,10 +133,12 @@ cargo test -p agent-runtime --test managed_queue --locked --offline
 cargo test -p agent-runtime --test durable_queue --locked --offline
 cargo test -p agent-runtime --test task_store --locked --offline
 cargo test -p agent-runtime --lib session::tests --locked --offline
-cargo test -p agent-desktop --lib workbench --locked --offline
+cargo test -p agent-desktop --lib --locked --offline
 cargo test -p agent-desktop --test desktop_shell --locked --offline
 ./check.ps1 -Offline
 ./test.ps1 -Offline
 ```
+
+`cargo test -p agent-desktop --lib` 覆盖任务中心、分组管理与批量操作的界面回归（`task_management_ui`、`workbench_ui`、`connections_ui`）；`--test desktop_shell` 覆盖布局与主题。
 
 只使用本地 fixture 和 Demo，不访问真实凭据或付费模型。
