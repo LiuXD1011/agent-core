@@ -24,6 +24,7 @@ pub(super) enum WorkbenchPage {
     #[default]
     Conversation,
     Tasks,
+    Automations,
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
@@ -748,6 +749,11 @@ impl DesktopApp {
                 "当前对话",
             );
             ui.selectable_value(&mut self.workbench.page, WorkbenchPage::Tasks, "任务中心");
+            ui.selectable_value(
+                &mut self.workbench.page,
+                WorkbenchPage::Automations,
+                "定时任务",
+            );
         });
     }
 

@@ -140,6 +140,9 @@ impl SessionStore {
     pub fn task_store(&self) -> crate::task_store::TaskStore {
         crate::task_store::TaskStore::new(self.directory.clone())
     }
+    pub fn directory(&self) -> &Path {
+        &self.directory
+    }
     pub fn default_directory() -> PathBuf {
         std::env::var_os("LOCALAPPDATA")
             .map(PathBuf::from)

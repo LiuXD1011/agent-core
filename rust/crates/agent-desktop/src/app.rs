@@ -43,7 +43,7 @@ use eframe::egui::{self, FontFamily, RichText};
 use std::collections::BTreeMap;
 use std::io::Cursor;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError};
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -59,6 +59,10 @@ use workbench_ui::{WorkbenchPage, WorkbenchState};
 #[path = "app_task_management.rs"]
 mod task_management_ui;
 use task_management_ui::TaskManagement;
+
+#[path = "app_automations.rs"]
+mod automations_ui;
+use automations_ui::{AutomationEvent, AutomationIo, AutomationsState};
 
 #[cfg(test)]
 #[path = "app_auth_tests.rs"]
@@ -209,35 +213,121 @@ pub struct DesktopApp {
     model_committed: bool,
     ui_dialogs: DesktopDialogs,
     settings_open: bool,
+    composer_mode: ComposerMode,
+    recent_workspaces: Vec<String>,
     connections: ConnectionsState,
     workbench: WorkbenchState,
     tasks: TaskManagement,
+    automation_store:
+        Option<std::sync::Arc<std::sync::Mutex<agent_runtime::automations::AutomationStore>>>,
+    automation_event_sender: Option<mpsc::Sender<AutomationEvent>>,
+    automation_events: Option<Receiver<AutomationEvent>>,
+    automation_scheduler: Option<AutomationIo>,
+    schedules: AutomationsState,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+enum ComposerMode {
+    /// 仅问答：模型不获得任何工具，只回答。
+    Ask,
+    /// 计划：只读工具可用，不能写文件或运行命令。
+    Plan,
+    /// 执行：按权限开关执行任务。
+    #[default]
+    Craft,
+}
+
+impl ComposerMode {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Ask => "问答",
+            Self::Plan => "计划",
+            Self::Craft => "执行",
+        }
+    }
+    fn description(self) -> &'static str {
+        match self {
+            Self::Ask => "仅问答：不提供工具，模型只回答问题",
+            Self::Plan => "计划：只读工具，不写文件、不运行命令",
+            Self::Craft => "执行：按下方权限开关执行任务",
+        }
+    }
 }
 
 fn configure_ui(ctx: &egui::Context) {
     shell::configure(ctx);
     let mut fonts = egui::FontDefinitions::default();
-    if let Some(directory) = std::env::var_os("WINDIR") {
-        for name in ["msyh.ttc", "simhei.ttf"] {
-            if let Ok(bytes) = std::fs::read(PathBuf::from(&directory).join("Fonts").join(name)) {
-                fonts
-                    .font_data
-                    .insert("cjk".into(), egui::FontData::from_owned(bytes).into());
-                fonts
-                    .families
-                    .entry(FontFamily::Proportional)
-                    .or_default()
-                    .insert(0, "cjk".into());
-                fonts
-                    .families
-                    .entry(FontFamily::Monospace)
-                    .or_default()
-                    .push("cjk".into());
-                break;
-            }
+    for candidate in cjk_font_candidates() {
+        if let Ok(bytes) = std::fs::read(candidate) {
+            fonts
+                .font_data
+                .insert("cjk".into(), egui::FontData::from_owned(bytes).into());
+            fonts
+                .families
+                .entry(FontFamily::Proportional)
+                .or_default()
+                .insert(0, "cjk".into());
+            fonts
+                .families
+                .entry(FontFamily::Monospace)
+                .or_default()
+                .push("cjk".into());
+            break;
         }
     }
     ctx.set_fonts(fonts);
+}
+
+/// CJK font files across platforms: the Windows font directory first, then
+/// the WSL mount of the same directory, then common Linux font packages.
+fn cjk_font_candidates() -> Vec<PathBuf> {
+    let mut candidates = vec![];
+    if let Some(directory) = std::env::var_os("WINDIR") {
+        let fonts = PathBuf::from(&directory).join("Fonts");
+        candidates.push(fonts.join("msyh.ttc"));
+        candidates.push(fonts.join("simhei.ttf"));
+    }
+    candidates.push(PathBuf::from("/mnt/c/Windows/Fonts/msyh.ttc"));
+    candidates.push(PathBuf::from(
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    ));
+    candidates.push(PathBuf::from(
+        "/usr/share/fonts/truetype/arphic-gkai00mp/gkai00mp.ttf",
+    ));
+    candidates.push(PathBuf::from(
+        "/usr/share/fonts/truetype/arphic-gbsn00lp/gbsn00lp.ttf",
+    ));
+    candidates
+}
+
+fn fallback_workspace() -> PathBuf {
+    std::env::current_dir()
+        .ok()
+        .filter(|path| path.is_dir())
+        .or_else(|| {
+            std::env::var_os("USERPROFILE")
+                .or_else(|| std::env::var_os("HOME"))
+                .map(PathBuf::from)
+                .filter(|path| path.is_dir())
+        })
+        .unwrap_or_else(std::env::temp_dir)
+}
+
+/// Recent workspace list, persisted beside the sessions like the task store.
+/// The first entry is the most recently used.
+fn load_recent_workspaces(store: &SessionStore) -> Vec<String> {
+    let path = store.directory().join("workspaces.json");
+    std::fs::read(path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Vec<String>>(&bytes).ok())
+        .unwrap_or_default()
+}
+
+fn save_recent_workspaces(store: &SessionStore, workspaces: &[String]) {
+    let path = store.directory().join("workspaces.json");
+    if let Ok(bytes) = serde_json::to_vec_pretty(workspaces) {
+        let _ = std::fs::write(path, bytes);
+    }
 }
 
 impl DesktopApp {
@@ -250,11 +340,12 @@ impl DesktopApp {
         let mut app = Self::with_store(ctx, store);
         app.enable_task_management(ctx);
         app.enable_durable_queues(ctx);
+        app.enable_automations(ctx);
         app
     }
     fn with_store(ctx: &egui::Context, store: SessionStore) -> Self {
         configure_ui(ctx);
-        let (sessions, status) = match store.load_with_diagnostics() {
+        let (sessions, mut status) = match store.load_with_diagnostics() {
             Ok(loaded) => {
                 let status = if loaded.diagnostics.is_empty() {
                     "就绪 · Rust 原生运行时".into()
@@ -265,14 +356,25 @@ impl DesktopApp {
             }
             Err(error) => (vec![], format!("读取会话失败：{error}")),
         };
-        let session = sessions.first().cloned().unwrap_or_default();
-        let workspace = session.workspace.to_string_lossy().into_owned();
+        let mut session = sessions.first().cloned().unwrap_or_default();
+        let mut workspace = session.workspace.to_string_lossy().into_owned();
+        if !Path::new(workspace.trim()).is_dir() {
+            let fallback = fallback_workspace();
+            status = format!(
+                "会话工作区 {} 不存在，已改用 {}；可在设置中修改",
+                workspace.trim(),
+                fallback.display()
+            );
+            workspace = fallback.to_string_lossy().into_owned();
+            session.workspace = fallback;
+        }
         let session_name_draft = session
             .get_session_name()
             .ok()
             .flatten()
             .unwrap_or_default();
         let auth_path = default_auth_directory().join("credentials.dat");
+        let recent_workspaces = load_recent_workspaces(&store);
         let mut app = Self {
             keybindings: DEFAULT_APP_KEYBINDINGS,
             session,
@@ -352,9 +454,16 @@ impl DesktopApp {
             model_committed: false,
             ui_dialogs: DesktopDialogs::default(),
             settings_open: false,
+            composer_mode: ComposerMode::default(),
+            recent_workspaces,
             connections: ConnectionsState::default(),
             workbench: WorkbenchState::default(),
             tasks: TaskManagement::default(),
+            automation_store: None,
+            automation_event_sender: None,
+            automation_events: None,
+            automation_scheduler: None,
+            schedules: AutomationsState::default(),
         };
         if let Err(error) = app.extensions.bind_ui(app.ui_dialogs.broker().handle()) {
             app.status = error;
@@ -694,8 +803,13 @@ impl DesktopApp {
         let mut options = RunOptions {
             allow_changes: self.allow_changes,
             allow_commands: self.allow_commands,
+            no_tools: self.composer_mode == ComposerMode::Ask,
             ..Default::default()
         };
+        if self.composer_mode == ComposerMode::Plan {
+            options.allow_changes = false;
+            options.allow_commands = false;
+        }
         options.automation.enabled = self.auto_compaction;
         options.automation.retry.enabled = self.retry_enabled;
         options.automation.reserve_tokens = self.reserve_tokens;
@@ -721,6 +835,51 @@ impl DesktopApp {
         self.runtime_activity.clear();
         self.extension_display.clear();
         self.extension_statuses.clear();
+    }
+    /// Remember the workspace of a finished run for the sidebar quick switch.
+    fn record_recent_workspace(&mut self) {
+        let workspace = self.session.workspace.to_string_lossy().into_owned();
+        if workspace.trim().is_empty() {
+            return;
+        }
+        self.recent_workspaces.retain(|item| item != &workspace);
+        self.recent_workspaces.insert(0, workspace);
+        self.recent_workspaces.truncate(8);
+        save_recent_workspaces(&self.store, &self.recent_workspaces);
+    }
+    fn switch_workspace(&mut self, workspace: String) {
+        if self.busy() {
+            self.status = "运行期间工作区保持不变".into();
+            return;
+        }
+        let trimmed = workspace.trim().to_owned();
+        let canonical = match std::fs::canonicalize(&trimmed) {
+            Ok(canonical) => canonical,
+            Err(_) => {
+                self.status = format!("工作目录不存在：{trimmed}");
+                return;
+            }
+        };
+        self.workspace = trimmed.clone();
+        self.session.workspace = canonical;
+        self.save();
+        self.record_recent_workspace();
+        self.status = format!("工作区已切换为 {trimmed}");
+    }
+    /// Context tokens of the latest model response, for the header chip.
+    fn session_token_usage(&self) -> u64 {
+        self.session
+            .context
+            .messages
+            .iter()
+            .rev()
+            .find_map(|message| match message {
+                Message::Assistant(assistant) => {
+                    assistant.usage.as_ref().map(|usage| usage.total_tokens)
+                }
+                _ => None,
+            })
+            .unwrap_or(0)
     }
     fn navigate_tree(&mut self, target: Option<&str>) -> Result<(), String> {
         if self.busy() {
@@ -1355,8 +1514,9 @@ impl DesktopApp {
         let repaint = ctx.clone();
         self.worker = Some(std::thread::spawn(move || {
             let preparation = catch_unwind(AssertUnwindSafe(|| {
-                session.workspace = std::fs::canonicalize(workspace.trim())
-                    .map_err(|_| "工作目录不存在，请修改左侧工作区路径".to_owned())?;
+                session.workspace = std::fs::canonicalize(workspace.trim()).map_err(|_| {
+                    format!("工作目录不存在：{}，请修改左侧工作区路径", workspace.trim())
+                })?;
                 if !session.workspace.is_dir() {
                     return Err("工作区路径不是目录".into());
                 }
@@ -1510,8 +1670,8 @@ impl DesktopApp {
         let repaint = ctx.clone();
         self.queue_worker = Some(std::thread::spawn(move || {
             let result = catch_unwind(AssertUnwindSafe(|| {
-                session.workspace =
-                    std::fs::canonicalize(workspace.trim()).map_err(|error| error.to_string())?;
+                session.workspace = std::fs::canonicalize(workspace.trim())
+                    .map_err(|_| format!("工作目录不存在：{}", workspace.trim()))?;
                 let context =
                     extension_context(&session, &registry, ExtensionMode::Desktop, model)?;
                 let result = prepare_input_with_behavior(
@@ -2727,6 +2887,7 @@ impl DesktopApp {
     }
     fn poll(&mut self, ctx: &egui::Context) {
         self.poll_task_management(ctx);
+        self.poll_automations(ctx);
         self.sync_queue_session();
         self.poll_queue_io(ctx);
         self.poll_connections(ctx);
@@ -2820,6 +2981,7 @@ impl DesktopApp {
                     } else {
                         self.pending_draft = None;
                     }
+                    let run_succeeded = result.is_ok();
                     self.status = match result {
                         Ok(()) if self.signal.is_cancelled() => "已停止".into(),
                         Ok(()) if self.compacting => "上下文已压缩 · 原始消息已归档".into(),
@@ -2840,6 +3002,9 @@ impl DesktopApp {
                     };
                     self.compacting = false;
                     self.save();
+                    if run_succeeded {
+                        self.record_recent_workspace();
+                    }
                     self.receiver = None;
                     if let Some(worker) = self.worker.take() {
                         let _ = worker.join();
@@ -3169,18 +3334,30 @@ impl DesktopApp {
                     .file_name()
                     .and_then(|name| name.to_str())
                     .unwrap_or("本地工作区");
-                if ui
-                    .add(
-                        egui::Button::new(format!("工作区 · {label}"))
-                            .frame(false)
-                            .truncate()
-                            .min_size(egui::vec2(ui.available_width(), 30.0)),
-                    )
-                    .on_hover_text(&self.workspace)
-                    .clicked()
-                {
-                    self.settings_open = true;
-                }
+                ui.menu_button(format!("工作区 · {label}"), |ui| {
+                    let current = self.workspace.trim().to_owned();
+                    if self.recent_workspaces.is_empty() {
+                        ui.label("暂无最近工作区");
+                    }
+                    for recent in self.recent_workspaces.clone() {
+                        let marker = if recent.trim() == current { "✓ " } else { "" };
+                        if ui
+                            .button(format!("{marker}{}", recent))
+                            .on_hover_text(&recent)
+                            .clicked()
+                        {
+                            self.switch_workspace(recent);
+                            ui.close_menu();
+                        }
+                    }
+                    ui.separator();
+                    if ui.button("修改工作区路径…").clicked() {
+                        self.settings_open = true;
+                        ui.close_menu();
+                    }
+                })
+                .response
+                .on_hover_text(&self.workspace);
                 if ui
                     .add(
                         egui::Button::new("设置与工具")
@@ -3369,6 +3546,15 @@ impl DesktopApp {
                             .size(11.0)
                             .color(palette.muted),
                         );
+                        let used = self.session_token_usage();
+                        if used > 0 {
+                            ui.label(
+                                RichText::new(format!("上下文 {used} tokens"))
+                                    .size(11.0)
+                                    .color(palette.muted),
+                            )
+                            .on_hover_text("最近一次模型响应的累计 token 用量");
+                        }
                     });
                 });
             });
@@ -3424,12 +3610,23 @@ impl DesktopApp {
                                     input.consume_shortcut(&self.keybindings.send)
                                 });
                             ui.horizontal(|ui| {
+                                const MODES: [ComposerMode; 3] =
+                                    [ComposerMode::Ask, ComposerMode::Plan, ComposerMode::Craft];
+                                for mode in MODES {
+                                    if ui
+                                        .selectable_label(self.composer_mode == mode, mode.label())
+                                        .on_hover_text(mode.description())
+                                        .clicked()
+                                    {
+                                        self.composer_mode = mode;
+                                    }
+                                }
                                 let model_label = if self.settings.mode == ProviderMode::Demo {
                                     "离线演示".to_owned()
                                 } else {
                                     self.settings.model.clone()
                                 };
-                                let model_width = (ui.available_width() * 0.5).min(220.0);
+                                let model_width = (ui.available_width() * 0.5).min(200.0);
                                 if ui
                                     .add_sized(
                                         [model_width, 34.0],
@@ -3444,26 +3641,37 @@ impl DesktopApp {
                                 {
                                     self.open_connections(ctx);
                                 }
-                                let permission = if self.allow_commands {
-                                    "允许命令"
-                                } else if self.allow_changes {
-                                    "允许编辑"
-                                } else {
+                                let permission = if self.composer_mode == ComposerMode::Plan {
                                     "只读工作区"
+                                } else if self.allow_commands {
+                                    "完全访问"
+                                } else if self.allow_changes {
+                                    "可写文件"
+                                } else {
+                                    "默认权限"
                                 };
+                                let next_permission =
+                                    |allow_changes: bool, allow_commands: bool| {
+                                        if allow_commands {
+                                            (false, false)
+                                        } else if allow_changes {
+                                            (true, true)
+                                        } else {
+                                            (true, false)
+                                        }
+                                    };
                                 if ui
                                     .add(
-                                        egui::Button::new(
-                                            RichText::new(permission)
-                                                .size(11.0)
-                                                .color(palette.muted),
-                                        )
-                                        .frame(false),
+                                        egui::Button::new(RichText::new(permission).size(11.0))
+                                            .frame(false),
                                     )
-                                    .on_hover_text("查看工作区与执行权限")
+                                    .on_hover_text("切换执行权限：默认权限 → 可写文件 → 完全访问")
                                     .clicked()
                                 {
-                                    self.settings_open = true;
+                                    let (changes, commands) =
+                                        next_permission(self.allow_changes, self.allow_commands);
+                                    self.allow_changes = changes;
+                                    self.allow_commands = commands;
                                 }
                                 ui.with_layout(
                                     egui::Layout::right_to_left(egui::Align::Center),
@@ -3690,10 +3898,17 @@ impl DesktopApp {
     pub fn show(&mut self, ctx: &egui::Context) {
         self.poll(ctx);
         if ctx.input(|input| input.viewport().close_requested())
-            && (self.busy() || self.task_management_busy() || !self.extensions.ids().is_empty())
+            && (self.busy()
+                || self.task_management_busy()
+                || !self.extensions.ids().is_empty()
+                || self.schedules.active_run_count() > 0)
         {
             self.closing = true;
             self.cancel_task_management();
+            if let Some(scheduler) = &self.automation_scheduler {
+                scheduler.signal.cancel();
+            }
+            self.schedules.cancel_all_runs();
             self.ui_dialogs.close();
             self.signal.cancel();
             self.queue_signal.cancel();
@@ -3712,13 +3927,15 @@ impl DesktopApp {
         }
         self.sidebar_ui(ctx);
         self.header_ui(ctx);
-        if self.workbench.page == WorkbenchPage::Tasks {
-            self.tasks_ui(ctx);
-        } else {
-            self.inspector_panel(ctx);
-            self.composer_ui(ctx);
-            self.transcript_ui(ctx);
-            self.inspector_window(ctx);
+        match self.workbench.page {
+            WorkbenchPage::Tasks => self.tasks_ui(ctx),
+            WorkbenchPage::Automations => self.automations_ui(ctx),
+            WorkbenchPage::Conversation => {
+                self.inspector_panel(ctx);
+                self.composer_ui(ctx);
+                self.transcript_ui(ctx);
+                self.inspector_window(ctx);
+            }
         }
         self.settings_ui(ctx);
         self.queue_window(ctx);
@@ -4706,6 +4923,99 @@ mod tests {
             account_id: "fixture-account".into(),
             extra: BTreeMap::new(),
         }
+    }
+    #[test]
+    fn composer_mode_gates_backend_tools() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let mut app = fixture_app(&ctx, &fixture);
+        app.allow_changes = true;
+        app.allow_commands = true;
+        let options = app.run_options().unwrap();
+        assert!(!options.no_tools);
+        assert!(options.allow_changes && options.allow_commands);
+        app.composer_mode = ComposerMode::Plan;
+        let options = app.run_options().unwrap();
+        assert!(!options.no_tools);
+        assert!(!options.allow_changes && !options.allow_commands);
+        let tools =
+            agent_runtime::runtime::configured_tools(&app.session.workspace, &options).unwrap();
+        assert!(!tools.iter().any(|tool| tool.name() == "write"));
+        assert!(!tools.iter().any(|tool| tool.name() == "run_command"));
+        assert!(tools.iter().any(|tool| tool.name() == "read"));
+        app.composer_mode = ComposerMode::Ask;
+        let options = app.run_options().unwrap();
+        assert!(options.no_tools);
+        assert!(
+            agent_runtime::runtime::configured_tools(&app.session.workspace, &options)
+                .unwrap()
+                .is_empty()
+        );
+    }
+    #[test]
+    fn recent_workspaces_persist_and_switch_validates_paths() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let mut app = fixture_app(&ctx, &fixture);
+        let target = fixture.0.join("other-project");
+        std::fs::create_dir(&target).unwrap();
+        app.switch_workspace(target.to_string_lossy().into_owned());
+        assert_eq!(app.workspace.trim(), target.to_string_lossy().trim());
+        assert_eq!(app.recent_workspaces.len(), 1);
+        let persisted = load_recent_workspaces(&app.store);
+        assert_eq!(persisted.len(), 1);
+        assert_eq!(persisted[0].trim(), target.to_string_lossy().trim());
+        let missing = fixture.0.join("deleted-workspace");
+        app.switch_workspace(missing.to_string_lossy().into_owned());
+        assert!(app.status.contains("工作目录不存在"));
+        assert_eq!(app.workspace.trim(), target.to_string_lossy().trim());
+    }
+    #[test]
+    fn header_token_usage_reads_latest_assistant_usage() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let mut app = fixture_app(&ctx, &fixture);
+        assert_eq!(app.session_token_usage(), 0);
+        let mut assistant = AssistantMessage::text("");
+        assistant.usage = Some(agent_core::types::Usage {
+            total_tokens: 42,
+            ..Default::default()
+        });
+        app.session
+            .append_message(Message::Assistant(assistant))
+            .unwrap();
+        assert_eq!(app.session_token_usage(), 42);
+    }
+    #[test]
+    fn desktop_startup_falls_back_when_stored_workspace_is_missing() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let store = SessionStore::new(fixture.0.join("sessions"));
+        let stale = Session {
+            workspace: fixture.0.join("deleted-workspace"),
+            ..Default::default()
+        };
+        store.save(&stale).unwrap();
+        let app = DesktopApp::with_store(&ctx, store);
+        assert!(Path::new(app.workspace.trim()).is_dir());
+        assert!(app.session.workspace.is_dir());
+        assert!(app.status.contains("不存在"));
+        assert!(app.status.contains("可在设置中修改"));
+    }
+    #[test]
+    fn desktop_startup_keeps_existing_workspace_and_ready_status() {
+        let fixture = Fixture::new();
+        let ctx = egui::Context::default();
+        let store = SessionStore::new(fixture.0.join("sessions"));
+        let stored = Session {
+            workspace: fixture.0.clone(),
+            ..Default::default()
+        };
+        store.save(&stored).unwrap();
+        let app = DesktopApp::with_store(&ctx, store);
+        assert_eq!(app.workspace.trim(), fixture.0.to_string_lossy().trim());
+        assert_eq!(app.session.workspace, fixture.0);
+        assert_eq!(app.status, "就绪 · Rust 原生运行时");
     }
     #[test]
     fn offline_desktop_workflow_and_layout() {

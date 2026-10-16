@@ -2,6 +2,7 @@ pub mod artifacts;
 pub mod auth;
 pub mod auth_storage;
 pub mod automatic;
+pub mod automations;
 pub mod builtins;
 pub mod catalog;
 pub mod compaction;
